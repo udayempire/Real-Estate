@@ -12,3 +12,78 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
+model Broker {
+  id        String  @id @default(cuid())
+  firstName String
+  lastName  String
+  email     String  @unique
+  phone     String  @unique
+  whatsapp  String?
+  password  String
+  avatar    String?
+  isBlocked Boolean @default(false)
+
+  //verification
+  isEmailVerified Boolean @default(false)
+  isPhoneVerified Boolean @default(false)
+
+  //upload tracking
+  freeUploadsUsed Int @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  property Property
+
+  @@map("brokers")
+}
+
+//property
+enum PropertyType {
+  FARMLAND
+  DUPLEX
+  FLAT
+  PLOT
+}
+
+enum PropertyStatus {
+  ACTIVE
+  INACTIVE
+  SOLD
+  DRAFT
+}
+
+enum SizeUnit {
+  ACRES
+  UNITS
+  SQFT
+  SQMT
+}
+
+model Property {
+  id String @id @default(cuid())
+  title String
+  description String?
+  propertyType PropertyType
+  status PropertyStatus
+  priceMin Float 
+  priceMax Float? //for price range
+  isNegotiable Boolean //?
+  state String
+  city String
+  area String
+  address String
+  latitude String
+  longitude String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  //Relations
+  brokerId String
+  broker String
+  media PropertyMedia[]
+
+}
+
+
