@@ -1,2 +1,73 @@
 
 /generated/prisma
+# =========================
+# Node.js
+# =========================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# =========================
+# Environment variables
+# =========================
+.env
+.env.local
+.env.development
+.env.production
+.env.test
+
+# =========================
+# Build output
+# =========================
+dist/
+build/
+out/
+
+# =========================
+# TypeScript (if used)
+# =========================
+*.tsbuildinfo
+
+# =========================
+# Logs
+# =========================
+logs/
+*.log
+
+# =========================
+# Runtime data
+# =========================
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# =========================
+# Coverage & reports
+# =========================
+coverage/
+.nyc_output/
+
+# =========================
+# OS / Editor files
+# =========================
+.DS_Store
+Thumbs.db
+
+# VS Code
+.vscode/
+!.vscode/extensions.json
+
+# =========================
+# Cache
+# =========================
+.cache/
+.eslintcache
+
+# =========================
+# Temporary files
+# =========================
+tmp/
+temp/
