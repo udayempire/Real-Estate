@@ -13,32 +13,31 @@ datasource db {
   provider = "postgresql"
 }
 
-model Broker {
-  id        String  @id @default(cuid())
-  firstName String
-  lastName  String
-  email     String  @unique
-  phone     String  @unique
-  whatsapp  String?
-  password  String
-  avatar    String?
-  isBlocked Boolean @default(false)
+model User {
+  id           String  @id @default(cuid())
+  firstName    String
+  lastName     String
+  email        String  @unique
+  phone        String  @unique
+  password     String
+  avatar       String?
+  isBlocked    Boolean @default(false)
+  referralCode String  @unique @default(cuid())
+  referralId   String?
+  referrer     User?   @relation("Referrals", references: [id], fields: [referralId])
+  referrals    User[]  @relation("Referrals") //users referred by User. 
+  points       Int     @default(0)
 
   //verification
   isEmailVerified Boolean @default(false)
-  isPhoneVerified Boolean @default(false)
-
-  //upload tracking
-  freeUploadsUsed Int @default(0)
 
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
-  properies     Property[]
-  subscriptions Subscriptions?
-  otp           Otp[]
-  refreshToken  RefreshToken[]
+  properties    Property[]
+  otps          Otp[]
+  refreshTokens RefreshToken[]
 
-  @@map("brokers")
+  @@map("users")
 }
 
 //property
@@ -68,26 +67,27 @@ model Property {
   title        String
   description  String?
   propertyType PropertyType
-  status       PropertyStatus
+  status       PropertyStatus @default(ACTIVE)
   priceMin     Float
   priceMax     Float? //for price range
-  isNegotiable Boolean //?
   state        String
   city         String
   area         String
   address      String
-  latitude     String
-  longitude    String
+  latitude     Float
+  longitude    Float
+  size Float?
+  sizeUnit SizeUnit
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   //Relations
-  brokerId String
-  broker   Broker          @relation(fields: [brokerId], references: [id], onDelete: Cascade)
-  media    PropertyMedia[]
+  userId String
+  user   User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  media  PropertyMedia[]
 
-  @@index([brokerId])
+  @@index([userId])
   @@index([propertyType])
   @@index([status])
   @@index([state, city])
@@ -106,86 +106,15 @@ model PropertyMedia {
   id        String   @id @default(cuid())
   url       String
   key       String // s3 key for deletion
-  mediaType String
+  mediaType MediaType
   order     Int      @default(0) // for ordering photos
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
 
   propertyId String
   property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
 
   @@index([propertyId])
   @@map("property_media")
-}
-
-enum PlanType {
-  FREE
-  PREMIUM
-}
-
-model Plan {
-  id                String          @id @default(cuid())
-  name              String
-  type              PlanType        @unique
-  price             Float
-  maxUploads        Int? //null = unlimited
-  featuredListing   Boolean         @default(false)
-  priorityVisibilty Boolean         @default(false)
-  validityDays      Int // 0 for free plan
-  isActive          Boolean         @default(true)
-  createdAt         DateTime        @default(now())
-  subscriptions     Subscriptions[]
-
-  @@map("plans")
-}
-
-model Subscriptions {
-  id        String    @id @default(cuid())
-  startDate DateTime  @default(now())
-  endDate   DateTime?
-  isActive  Boolean   @default(true)
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-
-  brokerId String    @unique
-  broker   Broker    @relation(fields: [brokerId], references: [id], onDelete: Cascade)
-  planId   String    @unique
-  plan     Plan      @relation(fields: [planId], references: [id])
-  payments Payment[]
-
-  @@map("subscriptions")
-}
-
-enum PaymentStatus {
-  PENDING
-  SUCCESS
-  FAILED
-  REFUNDED
-}
-
-enum PaymentMethods {
-  UPI
-  CARD
-  NETBANKING
-}
-
-model Payment {
-  id               String          @id @default(cuid())
-  amount           Float
-  currency         String          @default("INR")
-  status           PaymentStatus   @default(PENDING)
-  method           PaymentMethods?
-  gatewayOrderId   String?
-  gatewayPaymentId String
-  gatewaySignature String
-
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
-  subscriptionId String
-  subscripton    Subscriptions @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
-
-  @@index([subscriptionId])
-  @@map("payments")
 }
 
 //AUTH
@@ -202,10 +131,10 @@ model Otp {
   expiresAt DateTime
   isRevoked Boolean  @default(false)
   createdAt DateTime @default(now())
-  brokerId  String
-  broker    Broker   @relation(fields: [brokerId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@index([brokerId, code])
+  @@index([userId, type])
   @@map("otps")
 }
 
@@ -215,9 +144,9 @@ model RefreshToken {
   expiresAt DateTime
   isRevoked Boolean  @default(false)
   createdAt DateTime @default(now())
-  brokerId  String
-  broker    Broker   @relation(fields: [brokerId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@index([brokerId])
+  @@index([userId])
   @@map("refresh_tokens")
 }
