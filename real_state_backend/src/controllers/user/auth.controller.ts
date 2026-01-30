@@ -1,5 +1,5 @@
 import { prisma } from "../../config/prisma";
-import { hashPassword,comparePassword } from "../../utils/password";
+import { hashPassword, comparePassword } from "../../utils/password";
 import { signAccessToken, signRefreshToken } from "../../utils/jwt";
 import { Request, Response } from "express";
 import { generateReferralCode } from "../../utils/generateReferralCode";
@@ -57,7 +57,7 @@ export async function signup(req: Request, res: Response) {
         return res.status(500).json(error)
     }
 }
-
+// save refreshToken in localstoragen or session
 export async function signin(req: Request, res: Response) {
     try {
         const { email, password } = req.body;
@@ -88,5 +88,34 @@ export async function signin(req: Request, res: Response) {
 
     } catch (error) {
         return res.status(500).json(error);
+    }
+}
+
+export async function signout(req: Request, res: Response) {
+    try {
+        const refreshToken = req.body;
+        if (!refreshToken) {
+            return res.status(401).json({ error: "Refresh Token not found" });
+        }
+        await prisma.refreshToken.deleteMany({
+            where: { token: refreshToken }
+        });
+        return res.json({ message: "Logged out successfully" });
+    } catch (error) {
+        return res.status(500).json({ error: "Internal server error" })
+    }
+}
+export async function signoutAll(req: Request, res: Response) {
+    try {
+        const userId = req.user?.id;
+        if (!userId) {
+            return res.status(401).json({ error: "Unauthorized" });
+        }
+        await prisma.refreshToken.deleteMany({
+            where: { userId }
+        });
+        return res.json({ message: "Logged out successfully" });
+    } catch (error) {
+        return res.status(500).json({ error: "Internal server error" })
     }
 }
