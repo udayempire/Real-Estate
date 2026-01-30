@@ -1,9 +1,11 @@
 import { prisma } from "../../config/prisma";
-import { hashPassword } from "../../utils/password";
+import { hashPassword,comparePassword } from "../../utils/password";
 import { signAccessToken, signRefreshToken } from "../../utils/jwt";
 import { Request, Response } from "express";
 import { generateReferralCode } from "../../utils/generateReferralCode";
 
+
+//check status codes at last
 export async function signup(req: Request, res: Response) {
     function capitalizeFirstLetter(str: string): string {
         if (!str) return '';
@@ -45,7 +47,7 @@ export async function signup(req: Request, res: Response) {
         const refereshToken = signRefreshToken({ id: user.id, role: "user" });
         await prisma.refreshToken.create({
             data: {
-                token: refereshToken,
+                token: await hashPassword(refereshToken),
                 userId: user.id,
                 expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
             }
@@ -57,6 +59,34 @@ export async function signup(req: Request, res: Response) {
 }
 
 export async function signin(req: Request, res: Response) {
+    try {
+        const { email, password } = req.body;
+        if (!req.body) {
+            return res.status(400).json("Please fill valid email to proceed")
+        }
+        const user = await prisma.user.findUnique({
+            where: { email }
+        })
+        if (!user) {
+            return res.status(401).json({ message: "User not found. Please signup" })
+        }
+        //check password
+        const isValid = await comparePassword(user.password);
+        if (!isValid) {
+            return res.status(401).json({ error: "Invalid credentials" });
+        }
+        const accessToken = signAccessToken({ id: user.id, role: "user" });
+        const refereshToken = signRefreshToken({ id: user.id, role: "user" })
+        await prisma.refreshToken.create({
+            data: {
+                token: await hashPassword(refereshToken),
+                userId: user.id,
+                expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+            }
+        });
+        return res.json({ accessToken, refereshToken, user })
 
-
+    } catch (error) {
+        return res.status(500).json(error);
+    }
 }

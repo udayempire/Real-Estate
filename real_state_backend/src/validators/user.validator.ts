@@ -13,7 +13,8 @@ export const signupSchema = z.object({
 });
 
 export const signinSchema =z.object({
-    email: z.email("invalid email")
+    email: z.email("invalid email"),
+    password: z.string()
 });
 
 export const forgotPasswordSchema = z.object({

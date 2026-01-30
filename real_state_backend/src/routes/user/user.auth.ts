@@ -1,11 +1,12 @@
 import express from "express";
-import { SigninInput, signupSchema } from "../../validators/user.validator";
+import { signinSchema, signupSchema } from "../../validators/user.validator";
 import { validate } from "../../middleware/validate";
-import { signup } from "../../controllers/user/auth.controller";
+import { signin, signup } from "../../controllers/user/auth.controller";
 
 const router = express.Router();
 
 // api/v1/user/auth/register
-router.post('/register',validate(signupSchema),(signup))
+router.post('/signup',validate(signupSchema),(signup))
+router.post('/signin',validate(signinSchema),(signin))
 
 export default router;
