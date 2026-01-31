@@ -4,7 +4,7 @@ import { signAccessToken, signRefreshToken } from "../../utils/jwt";
 import { Request, Response } from "express";
 import { generateReferralCode } from "../../utils/generateReferralCode";
 import { verifyRefreshToken } from "../../utils/jwt";
-import { createOtp, generateOtpCode, sendOtpEmail, verifyOtp as verifyOtpService } from "../../services/otp.service";
+import { createOtp, generateOtpCode, sendOtpEmail, verifyOtp, verifyOtp as verifyOtpService } from "../../services/otp.service";
 import { OtpType } from "@prisma/client";
 
 //check status codes at last
@@ -165,12 +165,39 @@ export async function sendOtp(req: Request, res: Response) {
         if (!user) {
             return res.status(401).json({ error: "No user found with this email" });
         }
-        const createEmailOtp  = await createOtp(user.id,"EMAIL");
+        const createEmailOtp = await createOtp(user.id, "EMAIL");
         await sendOtpEmail(email, createEmailOtp.code);
         return res.json({ message: "OTP sent successfully" },);
     } catch (error) {
         console.error(error);
         return res.status(500).json({ error: "Failed to send OTP" });
+    }
+}
+
+export async function verifyOtpEmail(req: Request, res: Response) {
+    try {
+        const { email, code } = req.body;
+        if (!email) {
+            return res.status(400).json({ message: "Please enter a valid email" });
+        }
+        if (!code) {
+            return res.status(400).json({ message: "Please enter otp" });
+        }
+        const user = await prisma.user.findUnique({
+            where: { email }
+        })
+        if (!user) {
+            return res.status(401).json({ error: "No user found with this email" });
+        }
+        const verifyEmailOtp = await verifyOtp(user.id, code, "EMAIL");
+        if (verifyEmailOtp.valid) {
+            return res.status(200).json({ message: verifyEmailOtp.message })
+        }else{
+            return res.status(400).json({messsage:"Invalid OTP. Please enter correct otp"})
+        }
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ error: "Failed to verify OTP" })
     }
 }
 
