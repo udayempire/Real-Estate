@@ -92,7 +92,7 @@ export async function signin(req: Request, res: Response) {
         return res.status(500).json(error);
     }
 }
-
+// uses referesh Token so that only that device is signed out not all(if used userId to take refreshToken of all)
 export async function signout(req: Request, res: Response) {
     try {
         const { refreshToken } = req.body;
