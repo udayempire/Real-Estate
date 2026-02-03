@@ -8,11 +8,19 @@ export const signupSchema = z.object({
         /^\+[1-9]\d{6,14}$/,
         'Invalid phone number. Use international format: +1234567890'
     ),
-    password: z.string().min(6,"password must be atleast 6 characters long"),
-    referrerId: z.string().optional()
+    password: z.string().min(6, "password must be atleast 6 characters long"),
+    referrerId: z.string().optional(),
+    // Aadhar Section
+    aadharNo: z.string().regex(/^\d{12}$/, "Aadhar must be 12 digits"),
+    kycAadharImageUrl: z.string().url("Invalid Aadhar image URL"),
+    kycAadharImageKey: z.string().min(1, "Aadhar image key is required"),
+    // PAN Section
+    panNo: z.string().regex(/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/, "Invalid PAN format"),
+    kycPanImageUrl: z.string().url("Invalid PAN image URL"),
+    kycPanImageKey: z.string().min(1, "PAN image key is required"),
 });
 
-export const signinSchema =z.object({
+export const signinSchema = z.object({
     email: z.email("invalid email"),
     password: z.string()
 });
@@ -23,7 +31,7 @@ export const forgotPasswordSchema = z.object({
 
 export const resetPasswordSchema = z.object({
     token: z.string().min(1),
-    password: z.string().min(6,"password must be atleast 6 characters long")
+    password: z.string().min(6, "password must be atleast 6 characters long")
 })
 
 // otp 
@@ -41,7 +49,7 @@ export const updateProfileSchema = z.object({
         /^\+[1-9]\d{6,14}$/,
         'Invalid phone number. Use international format: +1234567890'
     ),
-    password: z.string().min(6,"password must be atleast 6 characters long")
+    password: z.string().min(6, "password must be atleast 6 characters long")
 })
 
 export type SignupInput = z.infer<typeof signupSchema>;
