@@ -13,6 +13,15 @@ export const propertyTypeEnum = [
     "PLOT",
 ]
 
+export const MediaTypeEnum = ["IMAGE", "VIDEO"] as const;
+
+export const propertyMediaSchema = z.object({
+    url: z.url(),
+    key: z.string(),
+    mediaType: z.enum(MediaTypeEnum),
+    order: z.number().int().min(0).optional(),
+})
+
 export const addProperty = z.object({
     title: z.string(),
     description: z.string(),
@@ -26,7 +35,8 @@ export const addProperty = z.object({
     address: z.string(),
     longitude: z.number(),
     latitude: z.number(),
-    size: z.number()
-})
+    size: z.number(),
+    media: z.array(propertyMediaSchema).min(1,"At least one media file is required")
+});
 
-export type addPropertyInput = z.infer.<typeof addProperty>;
+export type addPropertyInput = z.infer<typeof addProperty>;
