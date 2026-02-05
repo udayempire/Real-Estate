@@ -11,7 +11,14 @@ export const propertyTypeEnum = [
     "DUPLEX",
     "FLAT",
     "PLOT",
-]
+] as const;
+
+export const sizeUnitEnum = [
+    "ACRES",
+    "UNITS",
+    "SQFT",
+    "SQMT"
+] as const;
 
 export const MediaTypeEnum = ["IMAGE", "VIDEO"] as const;
 
@@ -22,13 +29,13 @@ export const propertyMediaSchema = z.object({
     order: z.number().int().min(0).optional(),
 })
 
-export const addProperty = z.object({
+export const addPropertySchema = z.object({
     title: z.string(),
     description: z.string(),
     status:    z.enum(StatusEnum).default("ACTIVE"),
     propertyType: z.enum(propertyTypeEnum),
     priceMin: z.number(),
-    priceMax: z.number(),
+    priceMax: z.number().optional(),
     state: z.string(),
     city: z.string(),
     area: z.string(),
@@ -36,7 +43,8 @@ export const addProperty = z.object({
     longitude: z.number(),
     latitude: z.number(),
     size: z.number(),
+    sizeUnit: z.enum(sizeUnitEnum),
     media: z.array(propertyMediaSchema).min(1,"At least one media file is required")
 });
 
-export type addPropertyInput = z.infer<typeof addProperty>;
+export type addPropertyInput = z.infer<typeof addPropertySchema>;
