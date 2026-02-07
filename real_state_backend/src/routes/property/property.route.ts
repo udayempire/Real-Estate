@@ -13,6 +13,6 @@ router.get("/:id", authMiddleware, getProperty);
 router.put("/:id", authMiddleware, updateProperty);
 router.post("/:id/media", authMiddleware, addMedia); //adds media if porperty exists
 router.delete("/:id", authMiddleware, deleteProperty);
-router.delete("/media/:id",authMiddleware,deleteMedia)
+router.delete("/media/:id",authMiddleware,deleteMedia);
 
 export default router;

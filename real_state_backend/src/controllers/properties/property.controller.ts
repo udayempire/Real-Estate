@@ -226,34 +226,42 @@ export async function deleteMedia(req: Request<Params>, res: Response) {
             where: { id },
             include: {
                 property: {
-                    select: { userId: true },
+                    select: { id: true, userId: true },
                 },
             },
         });
 
         if (!media) {
-            return res.status(404).json({
-                message: "Media not found",
-            });
+            return res.status(404).json({ message: "Media not found" });
         }
+
         if (media.property.userId !== req.user?.id) {
             return res.status(403).json({
                 message: "You are not allowed to delete this media",
             });
         }
 
-        await prisma.propertyMedia.delete({
-            where: { id },
+        const propertyId = media.property.id;
+
+        await prisma.$transaction(async (tx) => {
+            await tx.propertyMedia.delete({
+                where: { id: id },
+            });
+            const remainingMedia = await tx.propertyMedia.findMany({
+                where: { propertyId },
+                orderBy: { order: "asc" },
+            });
+            for (const [index, item] of remainingMedia.entries()) {
+                await tx.propertyMedia.update({
+                    where: { id: item.id },
+                    data: { order: index },
+                });
+            }
         });
-        // await s3.send(
-        //     new DeleteObjectCommand({
-        //         Bucket: process.env.AWS_BUCKET_NAME!,
-        //         Key: media.key,
-        //     })
-        // );
+
         return res.status(200).json({
             success: true,
-            message: "Media deleted successfully",
+            message: "Media deleted and reordered successfully",
         });
     } catch (error) {
         console.error(error);
