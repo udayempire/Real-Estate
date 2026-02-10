@@ -42,14 +42,14 @@ export const sendOtpSchema = z.object({
 })
 
 export const updateProfileSchema = z.object({
-    firstName: z.string().min(2, "First name must be atleast 2 characters"),
-    lastName: z.string().min(2, "last name must be atleast 2 characters"),
-    email: z.email("Invalid email"),
+    firstName: z.string().min(2, "First name must be atleast 2 characters").optional(),
+    lastName: z.string().min(2, "last name must be atleast 2 characters").optional(),
+    email: z.email("Invalid email").optional(),
     phone: z.string().regex(
         /^\+[1-9]\d{6,14}$/,
         'Invalid phone number. Use international format: +1234567890'
-    ),
-    password: z.string().min(6, "password must be atleast 6 characters long")
+    ).optional(),
+    password: z.string().min(6, "password must be atleast 6 characters long").optional()
 })
 
 export type SignupInput = z.infer<typeof signupSchema>;
