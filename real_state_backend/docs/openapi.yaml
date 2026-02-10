@@ -1,0 +1,895 @@
+openapi: 3.0.3
+info:
+  title: Real State Backend API
+  description: |
+    API documentation for the Real State Backend.
+
+    ## Authentication
+    Most endpoints require a **Bearer token** in the `Authorization` header.
+    - Call `/api/v1/user/auth/signup` or `/api/v1/user/auth/signin` to get an `accessToken`.
+    - Pass it as: `Authorization: Bearer <accessToken>`
+    - When the access token expires, call `/api/v1/user/auth/refresh-token` with your `refreshToken` to get a new one.
+
+    ## Auth Flow (for app developers)
+    1. **Sign Up** — `POST /api/v1/user/auth/signup`
+    2. **Send OTP** — `POST /api/v1/user/auth/send-otp` (sends OTP to email)
+    3. **Verify OTP** — `POST /api/v1/user/auth/verify-otp` (marks email as verified)
+    4. **Sign In** — `POST /api/v1/user/auth/signin` (returns access + refresh tokens)
+    5. Use `accessToken` for all protected endpoints.
+
+    ## Password Reset Flow
+    1. **Forgot Password** — `POST /api/v1/user/auth/forgot-password`
+    2. **Reset Password** — `POST /api/v1/user/auth/reset-password`
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:4000
+    description: Local development
+
+tags:
+  - name: Health
+    description: Server health check
+  - name: User Auth
+    description: Authentication endpoints (signup, signin, OTP, password reset)
+  - name: User Profile
+    description: User profile endpoints
+  - name: Properties
+    description: Property CRUD and media management
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: "Pass the accessToken received from signin/signup"
+
+  schemas:
+    # ─── Auth Schemas ───────────────────────────────────────
+    SignUpRequest:
+      type: object
+      required:
+        - firstName
+        - lastName
+        - email
+        - phone
+        - password
+        - aadharNo
+        - kycAadharImageUrl
+        - kycAadharImageKey
+        - panNo
+        - kycPanImageUrl
+        - kycPanImageKey
+      properties:
+        firstName:
+          type: string
+          minLength: 2
+          example: "John"
+        lastName:
+          type: string
+          minLength: 2
+          example: "Doe"
+        email:
+          type: string
+          format: email
+          example: "john@example.com"
+        phone:
+          type: string
+          description: "International format e.g. +911234567890"
+          example: "+911234567890"
+        password:
+          type: string
+          minLength: 6
+          example: "mypassword123"
+        referrerId:
+          type: string
+          nullable: true
+          description: "Optional referral code of an existing user"
+          example: "JOHN-AB12"
+        aadharNo:
+          type: string
+          description: "12-digit Aadhar number"
+          example: "123456789012"
+        kycAadharImageUrl:
+          type: string
+          format: uri
+          example: "https://s3.example.com/aadhar.jpg"
+        kycAadharImageKey:
+          type: string
+          example: "uploads/aadhar-123.jpg"
+        panNo:
+          type: string
+          description: "PAN format e.g. ABCDE1234F"
+          example: "ABCDE1234F"
+        kycPanImageUrl:
+          type: string
+          format: uri
+          example: "https://s3.example.com/pan.jpg"
+        kycPanImageKey:
+          type: string
+          example: "uploads/pan-123.jpg"
+
+    SignInRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+          example: "john@example.com"
+        password:
+          type: string
+          example: "mypassword123"
+
+    AuthResponse:
+      type: object
+      properties:
+        accessToken:
+          type: string
+          description: "JWT access token (short-lived)"
+        refreshToken:
+          type: string
+          description: "JWT refresh token (long-lived, 7 days)"
+        user:
+          type: object
+          description: "User object"
+
+    RefreshTokenRequest:
+      type: object
+      required: [refreshToken]
+      properties:
+        refreshToken:
+          type: string
+
+    RefreshTokenResponse:
+      type: object
+      properties:
+        accessToken:
+          type: string
+
+    SignOutRequest:
+      type: object
+      required: [refreshToken]
+      properties:
+        refreshToken:
+          type: string
+
+    SendOtpRequest:
+      type: object
+      required: [email]
+      properties:
+        email:
+          type: string
+          format: email
+          example: "john@example.com"
+
+    VerifyOtpRequest:
+      type: object
+      required: [email, code]
+      properties:
+        email:
+          type: string
+          format: email
+          example: "john@example.com"
+        code:
+          type: string
+          description: "OTP code received via email"
+          example: "483921"
+
+    ForgotPasswordRequest:
+      type: object
+      required: [email]
+      properties:
+        email:
+          type: string
+          format: email
+          example: "john@example.com"
+
+    ResetPasswordRequest:
+      type: object
+      required: [email, code, newPassword]
+      properties:
+        email:
+          type: string
+          format: email
+          example: "john@example.com"
+        code:
+          type: string
+          description: "OTP code from forgot-password"
+          example: "483921"
+        newPassword:
+          type: string
+          minLength: 8
+          example: "newSecurePass123"
+
+    # ─── Profile Schemas ────────────────────────────────────
+    ProfileResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
+          properties:
+            id:
+              type: string
+            firstName:
+              type: string
+            lastName:
+              type: string
+            email:
+              type: string
+            phone:
+              type: string
+            avatar:
+              type: string
+              nullable: true
+            referralCode:
+              type: string
+            referrerId:
+              type: string
+              nullable: true
+            points:
+              type: integer
+            isEmailVerified:
+              type: boolean
+            createdAt:
+              type: string
+              format: date-time
+
+    # ─── Property Schemas ───────────────────────────────────
+    PropertyMedia:
+      type: object
+      required: [url, key, mediaType]
+      properties:
+        url:
+          type: string
+          format: uri
+          example: "https://s3.example.com/property-img.jpg"
+        key:
+          type: string
+          example: "uploads/prop-img-1.jpg"
+        mediaType:
+          type: string
+          enum: [IMAGE, VIDEO]
+        order:
+          type: integer
+          minimum: 0
+          description: "Display order (auto-assigned if omitted)"
+
+    AddPropertyRequest:
+      type: object
+      required:
+        - title
+        - description
+        - propertyType
+        - priceMin
+        - state
+        - city
+        - area
+        - address
+        - longitude
+        - latitude
+        - size
+        - sizeUnit
+        - media
+      properties:
+        title:
+          type: string
+          example: "3BHK Flat in Hyderabad"
+        description:
+          type: string
+          example: "Spacious flat with garden view"
+        status:
+          type: string
+          enum: [ACTIVE, INACTIVE, SOLD, DRAFT]
+          default: ACTIVE
+        propertyType:
+          type: string
+          enum: [FARMLAND, DUPLEX, FLAT, PLOT]
+        priceMin:
+          type: number
+          example: 5000000
+        priceMax:
+          type: number
+          nullable: true
+          example: 7000000
+        state:
+          type: string
+          example: "Telangana"
+        city:
+          type: string
+          example: "Hyderabad"
+        area:
+          type: string
+          example: "Gachibowli"
+        address:
+          type: string
+          example: "Plot 42, Gachibowli, Hyderabad"
+        longitude:
+          type: number
+          example: 78.3631
+        latitude:
+          type: number
+          example: 17.4401
+        size:
+          type: number
+          example: 1200
+        sizeUnit:
+          type: string
+          enum: [ACRES, UNITS, SQFT, SQMT]
+        media:
+          type: array
+          minItems: 1
+          items:
+            $ref: "#/components/schemas/PropertyMedia"
+
+    UpdatePropertyRequest:
+      type: object
+      required:
+        - title
+        - description
+        - propertyType
+        - priceMin
+        - state
+        - city
+        - area
+        - address
+        - longitude
+        - latitude
+        - size
+        - sizeUnit
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+          enum: [ACTIVE, INACTIVE, SOLD, DRAFT]
+          default: ACTIVE
+        propertyType:
+          type: string
+          enum: [FARMLAND, DUPLEX, FLAT, PLOT]
+        priceMin:
+          type: number
+        priceMax:
+          type: number
+          nullable: true
+        state:
+          type: string
+        city:
+          type: string
+        area:
+          type: string
+        address:
+          type: string
+        longitude:
+          type: number
+        latitude:
+          type: number
+        size:
+          type: number
+        sizeUnit:
+          type: string
+          enum: [ACRES, UNITS, SQFT, SQMT]
+
+    AddMediaRequest:
+      type: object
+      required: [media]
+      properties:
+        media:
+          type: array
+          minItems: 1
+          items:
+            type: object
+            required: [url, key, mediaType]
+            properties:
+              url:
+                type: string
+                format: uri
+              key:
+                type: string
+              mediaType:
+                type: string
+                enum: [IMAGE, VIDEO]
+
+    ChangeStatusRequest:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [ACTIVE, INACTIVE, SOLD, DRAFT]
+
+    PaginationResponse:
+      type: object
+      properties:
+        total:
+          type: integer
+        page:
+          type: integer
+        limit:
+          type: integer
+        totalPages:
+          type: integer
+
+    MessageResponse:
+      type: object
+      properties:
+        message:
+          type: string
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+
+# ═══════════════════════════════════════════════════════════
+# PATHS
+# ═══════════════════════════════════════════════════════════
+paths:
+  # ─── Health ─────────────────────────────────────────────
+  /health:
+    get:
+      tags: [Health]
+      summary: Health check
+      description: Returns server status, timestamp and uptime.
+      responses:
+        "200":
+          description: Server is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "healthy"
+                  timestamp:
+                    type: string
+                    format: date-time
+                  uptime:
+                    type: number
+
+  # ─── User Auth ──────────────────────────────────────────
+  /api/v1/user/auth/signup:
+    post:
+      tags: [User Auth]
+      summary: Sign up a new user
+      description: |
+        Creates a new user account with KYC documents.
+        Returns access + refresh tokens on success.
+        Optionally accepts a `referrerId` (referral code of existing user).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SignUpRequest"
+      responses:
+        "200":
+          description: User created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "400":
+          description: Invalid referrer ID
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Server error
+
+  /api/v1/user/auth/signin:
+    post:
+      tags: [User Auth]
+      summary: Sign in
+      description: |
+        Authenticate with email + password.
+        Returns access + refresh tokens.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SignInRequest"
+      responses:
+        "200":
+          description: Signed in successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "401":
+          description: User not found or invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/v1/user/auth/signout:
+    post:
+      tags: [User Auth]
+      summary: Sign out (current device)
+      description: Revokes the provided refresh token (signs out only the current device).
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SignOutRequest"
+      responses:
+        "200":
+          description: Logged out successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+        "401":
+          description: Missing refresh token or unauthorized
+
+  /api/v1/user/auth/signout-all:
+    post:
+      tags: [User Auth]
+      summary: Sign out all devices
+      description: Revokes all refresh tokens for the authenticated user.
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: All sessions logged out
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+        "401":
+          description: Unauthorized
+
+  /api/v1/user/auth/refresh-token:
+    post:
+      tags: [User Auth]
+      summary: Refresh access token
+      description: |
+        Provide a valid (non-expired, non-revoked) refresh token to get a new access token.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RefreshTokenRequest"
+      responses:
+        "200":
+          description: New access token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RefreshTokenResponse"
+        "400":
+          description: Refresh token required
+        "401":
+          description: Invalid, revoked, or expired token
+
+  /api/v1/user/auth/send-otp:
+    post:
+      tags: [User Auth]
+      summary: Send OTP to email
+      description: |
+        Sends a one-time password to the user's registered email.
+        User must exist. Used for email verification after signup.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SendOtpRequest"
+      responses:
+        "200":
+          description: OTP sent successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+        "401":
+          description: No user found with this email
+
+  /api/v1/user/auth/verify-otp:
+    post:
+      tags: [User Auth]
+      summary: Verify email OTP
+      description: |
+        Verifies the OTP code sent to email.
+        On success, marks the user's email as verified (`isEmailVerified = true`).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VerifyOtpRequest"
+      responses:
+        "200":
+          description: Email verified successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+        "400":
+          description: Invalid OTP
+        "401":
+          description: User not found
+
+  /api/v1/user/auth/forgot-password:
+    post:
+      tags: [User Auth]
+      summary: Forgot password (send reset OTP)
+      description: Sends a RESET_PASSWORD OTP to the user's email.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ForgotPasswordRequest"
+      responses:
+        "200":
+          description: OTP sent (or user doesn't exist — same 200 for security)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+
+  /api/v1/user/auth/reset-password:
+    post:
+      tags: [User Auth]
+      summary: Reset password
+      description: |
+        Resets the user's password using the OTP from forgot-password.
+        New password must be at least 8 characters.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ResetPasswordRequest"
+      responses:
+        "200":
+          description: Password reset successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+        "400":
+          description: Missing fields, invalid OTP, or user not found
+
+  # ─── User Profile ───────────────────────────────────────
+  /api/v1/user/profile:
+    get:
+      tags: [User Profile]
+      summary: Get current user profile
+      description: Returns the authenticated user's profile details.
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Profile data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProfileResponse"
+        "401":
+          description: Unauthorized
+        "404":
+          description: User not found
+
+  # ─── Properties ─────────────────────────────────────────
+  /api/v1/property:
+    post:
+      tags: [Properties]
+      summary: Create a property
+      description: |
+        Creates a new property listing with media files.
+        At least one media item is required.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AddPropertyRequest"
+      responses:
+        "201":
+          description: Property created
+        "401":
+          description: Unauthorized
+        "500":
+          description: Server error
+
+    get:
+      tags: [Properties]
+      summary: List all active properties (paginated)
+      description: Returns paginated list of properties with status ACTIVE.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+          description: Page number
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 10
+          description: Items per page
+      responses:
+        "200":
+          description: List of properties
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                  pagination:
+                    $ref: "#/components/schemas/PaginationResponse"
+
+  /api/v1/property/my-properties:
+    get:
+      tags: [Properties]
+      summary: List my properties
+      description: Returns all properties owned by the authenticated user.
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: User's properties
+        "401":
+          description: Unauthorized
+
+  /api/v1/property/{id}:
+    get:
+      tags: [Properties]
+      summary: Get property by ID
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Property details
+        "404":
+          description: Property not found
+
+    put:
+      tags: [Properties]
+      summary: Update property
+      description: Updates a property owned by the authenticated user.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdatePropertyRequest"
+      responses:
+        "200":
+          description: Property updated
+        "404":
+          description: Property not found or not owned by user
+
+    delete:
+      tags: [Properties]
+      summary: Delete property
+      description: Deletes a property owned by the authenticated user.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Property deleted
+        "404":
+          description: Property not found or not owned by user
+
+  /api/v1/property/{id}/media:
+    post:
+      tags: [Properties]
+      summary: Add media to a property
+      description: |
+        Adds new media files to an existing property.
+        Order is auto-assigned after the last existing media item.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: Property ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AddMediaRequest"
+      responses:
+        "201":
+          description: Media added
+        "404":
+          description: Property not found or not owned by user
+
+  /api/v1/property/media/{id}:
+    delete:
+      tags: [Properties]
+      summary: Delete a media item
+      description: |
+        Deletes a media item by its ID.
+        Remaining media is automatically reordered.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: Media ID
+      responses:
+        "200":
+          description: Media deleted and reordered
+        "403":
+          description: Not allowed (not property owner)
+        "404":
+          description: Media not found
+
+  /api/v1/property/change-status/{id}:
+    put:
+      tags: [Properties]
+      summary: Change property status
+      description: Updates the status of a property (ACTIVE, INACTIVE, SOLD, DRAFT).
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: Property ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChangeStatusRequest"
+      responses:
+        "200":
+          description: Status updated
+        "404":
+          description: Property not found for this user
