@@ -96,7 +96,7 @@ export async function getMyProperties(req: Request, res: Response) {
     try {
         const userId = req.user?.id;
         if (!userId) {
-            res.status(401).json({ message: "Unauthorized" })
+            return res.status(401).json({ message: "Unauthorized" })
         };
         const properties = await prisma.property.findMany({
             where: { userId: userId },
@@ -150,7 +150,7 @@ export async function updateProperty(req: Request<Params>, res: Response) {
             },
             data: propertyData,
         });
-        return res.status(404).json({
+        return res.status(200).json({
             success: true,
             data: property
         })

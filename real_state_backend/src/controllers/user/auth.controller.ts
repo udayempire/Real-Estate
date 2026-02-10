@@ -100,15 +100,15 @@ export async function signin(req: Request, res: Response) {
             return res.status(401).json({ error: "Invalid credentials" });
         }
         const accessToken = signAccessToken({ id: user.id, role: "user" });
-        const refereshToken = signRefreshToken({ id: user.id, role: "user" })
+        const refreshToken = signRefreshToken({ id: user.id, role: "user" })
         await prisma.refreshToken.create({
             data: {
-                token: refereshToken,
+                token: refreshToken,
                 userId: user.id,
                 expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
             }
         });
-        return res.json({ accessToken, refereshToken, user })
+        return res.json({ accessToken, refreshToken, user })
 
     } catch (error) {
         return res.status(500).json(error);
