@@ -8,6 +8,7 @@ import swaggerUi from "swagger-ui-express";
 import { parse } from "yaml";
 import userRoutes from "./routes/user/index";
 import propertyRoutes from "./routes/property/property.route"
+import uploadRoutes from "./routes/upload/upload.route"
 dotenv.config();
 
 const app = express();
@@ -31,6 +32,7 @@ app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument, {
 // app.use(`${process.env.API_VERSION}/broker`);
 app.use(`${process.env.API_VERSION}/user`,userRoutes);
 app.use(`${process.env.API_VERSION}/property`,propertyRoutes);
+app.use(`${process.env.API_VERSION}/upload`,uploadRoutes);
 
 app.get("/health",(req,res)=>{
     res.status(200).json({

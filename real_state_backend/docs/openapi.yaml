@@ -35,6 +35,8 @@ tags:
     description: User profile endpoints
   - name: Properties
     description: Property CRUD and media management
+  - name: Upload
+    description: Pre-signed S3 upload URL generation
 
 components:
   securitySchemes:
@@ -449,6 +451,48 @@ components:
         error:
           type: string
 
+    PresignUploadRequest:
+      type: object
+      required: [fileName, contentType, purpose]
+      properties:
+        fileName:
+          type: string
+          example: "aadhar-front.jpg"
+        contentType:
+          type: string
+          example: "image/jpeg"
+        purpose:
+          type: string
+          enum: [KYC_AADHAR, KYC_PAN, PROPERTY_IMAGE, PROPERTY_VIDEO, USER_AVATAR]
+          example: "KYC_AADHAR"
+
+    PresignUploadData:
+      type: object
+      properties:
+        uploadUrl:
+          type: string
+          format: uri
+          example: "https://bucket.s3.amazonaws.com/..."
+        key:
+          type: string
+          example: "kyc/aadhar/guest/1700000000000-uuid.jpg"
+        fileUrl:
+          type: string
+          format: uri
+          example: "https://cdn.example.com/kyc/aadhar/guest/1700000000000-uuid.jpg"
+        expiresIn:
+          type: integer
+          example: 300
+
+    PresignUploadResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          $ref: "#/components/schemas/PresignUploadData"
+
 # ═══════════════════════════════════════════════════════════
 # PATHS
 # ═══════════════════════════════════════════════════════════
@@ -733,6 +777,33 @@ paths:
           description: Unauthorized
         "409":
           description: Email or phone already in use
+
+  # ─── Upload ─────────────────────────────────────────────
+  /api/v1/upload/presign:
+    post:
+      tags: [Upload]
+      summary: Generate pre-signed S3 upload URL
+      description: |
+        Returns a temporary S3 upload URL for direct client uploads.
+        Upload the file bytes using HTTP PUT to `uploadUrl` with the same `contentType`.
+        Then use returned `key` + `fileUrl` in signup/property payloads.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PresignUploadRequest"
+      responses:
+        "200":
+          description: Pre-signed URL generated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PresignUploadResponse"
+        "400":
+          description: Validation failed or unsupported content type
+        "500":
+          description: Server error
 
   # ─── Properties ─────────────────────────────────────────
   /api/v1/property:
