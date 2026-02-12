@@ -1,7 +1,11 @@
 import { AuthBanner } from "@/components/auth/authLeftBanner";
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
-    return <div className="grid grid-cols-2 h-screen overflow-hidden">
-        <AuthBanner />
-        {children}
-    </div>;
+    return (
+        <div className="grid h-svh overflow-hidden md:grid-cols-2">
+            <div className="hidden md:block">
+                <AuthBanner />
+            </div>
+            {children}
+        </div>
+    );
 }

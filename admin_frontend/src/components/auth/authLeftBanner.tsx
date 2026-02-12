@@ -2,7 +2,7 @@ import Image from "next/image";
 
 export const AuthBanner = () => {
     return (
-        <div className="bg-blue-500 h-screen flex flex-col">
+        <div className="bg-blue-500 h-full min-h-0 flex flex-col">
 
             {/* Top Text */}
             <div className="mt-14 p-4">

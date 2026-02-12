@@ -37,7 +37,7 @@ export const SigninCard = () => {
                 </div>
 
                 <div className="text-center text-[15px] font-bold mt-4 text-blue-600">
-                    <Link href="/forgot-password">
+                    <Link href="/reset-password">
                         Reset your password
                     </Link>
                 </div>
