@@ -3,7 +3,7 @@ import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { LockKeyholeOpen, Mail } from "lucide-react";
 
-export const LoginCard = () => {
+export const SigninCard = () => {
     return (
         <div className="flex items-center justify-center">
             <div className="w-full max-w-md">

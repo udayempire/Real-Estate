@@ -1,4 +1,7 @@
-import { LoginCard } from "./loginCard";
+import { SigninCard } from "./signinCard";
+import { VerificationCard } from "./verificationCard";
+import { CreatePasswordCard } from "./createPasswordCard";
+import { AuthForgotPassword } from "./authForgotPassword";
 import Image from "next/image";
 export const AdminLoginPanel = () => {
     return (
@@ -7,7 +10,10 @@ export const AdminLoginPanel = () => {
                 <Image src={"/realBroLogo.svg"} alt="real bro logo" width={140} height={100} />
             </div>
             <div className="">
-                <LoginCard />
+                {/* <SigninCard /> */}
+                {/* <AuthForgotPassword /> */}
+                {/* <VerificationCard /> */}
+                <CreatePasswordCard />
             </div>
             <div className="flex justify-end">
                 <Image src={"/authPageBuildingIcon.svg"} alt="auth page building icon" width={200} height={500} />
