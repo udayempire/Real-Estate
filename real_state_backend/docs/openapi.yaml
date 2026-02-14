@@ -56,6 +56,7 @@ components:
         - email
         - phone
         - password
+        - age
         - aadharNo
         - kycAadharImageUrl
         - kycAadharImageKey
@@ -83,6 +84,12 @@ components:
           type: string
           minLength: 6
           example: "mypassword123"
+        age:
+          type: integer
+          minimum: 18
+          maximum: 120
+          example: 25
+          description: "User's age (must be at least 18)"
         referrerId:
           type: string
           nullable: true
@@ -240,6 +247,21 @@ components:
             avatar:
               type: string
               nullable: true
+            avatarKey:
+              type: string
+              nullable: true
+              description: "S3 key for the avatar image"
+            age:
+              type: integer
+              nullable: true
+              minimum: 18
+              maximum: 120
+              example: 25
+            gender:
+              type: string
+              nullable: true
+              enum: [MALE, FEMALE, OTHER]
+              example: "MALE"
             referralCode:
               type: string
             referrerId:
@@ -285,12 +307,32 @@ components:
         lastName:
           type: string
           minLength: 2
+        avatar:
+          type: string
+          format: uri
+          description: "Avatar image URL (get from upload API with purpose=USER_AVATAR)"
+          example: "https://s3.example.com/user/avatar/123.jpg"
+        avatarKey:
+          type: string
+          description: "S3 key for the avatar image (for deletion purposes)"
+          example: "user/avatar/user123/1234567890-uuid.jpg"
         email:
           type: string
           format: email
         phone:
           type: string
           description: International format e.g. +911234567890
+        age:
+          type: integer
+          minimum: 18
+          maximum: 120
+          example: 25
+          description: "User's age (must be at least 18)"
+        gender:
+          type: string
+          enum: [MALE, FEMALE, OTHER]
+          example: "MALE"
+          description: "User's gender"
         password:
           type: string
           minLength: 6

@@ -21,6 +21,9 @@ model User {
   phone        String  // Removed @unique to allow duplicate phone numbers
   password     String
   avatar       String?
+  avatarKey    String?
+  age          Int?
+  gender       Gender?
   isBlocked    Boolean @default(false)
   referralCode String  @unique
   referrerId   String?
@@ -238,6 +241,12 @@ enum OtpType {
   EMAIL
   PHONE
   RESET_PASSWORD
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
 }
 
 model Otp {

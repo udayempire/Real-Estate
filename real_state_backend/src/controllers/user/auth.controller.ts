@@ -15,7 +15,7 @@ export async function signup(req: Request, res: Response) {
     }
     try {
         const {
-            firstName, lastName, email, phone, password, referrerId,
+            firstName, lastName, email, phone, password, age, referrerId,
             aadharNo, kycAadharImageUrl, kycAadharImageKey,
             panNo, kycPanImageUrl, kycPanImageKey
         } = req.body;
@@ -44,6 +44,7 @@ export async function signup(req: Request, res: Response) {
                 email,
                 phone,
                 password: await hashPassword(password),
+                age,
                 referralCode: userReferralCode,
                 referrerId: referrer?.id,
                 kyc: {

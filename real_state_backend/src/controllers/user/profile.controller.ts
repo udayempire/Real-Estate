@@ -18,6 +18,9 @@ export async function getProfile(req: Request, res: Response) {
                 email: true,
                 phone: true,
                 avatar: true,
+                avatarKey: true,
+                age: true,
+                gender: true,
                 referralCode: true,
                 referrerId: true,
                 points: true,
@@ -64,18 +67,26 @@ export async function updateProfile(req: Request, res: Response) {
         if (!userId) {
             return res.status(401).json({ message: "Unauthorized" });
         };
-        const { firstName, lastName, email, password, phone } = req.body as Partial<{
+        const { firstName, lastName, email, password, phone, avatar, avatarKey, age, gender } = req.body as Partial<{
             firstName: string;
             lastName: string;
             email: string;
             phone: string;
             password: string;
+            avatar: string;
+            avatarKey: string;
+            age: number;
+            gender: string;
         }>;
 
         const data: Record<string, unknown> = {};
         if (firstName !== undefined) data.firstName = firstName;
         if (lastName !== undefined) data.lastName = lastName;
         if (phone !== undefined) data.phone = phone;
+        if (avatar !== undefined) data.avatar = avatar;
+        if (avatarKey !== undefined) data.avatarKey = avatarKey;
+        if (age !== undefined) data.age = age;
+        if (gender !== undefined) data.gender = gender;
         if (email !== undefined) {
             data.email = email;
             // If email changes, require re-verification.
@@ -99,6 +110,9 @@ export async function updateProfile(req: Request, res: Response) {
                 email: true,
                 phone: true,
                 avatar: true,
+                avatarKey: true,
+                age: true,
+                gender: true,
                 referralCode: true,
                 referrerId: true,
                 points: true,

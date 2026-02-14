@@ -9,6 +9,7 @@ export const signupSchema = z.object({
         'Invalid phone number. Use international format: +1234567890'
     ),
     password: z.string().min(6, "password must be atleast 6 characters long"),
+    age: z.number().int().min(18, "Age must be at least 18").max(120, "Invalid age"),
     referrerId: z.string().optional(),
     // Aadhar Section
     aadharNo: z.string().regex(/^\d{12}$/, "Aadhar must be 12 digits"),
@@ -54,7 +55,11 @@ export const updateProfileSchema = z.object({
         /^\+[1-9]\d{6,14}$/,
         'Invalid phone number. Use international format: +1234567890'
     ).optional(),
-    password: z.string().min(6, "password must be atleast 6 characters long").optional()
+    password: z.string().min(6, "password must be atleast 6 characters long").optional(),
+    avatar: z.string().url("Invalid avatar URL").optional(),
+    avatarKey: z.string().optional(),
+    age: z.number().int().min(18, "Age must be at least 18").max(120, "Invalid age").optional(),
+    gender: z.enum(["MALE", "FEMALE", "OTHER"]).optional()
 })
 
 export type SignupInput = z.infer<typeof signupSchema>;
