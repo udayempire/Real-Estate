@@ -10,6 +10,7 @@ export const signupSchema = z.object({
     ),
     password: z.string().min(6, "password must be atleast 6 characters long"),
     age: z.number().int().min(18, "Age must be at least 18").max(120, "Invalid age"),
+    gender: z.enum(["MALE", "FEMALE", "OTHER"]),
     referrerId: z.string().optional(),
     // Aadhar Section
     aadharNo: z.string().regex(/^\d{12}$/, "Aadhar must be 12 digits"),

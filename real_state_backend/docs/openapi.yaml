@@ -57,6 +57,7 @@ components:
         - phone
         - password
         - age
+        - gender
         - aadharNo
         - kycAadharImageUrl
         - kycAadharImageKey
@@ -90,6 +91,11 @@ components:
           maximum: 120
           example: 25
           description: "User's age (must be at least 18)"
+        gender:
+          type: string
+          enum: [MALE, FEMALE, OTHER]
+          example: "MALE"
+          description: "User's gender"
         referrerId:
           type: string
           nullable: true
