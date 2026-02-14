@@ -23,14 +23,34 @@ export async function getProfile(req: Request, res: Response) {
                 points: true,
                 isEmailVerified: true,
                 createdAt: true,
+                kyc: {
+                    select: {
+                        type: true,
+                        docNo: true,
+                        status: true,
+                    }
+                }
             }
         })
         if (!user) {
             return res.status(404).json({ message: "User does not exist" });
         }
+        
+        // Extract Aadhar and PAN numbers from KYC array
+        const aadharKyc = user.kyc.find(k => k.type === 'AADHARCARD');
+        const panKyc = user.kyc.find(k => k.type === 'PANCARD');
+        
+        const { kyc, ...userData } = user;
+        
         return res.status(200).json({
             success: true,
-            data: user
+            data: {
+                ...userData,
+                aadharCardNumber: aadharKyc?.docNo || null,
+                aadharCardStatus: aadharKyc?.status || null,
+                panCardNumber: panKyc?.docNo || null,
+                panCardStatus: panKyc?.status || null,
+            }
         });
     } catch (error) {
         console.error("Get Profile Error:", error);

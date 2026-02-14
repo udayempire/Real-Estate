@@ -204,6 +204,20 @@ components:
           minLength: 8
           example: "newSecurePass123"
 
+    ChangePasswordRequest:
+      type: object
+      required: [oldPassword, newPassword]
+      properties:
+        oldPassword:
+          type: string
+          description: "Current password"
+          example: "currentPass123"
+        newPassword:
+          type: string
+          minLength: 6
+          description: "New password (at least 6 characters)"
+          example: "newSecurePass123"
+
     # ─── Profile Schemas ────────────────────────────────────
     ProfileResponse:
       type: object
@@ -235,6 +249,26 @@ components:
               type: integer
             isEmailVerified:
               type: boolean
+            aadharCardNumber:
+              type: string
+              nullable: true
+              description: "12-digit Aadhar number"
+              example: "123456789012"
+            aadharCardStatus:
+              type: string
+              nullable: true
+              enum: [PENDING, VERIFIED, REJECTED]
+              description: "KYC verification status for Aadhar"
+            panCardNumber:
+              type: string
+              nullable: true
+              description: "PAN card number"
+              example: "ABCDE1234F"
+            panCardStatus:
+              type: string
+              nullable: true
+              enum: [PENDING, VERIFIED, REJECTED]
+              description: "KYC verification status for PAN"
             createdAt:
               type: string
               format: date-time
@@ -731,6 +765,36 @@ paths:
                 $ref: "#/components/schemas/MessageResponse"
         "400":
           description: Missing fields, invalid OTP, or user not found
+
+  /api/v1/user/auth/change-password:
+    post:
+      tags: [User Auth]
+      summary: Change password
+      description: |
+        Allows authenticated users to change their password.
+        Requires the current password and a new password (minimum 6 characters).
+        The new password must be different from the current password.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChangePasswordRequest"
+      responses:
+        "200":
+          description: Password changed successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+        "400":
+          description: Invalid current password or new password is same as old password
+        "401":
+          description: Unauthorized - Invalid or missing token
+        "404":
+          description: User not found
 
   # ─── User Profile ───────────────────────────────────────
   /api/v1/user/profile:

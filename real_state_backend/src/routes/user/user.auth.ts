@@ -1,7 +1,7 @@
 import express from "express";
-import { signinSchema, signupSchema } from "../../validators/user.validator";
+import { signinSchema, signupSchema, changePasswordSchema } from "../../validators/user.validator";
 import { validate } from "../../middleware/validate";
-import { refreshAccessToken, signin, signout, signoutAll, signup, sendOtp, verifyOtpEmail, forgotPassword, resetPassword } from "../../controllers/user/auth.controller";
+import { refreshAccessToken, signin, signout, signoutAll, signup, sendOtp, verifyOtpEmail, forgotPassword, resetPassword, changePassword } from "../../controllers/user/auth.controller";
 import { authMiddleware } from "../../middleware/auth";
 
 const router = express.Router();
@@ -16,4 +16,5 @@ router.post('/send-otp', sendOtp);
 router.post('/verify-otp', verifyOtpEmail);
 router.post("/forgot-password", forgotPassword);
 router.post("/reset-password", resetPassword);
+router.post("/change-password", authMiddleware, validate(changePasswordSchema), changePassword);
 export default router;

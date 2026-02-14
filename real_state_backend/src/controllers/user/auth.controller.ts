@@ -303,3 +303,46 @@ export async function resetPassword(req: Request, res: Response) {
     }
 }
 
+export async function changePassword(req: Request, res: Response) {
+    try {
+        const userId = req.user?.id;
+        if (!userId) {
+            return res.status(401).json({ error: "Unauthorized" });
+        }
+        
+        const { oldPassword, newPassword } = req.body;
+        
+        // Get user from database
+        const user = await prisma.user.findUnique({
+            where: { id: userId }
+        });
+        
+        if (!user) {
+            return res.status(404).json({ error: "User not found" });
+        }
+        
+        // Verify old password
+        const isValidPassword = await comparePassword(oldPassword, user.password);
+        if (!isValidPassword) {
+            return res.status(400).json({ error: "Current password is incorrect" });
+        }
+        
+        // Check if new password is same as old password
+        if (oldPassword === newPassword) {
+            return res.status(400).json({ error: "New password must be different from current password" });
+        }
+        
+        // Hash and update new password
+        const hashedPassword = await hashPassword(newPassword);
+        await prisma.user.update({
+            where: { id: userId },
+            data: { password: hashedPassword }
+        });
+        
+        return res.status(200).json({ message: "Password changed successfully" });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ error: "Failed to change password" });
+    }
+}
+
