@@ -39,6 +39,40 @@ export async function getProfile(req: Request, res: Response) {
             return res.status(404).json({ message: "User does not exist" });
         }
         
+        // Get property statistics
+        const [
+            totalProperties,
+            soldToRealbro,
+            soldFromListings,
+            soldOffline,
+            activePropertyCount
+        ] = await Promise.all([
+            prisma.property.count({
+                where: { userId }
+            }),
+            prisma.property.count({
+                where: { userId, status: "SOLDTOREALBRO" }
+            }),
+            prisma.property.count({
+                where: { userId, status: "SOLDFROMLISTINGS" }
+            }),
+            prisma.property.count({
+                where: { userId, status: "SOLDOFFLINE" }
+            }),
+            prisma.property.count({
+                where: { userId, status: "ACTIVE" }
+            })
+        ]);
+
+        const totalListed = await prisma.property.count({
+            where: {
+                userId,
+                status: {
+                    in: ["ACTIVE", "UNLISTED", "SOLDOFFLINE", "DRAFT"]
+                }
+            }
+        });
+        
         // Extract Aadhar and PAN numbers from KYC array
         const aadharKyc = user.kyc.find(k => k.type === 'AADHARCARD');
         const panKyc = user.kyc.find(k => k.type === 'PANCARD');
@@ -53,6 +87,14 @@ export async function getProfile(req: Request, res: Response) {
                 aadharCardStatus: aadharKyc?.status || null,
                 panCardNumber: panKyc?.docNo || null,
                 panCardStatus: panKyc?.status || null,
+                propertyStats: {
+                    totalProperties,
+                    soldToRealbro,
+                    soldFromListings,
+                    soldOffline,
+                    totalListed,
+                    activePropertyCount
+                }
             }
         });
     } catch (error) {

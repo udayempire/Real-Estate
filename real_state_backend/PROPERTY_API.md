@@ -218,8 +218,15 @@ Authorization: Bearer <token>
 
 ---
 
-### 7. Change Property Status
-**PATCH** `/api/v1/property/:id/status`
+### 7. Change Property Status (Toggle Status)
+**PUT** `/api/v1/property/change-status/:id`
+
+**Description:**
+Toggle/update property status between different states. All statuses can be updated from any current status.
+
+**Available Status Transitions:**
+- `ACTIVE` ↔ `UNLISTED` ↔ `SOLDOFFLINE` ↔ `SOLDTOREALBRO` ↔ `SOLDFROMLISTINGS` ↔ `DRAFT`
+- Any status can be changed to any other status
 
 **Headers:**
 ```
@@ -230,14 +237,45 @@ Authorization: Bearer <token>
 **Request Body:**
 ```json
 {
-  "status": "SOLD"
+  "status": "SOLDOFFLINE"
 }
 ```
+
+**Valid Status Values:**
+- `ACTIVE` - Property is active and visible in public listings
+- `UNLISTED` - Property is unlisted/hidden from public listings
+- `SOLDOFFLINE` - Property has been sold offline
+- `SOLDTOREALBRO` - Property has been sold to Realbro
+- `SOLDFROMLISTINGS` - Property has been sold from platform listings
+- `DRAFT` - Property is in draft mode
 
 **Success Response (200):**
 ```json
 {
-  "message": "Property updated successfully to SOLD"
+  "success": true,
+  "message": "Property status updated successfully from ACTIVE to SOLDOFFLINE",
+  "data": {
+    "id": "clxxx...",
+    "title": "Luxurious 3BHK Apartment in Arera Colony",
+    "status": "SOLDOFFLINE",
+    "updatedAt": "2026-02-16T..."
+  }
+}
+```
+
+**Error Responses:**
+
+**400 Bad Request - Invalid Status:**
+```json
+{
+  "message": "Invalid status. Valid statuses are: ACTIVE, UNLISTED, SOLDOFFLINE, SOLDTOREALBRO, SOLDFROMLISTINGS, DRAFT"
+}
+```
+
+**404 Not Found:**
+```json
+{
+  "message": "Property not found or not owned by this user"
 }
 ```
 

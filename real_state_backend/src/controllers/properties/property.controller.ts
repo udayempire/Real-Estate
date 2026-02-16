@@ -273,33 +273,57 @@ export async function changeStatus(req:Request<Params>,res:Response){
     try{
         const userId = req.user?.id;
         if(!userId){
-            return res.status(400).json({message:"UnAuthorized"})
+            return res.status(401).json({message:"Unauthorized User"})
         }
         const { id } = req.params;
         const { status } = req.body;
+        
         if(!id || !status){
-            return res.status(404).json({message:"Please provide property id"})
+            return res.status(400).json({message:"Please provide property id and status"})
         }
+
+        // Validate status value
+        const validStatuses = ["ACTIVE", "UNLISTED", "SOLDOFFLINE", "SOLDTOREALBRO", "SOLDFROMLISTINGS", "DRAFT"];
+        if(!validStatuses.includes(status)){
+            return res.status(400).json({
+                message:"Invalid status. Valid statuses are: ACTIVE, UNLISTED, SOLDOFFLINE, SOLDTOREALBRO, SOLDFROMLISTINGS, DRAFT"
+            })
+        }
+
         const property = await prisma.property.findUnique({
             where:{
                 id,
                 userId
             }
         });
+
         if(!property){
-            return res.status(404).json({message:"Property not found for this user"})
+            return res.status(404).json({message:"Property not found or not owned by this user"})
         }
-        await prisma.property.update({
-            where:{id,userId},
+
+        // Update property status
+        const updatedProperty = await prisma.property.update({
+            where:{id, userId},
             data:{
                 status
+            },
+            select:{
+                id: true,
+                title: true,
+                status: true,
+                updatedAt: true
             }
         });
-        return res.status(200).json({message:`Property updated successfully to ${status}`})
+
+        return res.status(200).json({
+            success: true,
+            message:`Property status updated successfully from ${property.status} to ${status}`,
+            data: updatedProperty
+        })
 
     }catch(error){
         console.error(error);
-        return res.status(500).json({message:"Interval server error"})
+        return res.status(500).json({message:"Internal server error"})
     }
 };
 

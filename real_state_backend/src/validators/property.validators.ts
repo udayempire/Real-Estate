@@ -2,8 +2,10 @@ import z from "zod";
 
 export const StatusEnum = [
     "ACTIVE",
-    "INACTIVE",
-    "SOLD",
+    "UNLISTED",
+    "SOLDOFFLINE",
+    "SOLDTOREALBRO",
+    "SOLDFROMLISTINGS",
     "DRAFT",
 ] as const;
 

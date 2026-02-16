@@ -54,8 +54,10 @@ enum PropertyType {
 
 enum PropertyStatus {
   ACTIVE
-  INACTIVE
-  SOLD
+  UNLISTED
+  SOLDOFFLINE
+  SOLDTOREALBRO
+  SOLDFROMLISTINGS
   DRAFT
 }
 

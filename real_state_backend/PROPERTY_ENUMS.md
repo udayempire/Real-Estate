@@ -6,10 +6,12 @@ This document provides all enum values for the Property API to help with fronten
 
 ## Property Status
 ```typescript
-"ACTIVE"   // Property is active and visible
-"INACTIVE" // Property is hidden
-"SOLD"     // Property has been sold
-"DRAFT"    // Property is in draft mode
+"ACTIVE"           // Property is active and visible
+"UNLISTED"         // Property is unlisted/hidden from public listings
+"SOLDOFFLINE"      // Property has been sold offline
+"SOLDTOREALBRO"    // Property has been sold to Realbro
+"SOLDFROMLISTINGS" // Property has been sold from platform listings
+"DRAFT"            // Property is in draft mode
 ```
 
 ---
