@@ -1,12 +1,13 @@
 import express from "express";
 import { authMiddleware } from "../../middleware/auth";
-import { addMedia, addProperty, changeStatus, deleteMedia, deleteProperty, getAllProperties, getMyProperties, getProperty, updateProperty } from "../../controllers/properties/property.controller";
+import { addMedia, addProperty, addDraftProperty, changeStatus, deleteMedia, deleteProperty, getAllProperties, getMyProperties, getProperty, updateProperty } from "../../controllers/properties/property.controller";
 import { validate } from "../../middleware/validate";
-import { addPropertySchema, changeStatus as changeStatusSchema, updatePropertySchema } from "../../validators/property.validators";
+import { addPropertySchema, addDraftPropertySchema, changeStatus as changeStatusSchema, updatePropertySchema } from "../../validators/property.validators";
 
 const router = express.Router();
 
 router.post("/", authMiddleware, validate(addPropertySchema), addProperty); //adds both property and media
+router.post("/draft", authMiddleware, validate(addDraftPropertySchema), addDraftProperty); //adds draft property - only title required
 router.get("/", authMiddleware, getAllProperties);
 router.get("/my-properties", authMiddleware, getMyProperties);
 router.get("/:id", authMiddleware, getProperty);

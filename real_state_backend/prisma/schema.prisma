@@ -118,24 +118,24 @@ model Property {
   id           String         @id @default(cuid())
   title        String
   description  String?
-  propertyType PropertyType
+  propertyType PropertyType?
   status       PropertyStatus @default(ACTIVE)
   
   // Price - Updated
-  listingPrice Float
+  listingPrice Float?
   priceMin     Float? // Deprecated but kept for backward compatibility
   priceMax     Float? // Deprecated but kept for backward compatibility
   
   // Location
-  state        String
-  city         String
+  state        String?
+  city         String?
   locality     String? // Main locality (e.g., "Arera Colony")
   subLocality  String? // Society/Building name
   flatNo       String? // Flat/House number
-  area         String // Keep for backward compatibility
-  address      String
-  latitude     Float
-  longitude    Float
+  area         String? // Keep for backward compatibility
+  address      String?
+  latitude     Float?
+  longitude    Float?
   
   // Size - Updated
   carpetArea     Float?

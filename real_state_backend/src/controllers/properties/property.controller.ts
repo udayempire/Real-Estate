@@ -1,6 +1,6 @@
 import { prisma } from "../../config/prisma";
 import { Request, Response } from "express";
-import { addMediaInput, addPropertySchema, updatePropertySchema } from "../../validators/property.validators";
+import { addMediaInput, addPropertySchema, updatePropertySchema, addDraftPropertySchema } from "../../validators/property.validators";
 import z from "zod";
 
 type Params = {
@@ -39,6 +39,48 @@ export async function addProperty(req: Request, res: Response) {
         });
     } catch (error) {
         console.error("Add property error", error);
+        return res.status(500).json({ message: "Internal server Error" })
+    }
+}
+
+export async function addDraftProperty(req: Request, res: Response) {
+    try {
+        const userId = req.user?.id;
+        if (!userId) {
+            return res.status(401).json({ message: "Unauthorized User" });
+        }
+        
+        type AddDraftPropertyInput = z.infer<typeof addDraftPropertySchema>;
+        const body = req.body as AddDraftPropertyInput;
+        const { media, ...propertyData } = body;
+        
+        // Create property with DRAFT status
+        const property = await prisma.property.create({
+            data: {
+                ...propertyData,
+                userId: userId,
+                status: "DRAFT", // Always set status to DRAFT
+                media: media && media.length > 0 ? {
+                    createMany: {
+                        data: media.map((m, index) => ({
+                            ...m,
+                            order: m.order ?? index
+                        })),
+                    },
+                } : undefined,
+            },
+            include: {
+                media: true
+            },
+        });
+        
+        return res.status(201).json({
+            success: true,
+            data: property,
+            message: "Draft property saved successfully"
+        });
+    } catch (error) {
+        console.error("Add draft property error", error);
         return res.status(500).json({ message: "Internal server Error" })
     }
 }

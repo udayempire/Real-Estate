@@ -132,6 +132,60 @@ export const addPropertySchema = z.object({
     media: z.array(propertyMediaSchema).min(1, "At least one media file is required")
 });
 
+// Draft Property Schema - Only title is required, status is always DRAFT
+export const addDraftPropertySchema = z.object({
+    // Basic Info - Only title is required
+    title: z.string().min(1, "Title is required"),
+    description: z.string().optional(),
+    propertyType: z.enum(propertyTypeEnum).optional(),
+    
+    // Price
+    listingPrice: z.number().positive("Listing price must be positive").optional(),
+    
+    // Location
+    state: z.string().optional(),
+    city: z.string().optional(),
+    locality: z.string().optional(),
+    subLocality: z.string().optional(),
+    flatNo: z.string().optional(),
+    area: z.string().optional(),
+    address: z.string().optional(),
+    longitude: z.number().optional(),
+    latitude: z.number().optional(),
+    
+    // Size
+    carpetArea: z.number().positive().optional(),
+    carpetAreaUnit: z.enum(carpetAreaUnitEnum).optional(),
+    
+    // Basic Details
+    category: z.enum(categoryEnum).optional(),
+    furnishingStatus: z.enum(furnishingStatusEnum).optional(),
+    availabilityStatus: z.enum(availabilityStatusEnum).optional(),
+    ageOfProperty: z.enum(ageOfPropertyEnum).optional(),
+    
+    // Property Details
+    numberOfRooms: z.number().int().min(0).optional(),
+    numberOfBathrooms: z.number().int().min(0).optional(),
+    numberOfBalcony: z.number().int().min(0).optional(),
+    numberOfFloors: z.number().int().min(0).optional(),
+    propertyFloor: z.string().optional(),
+    
+    // Price Details
+    allInclusivePrice: z.boolean().optional(),
+    negotiablePrice: z.boolean().optional(),
+    govtChargesTaxIncluded: z.boolean().optional(),
+    
+    // Other Details
+    propertyFacing: z.enum(propertyFacingEnum).optional(),
+    amenities: z.array(z.string()).optional(),
+    locationAdvantages: z.array(z.string()).optional(),
+    coveredParking: z.number().int().min(0).optional(),
+    uncoveredParking: z.number().int().min(0).optional(),
+    
+    // Media - Optional for draft
+    media: z.array(propertyMediaSchema).optional()
+});
+
 export const updatePropertySchema = z.object({
     // Basic Info
     title: z.string().min(1).optional(),
@@ -198,5 +252,6 @@ export const changeStatus = z.object({
 });
 
 export type addPropertyInput = z.infer<typeof addPropertySchema>;
+export type addDraftPropertyInput = z.infer<typeof addDraftPropertySchema>;
 export type updatePropertyInput = z.infer<typeof updatePropertySchema>;
 export type addMediaInput = z.infer<typeof addMediaSchema>;
