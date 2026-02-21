@@ -1,21 +1,12 @@
 "use client"
 
 import { useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { QRCodeSVG } from "qrcode.react";
-import { LockKeyholeOpen, Mail, ArrowLeft } from "lucide-react";
+import { LoginForm } from "./LoginForm";
 import { useMutation } from "@tanstack/react-query";
 import axios, { AxiosError } from "axios"; // Import axios
-import { Button } from "../ui/button";
-import { Input } from "../ui/input";
-import {
-    InputOTP,
-    InputOTPGroup,
-    InputOTPSlot,
-    InputOTPSeparator
-} from "@/components/ui/input-otp";
-import { REGEXP_ONLY_DIGITS } from "input-otp";
+import { Setup2FA } from "./setup2FA";
+import { Verify2FA } from "./verify2FA";
 
 type AuthStep = "LOGIN" | "SETUP_2FA" | "VERIFY_2FA";
 
@@ -30,14 +21,12 @@ interface LoginResponse {
 export const SigninCard = () => {
     const router = useRouter();
     const [step, setStep] = useState<AuthStep>("LOGIN");
-    
-    // Form Inputs
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [otpCode, setOtpCode] = useState("");
     const [qrCodeUrl, setQrCodeUrl] = useState("otpauth://totp/RealBros:admin@test.com?secret=JBSWY3DPEHPK3PXP&issuer=RealBros");
-    
-    // Helper to extract error message from Axios
+    // use useState("") as this is for development purposes and replace by unique_url comes from backend
+
     const getErrorMessage = (error: unknown) => {
         if (error instanceof AxiosError) {
             return error.response?.data?.message || error.message || "An error occurred";
@@ -45,13 +34,13 @@ export const SigninCard = () => {
         return "An unexpected error occurred";
     };
 
-    // --- MUTATION 1: LOGIN ---
+    //Mutation for Login
     const loginMutation = useMutation({
         mutationFn: async () => {
-            // Adjust the URL to match your actual backend endpoint
-            const response = await axios.post<LoginResponse>('/api/auth/login', { 
-                email, 
-                password 
+            // Adjust the URL to match actual backend api endpoint
+            const response = await axios.post<LoginResponse>('/api/auth/login', {
+                email,
+                password
             });
             return response.data;
         },
@@ -62,25 +51,26 @@ export const SigninCard = () => {
             } else if (data.require2fa) {
                 setStep("VERIFY_2FA");
             } else {
-                // If 2FA is not required/enabled at all (edge case), just go to dashboard
                 router.push("/dashboard");
             }
         },
-        // onError handled by isError state below
+        onError: (error) => {
+            console.error(error);
+        }
     });
 
-    // --- MUTATION 2: VERIFY OTP ---
+    // Mutation for Verify OTP
     const verifyOtpMutation = useMutation({
         mutationFn: async () => {
             // Determine which endpoint to hit based on the current step
-            const endpoint = step === "SETUP_2FA" 
-                ? '/api/auth/2fa/setup/verify' 
+            const endpoint = step === "SETUP_2FA"
+                ? '/api/auth/2fa/setup/verify'
                 : '/api/auth/2fa/verify';
-            
-            // You might need to send the email or a temp token along with the code
-            const response = await axios.post(endpoint, { 
-                email, 
-                token: otpCode 
+
+            // need to send the email or a temp token along with the code
+            const response = await axios.post(endpoint, {
+                email,
+                token: otpCode
             });
             return response.data;
         },
@@ -89,167 +79,41 @@ export const SigninCard = () => {
         }
     });
 
-    // -- RENDER: 2FA Setup --
     if (step === "SETUP_2FA") {
         return (
-            <div className="flex items-center justify-center">
-                <div className="w-full max-w-md text-center">
-                    <h1 className="text-[24px] font-semibold mb-2">Secure Your Account</h1>
-                    <p className="text-gray-500 mb-6 text-sm">
-                        Scan the QR code with Google Authenticator to enable 2FA.
-                    </p>
-
-                    <div className="flex justify-center mb-6 bg-white p-4 rounded-lg border">
-                        {qrCodeUrl && <QRCodeSVG value={qrCodeUrl} size={180} />}
-                    </div>
-
-                    <div className="flex justify-center mb-6">
-                        <InputOTP 
-                            maxLength={6} 
-                            value={otpCode} 
-                            onChange={setOtpCode}
-                            pattern={REGEXP_ONLY_DIGITS}
-                        >
-                             <InputOTPGroup>
-                                <InputOTPSlot index={0} />
-                                <InputOTPSlot index={1} />
-                                <InputOTPSlot index={2} />
-                            </InputOTPGroup>
-                            <InputOTPSeparator />
-                            <InputOTPGroup>
-                                <InputOTPSlot index={3} />
-                                <InputOTPSlot index={4} />
-                                <InputOTPSlot index={5} />
-                            </InputOTPGroup>
-                        </InputOTP>
-                    </div>
-
-                    {/* Show error from mutation */}
-                    {verifyOtpMutation.isError && (
-                        <p className="text-red-500 text-sm mb-4">
-                            {getErrorMessage(verifyOtpMutation.error)}
-                        </p>
-                    )}
-
-                    <Button 
-                        className="w-full rounded-3xl py-6 text-[16px]"
-                        onClick={() => verifyOtpMutation.mutate()}
-                        disabled={verifyOtpMutation.isPending || otpCode.length < 6}
-                    >
-                        {verifyOtpMutation.isPending ? "Verifying..." : "Verify & Enable 2FA"}
-                    </Button>
-                </div>
-            </div>
+            <Setup2FA
+                qrCodeUrl={qrCodeUrl}
+                otpCode={otpCode}
+                onOtpChange={setOtpCode}
+                onVerify={() => verifyOtpMutation.mutate()}
+                isPending={verifyOtpMutation.isPending}
+                error={verifyOtpMutation.isError ? getErrorMessage(verifyOtpMutation.error) : null}
+            />
         );
     }
-
-    // -- RENDER: 2FA Verification --
     if (step === "VERIFY_2FA") {
         return (
-             <div className="flex items-center justify-center">
-                <div className="w-full max-w-md text-center">
-                    <h1 className="text-[24px] font-semibold mb-2">Two-Factor Authentication</h1>
-                    <p className="text-gray-500 mb-8 text-sm">
-                        Enter the 6-digit code from your authenticator app.
-                    </p>
-
-                    <div className="flex justify-center mb-8">
-                        <InputOTP 
-                            maxLength={6} 
-                            value={otpCode} 
-                            onChange={setOtpCode}
-                            pattern={REGEXP_ONLY_DIGITS}
-                        >
-                            <InputOTPGroup>
-                                <InputOTPSlot index={0} />
-                                <InputOTPSlot index={1} />
-                                <InputOTPSlot index={2} />
-                            </InputOTPGroup>
-                            <InputOTPSeparator />
-                            <InputOTPGroup>
-                                <InputOTPSlot index={3} />
-                                <InputOTPSlot index={4} />
-                                <InputOTPSlot index={5} />
-                            </InputOTPGroup>
-                        </InputOTP>
-                    </div>
-
-                    {verifyOtpMutation.isError && (
-                        <p className="text-red-500 text-sm mb-4">
-                            {getErrorMessage(verifyOtpMutation.error)}
-                        </p>
-                    )}
-
-                    <Button 
-                        className="w-full rounded-3xl py-6 text-[16px]"
-                        onClick={() => verifyOtpMutation.mutate()}
-                        disabled={verifyOtpMutation.isPending || otpCode.length < 6}
-                    >
-                        {verifyOtpMutation.isPending ? "Verifying..." : "Verify Login"}
-                    </Button>
-                    
-                    <button 
-                        onClick={() => setStep("LOGIN")}
-                        className="mt-4 text-sm text-gray-500 hover:text-gray-700 flex items-center justify-center gap-2 mx-auto"
-                    >
-                        <ArrowLeft className="w-4 h-4" /> Back to Login
-                    </button>
-                </div>
-            </div>
+            <Verify2FA
+                otpCode={otpCode}
+                onOtpChange={setOtpCode}
+                onVerify={() => verifyOtpMutation.mutate()}
+                onBack={() => setStep("LOGIN")}
+                isPending={verifyOtpMutation.isPending}
+                error={verifyOtpMutation.isError ? getErrorMessage(verifyOtpMutation.error) : null}
+            />
         );
     }
 
-    // -- RENDER: Default Login --
+    // default login
     return (
-        <div className="flex items-center justify-center">
-            <div className="w-full max-w-md">
-                <h1 className="text-center text-[24px] font-semibold">
-                    Sign In
-                </h1>
-                <div className="flex flex-col gap-4 mt-12">
-                    <div className="relative">
-                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-blue-500" />
-                        <Input
-                            type="email"
-                            placeholder="Enter Email / number"
-                            className="pl-10 py-6"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                        />
-                    </div>
-                    
-                    <div className="relative">
-                        <LockKeyholeOpen className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-blue-500" />
-                        <Input
-                            type="password"
-                            placeholder="Enter password"
-                            className="pl-10 py-6"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                        />
-                    </div>
-                    
-                    {loginMutation.isError && (
-                        <p className="text-red-500 text-sm text-center">
-                            {getErrorMessage(loginMutation.error)}
-                        </p>
-                    )}
-
-                    <Button 
-                        className="rounded-3xl py-6 text-[16px]"
-                        onClick={() => loginMutation.mutate()}
-                        disabled={loginMutation.isPending}
-                    >
-                        {loginMutation.isPending ? "Signing in..." : "Sign in"}
-                    </Button>
-                </div>
-                
-                <div className="text-center text-[15px] font-bold mt-4 text-blue-600">
-                    <Link href="/reset-password">
-                        Reset your password
-                    </Link>
-                </div>
-            </div>
-        </div>
+        <LoginForm
+            email={email}
+            password={password}
+            onEmailChange={setEmail}
+            onPasswordChange={setPassword}
+            onSubmit={() => loginMutation.mutate()}
+            isPending={loginMutation.isPending}
+            error={loginMutation.error ? getErrorMessage(loginMutation.error) : null}
+        />
     );
 };
