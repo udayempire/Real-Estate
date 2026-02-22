@@ -444,7 +444,8 @@ export async function changeStatus(req:Request<Params>,res:Response){
 export async function filterProperties(req: Request, res: Response) {
     try {
         type FilterPropertiesInput = z.infer<typeof filterPropertiesSchema>;
-        const filters = req.query as unknown as FilterPropertiesInput;
+        // Get validated query data from middleware
+        const filters = ((req as any).validatedQuery || req.query) as FilterPropertiesInput;
         
         const {
             category,

@@ -25,7 +25,8 @@ export function validateQuery(schema: ZodSchema) {
                 details: result.error.flatten().fieldErrors
             });
         }
-        req.query = result.data as any;  // Replace with validated/typed data
+        // Store validated data in a custom property instead of overwriting req.query
+        (req as any).validatedQuery = result.data;
         next();
     }
 };
