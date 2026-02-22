@@ -254,17 +254,32 @@ export const changeStatus = z.object({
 // Filter Properties Schema
 export const filterPropertiesSchema = z.object({
     // Property Category (can select multiple)
-    category: z.array(z.enum(categoryEnum)).optional(),
+    category: z.preprocess(
+        (val) => val ? (Array.isArray(val) ? val : [val]) : undefined,
+        z.array(z.enum(categoryEnum)).optional()
+    ),
     
     // Property Type (can select multiple)
-    propertyType: z.array(z.enum(propertyTypeEnum)).optional(),
+    propertyType: z.preprocess(
+        (val) => val ? (Array.isArray(val) ? val : [val]) : undefined,
+        z.array(z.enum(propertyTypeEnum)).optional()
+    ),
     
     // Furnishing Status (can select multiple)
-    furnishingStatus: z.array(z.enum(furnishingStatusEnum)).optional(),
+    furnishingStatus: z.preprocess(
+        (val) => val ? (Array.isArray(val) ? val : [val]) : undefined,
+        z.array(z.enum(furnishingStatusEnum)).optional()
+    ),
     
     // Price Range
-    priceMin: z.coerce.number().positive().optional(),
-    priceMax: z.coerce.number().positive().optional(),
+    priceMin: z.preprocess(
+        (val) => val ? parseFloat(val as string) : undefined,
+        z.number().positive().optional()
+    ),
+    priceMax: z.preprocess(
+        (val) => val ? parseFloat(val as string) : undefined,
+        z.number().positive().optional()
+    ),
     
     // Location Filters
     state: z.string().optional(),
@@ -272,23 +287,53 @@ export const filterPropertiesSchema = z.object({
     locality: z.string().optional(),
     
     // Additional Filters
-    availabilityStatus: z.array(z.enum(availabilityStatusEnum)).optional(),
-    ageOfProperty: z.array(z.enum(ageOfPropertyEnum)).optional(),
-    numberOfRooms: z.coerce.number().int().min(0).optional(),
-    numberOfBathrooms: z.coerce.number().int().min(0).optional(),
-    propertyFacing: z.array(z.enum(propertyFacingEnum)).optional(),
+    availabilityStatus: z.preprocess(
+        (val) => val ? (Array.isArray(val) ? val : [val]) : undefined,
+        z.array(z.enum(availabilityStatusEnum)).optional()
+    ),
+    
+    ageOfProperty: z.preprocess(
+        (val) => val ? (Array.isArray(val) ? val : [val]) : undefined,
+        z.array(z.enum(ageOfPropertyEnum)).optional()
+    ),
+    
+    numberOfRooms: z.preprocess(
+        (val) => val ? parseInt(val as string) : undefined,
+        z.number().int().min(0).optional()
+    ),
+    numberOfBathrooms: z.preprocess(
+        (val) => val ? parseInt(val as string) : undefined,
+        z.number().int().min(0).optional()
+    ),
+    
+    propertyFacing: z.preprocess(
+        (val) => val ? (Array.isArray(val) ? val : [val]) : undefined,
+        z.array(z.enum(propertyFacingEnum)).optional()
+    ),
     
     // Carpet Area filters
-    carpetAreaMin: z.coerce.number().positive().optional(),
-    carpetAreaMax: z.coerce.number().positive().optional(),
+    carpetAreaMin: z.preprocess(
+        (val) => val ? parseFloat(val as string) : undefined,
+        z.number().positive().optional()
+    ),
+    carpetAreaMax: z.preprocess(
+        (val) => val ? parseFloat(val as string) : undefined,
+        z.number().positive().optional()
+    ),
     carpetAreaUnit: z.enum(carpetAreaUnitEnum).optional(),
     
     // Sorting
     sortBy: z.enum(['price_asc', 'price_desc', 'created_desc', 'created_asc']).default('created_desc'),
     
     // Pagination
-    page: z.coerce.number().int().min(1).default(1),
-    limit: z.coerce.number().int().min(1).max(100).default(10),
+    page: z.preprocess(
+        (val) => val ? parseInt(val as string) : 1,
+        z.number().int().min(1).default(1)
+    ),
+    limit: z.preprocess(
+        (val) => val ? Math.min(parseInt(val as string), 100) : 10,
+        z.number().int().min(1).max(100).default(10)
+    ),
 });
 
 export type addPropertyInput = z.infer<typeof addPropertySchema>;
