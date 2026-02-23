@@ -57,7 +57,7 @@ const items = [
     { title: "Appointments", url: "#", icon: Calendar },
     { title: "Requirement Board", url: "#", icon: ClipboardList },
     { title: "Financials", url: "#", icon: WalletIcon },
-    { title: "Banner Management", url: "#", icon: Image },
+    { title: "Banner Management", url: "/banner-management", icon: Image },
     { title: "Role Management", url: "/role-management", icon: UserCog },
 ]
 
