@@ -2,7 +2,7 @@
 
 import { ColumnDef } from "@tanstack/react-table"
 import { Button } from "@/components/ui/button"
-import { Eye, Pencil, Trash2, OctagonMinus, BadgeCheck, ShieldCheck, Clock } from "lucide-react"
+import { Eye, Pencil, Trash2, OctagonMinus, BadgeCheck, ShieldCheck, Clock, Gem,ArrowUpDown } from "lucide-react"
 
 export enum KYCStatus {
     Verified = "Verified",
@@ -13,7 +13,7 @@ export type UserColumnInterface = {
     username: string
     email: string
     gems: number
-    kycStatus: KYCStatus
+    kycStatus: string
     isVerified: boolean
     propertyListings: {
         total: number
@@ -27,14 +27,24 @@ export type UserColumnInterface = {
 export const allUsersColumns: ColumnDef<UserColumnInterface>[] = [
     {
         accessorKey: "username",
-        header: "User Name",
+        header: ({ column }) => {
+            return (
+                <Button
+                    variant="ghost"
+                    onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+                >
+                    User Name
+                    <ArrowUpDown className="ml-2 h-4 w-4" />
+                </Button>
+            )
+        },
         cell: ({ row }) => {
             const { username, isBlocked, isVerified } = row.original
             return (
                 <div className="flex items-center gap-2 pl-2">
                     <span className={`size-2 rounded-full shrink-0 ${isBlocked ? "bg-red-500" : "bg-green-500"}`} />
                     <span className="font-medium">{username}</span>
-                    {isVerified && <BadgeCheck className="size-4 text-blue-500 shrink-0" />}
+                    {isVerified && <BadgeCheck className="size-5 fill-blue-500 text-white " />}
                 </div>
             )
         },
@@ -42,12 +52,17 @@ export const allUsersColumns: ColumnDef<UserColumnInterface>[] = [
 
     {
         accessorKey: "email",
-        header: "Email",
-        cell: ({ row }) => (
-            <div className="text-blue-500 font-medium">
-                {row.original.email}
-            </div>
-        ),
+        header: ({ column }) => {
+            return (
+                <Button
+                    variant="ghost"
+                    onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+                >
+                    Email
+                    <ArrowUpDown className="ml-2 h-4 w-4" />
+                </Button>
+            )
+        },
     },
 
     {
@@ -56,11 +71,11 @@ export const allUsersColumns: ColumnDef<UserColumnInterface>[] = [
         cell: ({ row }) => {
             const l = row.original.propertyListings
             return (
-                <div className="text-sm text-muted-foreground whitespace-nowrap">
-                    Total: <span className="font-semibold text-foreground">{l.total}</span>
-                    {" ,Sold: "}<span className="font-semibold text-foreground">{l.sold}</span>
-                    {", Active: "}<span className="font-semibold text-foreground">{l.active}</span>
-                    {", Unlisted: "}<span className="font-semibold text-green-600">{l.unlisted}</span>
+                <div className="text-sm text-foreground font-semibold whitespace-nowrap">
+                    Total: <span className="font-medium text-foreground">{l.total}</span>
+                    {" ,Sold: "}<span className="font-medium text-foreground">{l.sold}</span>
+                    {", Active: "}<span className="font-medium text-foreground">{l.active}</span>
+                    {", Unlisted: "}<span className="font-medium text-foreground">{l.unlisted}</span>
                 </div>
             )
         },
@@ -68,11 +83,23 @@ export const allUsersColumns: ColumnDef<UserColumnInterface>[] = [
 
     {
         accessorKey: "gems",
-        header: "Gems",
+        header: ({ column }) => {
+            return (
+                <Button
+                    variant="ghost"
+                    onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+                >
+                    Gems
+                    <ArrowUpDown className="ml-2 h-4 w-4" />
+                </Button>
+            )
+        },
         cell: ({ row }) => (
             <div className="flex items-center gap-1.5 font-semibold text-green-600">
-                <span className="text-orange-500">💎</span>
-                {row.original.gems.toLocaleString()}
+                <span className="text-orange-500"><Gem className="size-4 text-green-400" /></span>
+                <p className="text-black font-medium">
+                    {row.original.gems.toLocaleString()}
+                </p>
             </div>
         ),
     },
@@ -81,16 +108,17 @@ export const allUsersColumns: ColumnDef<UserColumnInterface>[] = [
         accessorKey: "kycStatus",
         header: "KYC Status",
         cell: ({ row }) => {
-            const status = row.original.kycStatus
-            const isVerified = status === KYCStatus.Verified
+            const kycStatus = row.original.kycStatus;
 
             return (
-                <div className={`flex items-center gap-1.5 font-medium ${isVerified ? "text-green-600" : "text-orange-500"}`}>
-                    {isVerified
-                        ? <ShieldCheck className="size-4" />
-                        : <Clock className="size-4" />
+                <div className={`flex items-center gap-1.5 font-medium}`}>
+                    {kycStatus == "Verified"
+                        ? <ShieldCheck className="size-4 text-green-600" />
+                        : <Clock className="size-4 text-orange-500" />
                     }
-                    {status}
+                    <p className="text-foreground font-medium">
+                        {kycStatus}
+                    </p>
                 </div>
             )
         },
