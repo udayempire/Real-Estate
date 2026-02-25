@@ -1,6 +1,6 @@
 import { prisma } from "../../config/prisma";
 import { Request, Response } from "express";
-import { addMediaInput, addPropertySchema, updatePropertySchema, addDraftPropertySchema, filterPropertiesSchema } from "../../validators/property.validators";
+import { addMediaInput, addPropertySchema, updatePropertySchema, addDraftPropertySchema, filterPropertiesSchema, searchPropertiesSchema } from "../../validators/property.validators";
 import z from "zod";
 
 type Params = {
@@ -616,6 +616,146 @@ export async function filterProperties(req: Request, res: Response) {
 
     } catch (error) {
         console.error("Filter properties error:", error);
+        return res.status(500).json({ 
+            success: false,
+            message: "Internal server error" 
+        });
+    }
+}
+
+export async function searchProperties(req: Request, res: Response) {
+    try {
+        type SearchPropertiesInput = z.infer<typeof searchPropertiesSchema>;
+        // Get validated query data from middleware
+        const searchParams = ((req as any).validatedQuery || req.query) as SearchPropertiesInput;
+        
+        const {
+            query,
+            state,
+            city,
+            locality,
+            subLocality,
+            area,
+            sortBy = 'created_desc',
+            page = 1,
+            limit = 10,
+        } = searchParams;
+
+        // Build the where clause - only ACTIVE properties
+        const where: any = {
+            status: 'ACTIVE' // Only show active properties
+        };
+
+        // If query parameter is provided, search in title
+        if (query && query.trim()) {
+            where.title = { 
+                contains: query.trim(), 
+                mode: 'insensitive' 
+            };
+        }
+
+        // Location filters with OR condition for flexible search
+        const locationFilters: any[] = [];
+        
+        if (state && state.trim()) {
+            locationFilters.push({
+                state: { contains: state.trim(), mode: 'insensitive' }
+            });
+        }
+        
+        if (city && city.trim()) {
+            locationFilters.push({
+                city: { contains: city.trim(), mode: 'insensitive' }
+            });
+        }
+        
+        if (locality && locality.trim()) {
+            locationFilters.push({
+                locality: { contains: locality.trim(), mode: 'insensitive' }
+            });
+        }
+        
+        if (subLocality && subLocality.trim()) {
+            locationFilters.push({
+                subLocality: { contains: subLocality.trim(), mode: 'insensitive' }
+            });
+        }
+        
+        if (area && area.trim()) {
+            locationFilters.push({
+                area: { contains: area.trim(), mode: 'insensitive' }
+            });
+        }
+
+        // If location filters exist, add them with OR condition
+        if (locationFilters.length > 0) {
+            where.OR = locationFilters;
+        }
+
+        // Sorting logic
+        let orderBy: any = {};
+        switch (sortBy) {
+            case 'price_asc':
+                orderBy = { listingPrice: 'asc' };
+                break;
+            case 'price_desc':
+                orderBy = { listingPrice: 'desc' };
+                break;
+            case 'created_asc':
+                orderBy = { createdAt: 'asc' };
+                break;
+            case 'created_desc':
+            default:
+                orderBy = { createdAt: 'desc' };
+                break;
+        }
+
+        // Pagination
+        const skip = (page - 1) * limit;
+
+        // Execute the query
+        const [properties, totalCount] = await Promise.all([
+            prisma.property.findMany({
+                where,
+                orderBy,
+                skip,
+                take: limit,
+                include: {
+                    media: {
+                        orderBy: { order: 'asc' }
+                    },
+                    user: {
+                        select: {
+                            id: true,
+                            firstName: true,
+                            lastName: true,
+                            email: true,
+                            phone: true,
+                            avatar: true
+                        }
+                    }
+                }
+            }),
+            prisma.property.count({ where })
+        ]);
+
+        const totalPages = Math.ceil(totalCount / limit);
+
+        return res.status(200).json({
+            success: true,
+            data: properties,
+            pagination: {
+                currentPage: page,
+                totalPages,
+                totalCount,
+                limit,
+                hasNextPage: page < totalPages,
+                hasPreviousPage: page > 1
+            }
+        });
+
+    } catch (error) {
+        console.error("Search properties error:", error);
         return res.status(500).json({ 
             success: false,
             message: "Internal server error" 

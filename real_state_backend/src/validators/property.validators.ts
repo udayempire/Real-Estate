@@ -336,8 +336,35 @@ export const filterPropertiesSchema = z.object({
     ),
 });
 
+// Search Properties Schema
+export const searchPropertiesSchema = z.object({
+    // Search query for title
+    query: z.string().optional(),
+    
+    // Location search
+    state: z.string().optional(),
+    city: z.string().optional(),
+    locality: z.string().optional(),
+    subLocality: z.string().optional(),
+    area: z.string().optional(),
+    
+    // Sorting
+    sortBy: z.enum(['price_asc', 'price_desc', 'created_desc', 'created_asc']).default('created_desc'),
+    
+    // Pagination
+    page: z.preprocess(
+        (val) => val ? parseInt(val as string) : 1,
+        z.number().int().min(1).default(1)
+    ),
+    limit: z.preprocess(
+        (val) => val ? Math.min(parseInt(val as string), 100) : 10,
+        z.number().int().min(1).max(100).default(10)
+    ),
+});
+
 export type addPropertyInput = z.infer<typeof addPropertySchema>;
 export type addDraftPropertyInput = z.infer<typeof addDraftPropertySchema>;
 export type updatePropertyInput = z.infer<typeof updatePropertySchema>;
 export type addMediaInput = z.infer<typeof addMediaSchema>;
 export type filterPropertiesInput = z.infer<typeof filterPropertiesSchema>;
+export type searchPropertiesInput = z.infer<typeof searchPropertiesSchema>;
