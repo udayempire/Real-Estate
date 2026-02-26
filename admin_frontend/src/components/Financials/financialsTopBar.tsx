@@ -53,21 +53,21 @@ export default function FinancialsTopBar() {
                             <Card >
                                 <CardContent className="grid grid-cols-3">
                                     <div className="flex items-center gap-2 ">
-                                        <CalendarClockIcon size={30} className="text-blue-500" strokeWidth={1.5}/>
+                                        <CalendarClockIcon size={30} className="text-blue-500" strokeWidth={1.5} />
                                         <div>
                                             <h1 className="text-[24px] font-bold">12</h1>
                                             <p className=" text-sm text-gray-500 font-medium">Payouts Processed</p>
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-2 ">
-                                        <CalendarCheck2 size={30} className="text-green-500" strokeWidth={1.5}/>
+                                        <CalendarCheck2 size={30} className="text-green-500" strokeWidth={1.5} />
                                         <div>
                                             <h1 className="text-[24px] font-bold">₹250000</h1>
                                             <p className=" text-sm text-gray-500 font-medium">Total Sell</p>
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-2 ">
-                                        <CalendarSyncIcon size={30} className="text-red-500" strokeWidth={1.5}/>
+                                        <CalendarSyncIcon size={30} className="text-red-500" strokeWidth={1.5} />
                                         <div>
                                             <h1 className="text-[24px] font-bold text-green-500">+₹25 Lakh</h1>
                                             <p className=" text-sm text-gray-500 font-medium">Cashflow</p>
