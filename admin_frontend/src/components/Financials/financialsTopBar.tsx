@@ -44,7 +44,7 @@ export default function FinancialsTopBar() {
                 <Card className="full col-span-2">
                     <CardHeader>
                         <CardTitle className="flex justify-between">
-                            <h1 className="font-medium">Insights</h1>
+                            <h1 className="font-medium text-lg">Insights</h1>
                             <Button variant="outline" className="shadow-none" size="sm">
                                 <Calendar size={5} className="" />
                                 Today(15-02-2026)</Button>
@@ -53,23 +53,23 @@ export default function FinancialsTopBar() {
                             <Card >
                                 <CardContent className="grid grid-cols-3">
                                     <div className="flex items-center gap-2 ">
-                                        <CalendarClockIcon size={30} className="text-blue-500" strokeWidth={1.5} />
+                                        <CalendarClockIcon size={25} className="text-blue-500" strokeWidth={1.5} />
                                         <div>
-                                            <h1 className="text-[24px] font-bold">12</h1>
+                                            <h1 className="text-[20px] font-bold">12</h1>
                                             <p className=" text-sm text-gray-500 font-medium">Payouts Processed</p>
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-2 ">
-                                        <CalendarCheck2 size={30} className="text-green-500" strokeWidth={1.5} />
+                                        <CalendarCheck2 size={25} className="text-green-500" strokeWidth={1.5} />
                                         <div>
-                                            <h1 className="text-[24px] font-bold">₹250000</h1>
+                                            <h1 className="text-[20px] font-bold">₹250000</h1>
                                             <p className=" text-sm text-gray-500 font-medium">Total Sell</p>
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-2 ">
-                                        <CalendarSyncIcon size={30} className="text-red-500" strokeWidth={1.5} />
+                                        <CalendarSyncIcon size={25} className="text-red-500" strokeWidth={1.5} />
                                         <div>
-                                            <h1 className="text-[24px] font-bold text-green-500">+₹25 Lakh</h1>
+                                            <h1 className="text-[20px] font-bold text-green-500">+₹25 Lakh</h1>
                                             <p className=" text-sm text-gray-500 font-medium">Cashflow</p>
                                         </div>
                                     </div>
