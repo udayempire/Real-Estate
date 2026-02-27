@@ -1,8 +1,6 @@
-import { PrismaClient } from '@prisma/client';
-import { hashPassword } from '../src/utils/password';
-import { generateReferralCode } from '../src/utils/generateReferralCode';
-
-const prisma = new PrismaClient();
+import { prisma } from '../src/config/prisma.js';
+import { hashPassword } from '../src/utils/password.js';
+import { generateReferralCode } from '../src/utils/generateReferralCode.js';
 
 async function main() {
   console.log('🌱 Seeding database...');
