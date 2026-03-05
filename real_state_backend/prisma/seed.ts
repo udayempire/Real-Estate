@@ -31,12 +31,30 @@ async function main() {
       points: 0,
     }
   });
+  // create super admin
+  const superAdminEmail = "owner@realbro.com";
+  const superAdminPassword = "Owner@123";
+  const superAdmin = await prisma.superAdmin.upsert({
+    where: { email: superAdminEmail },
+    update: {
+      isActive: true,
+    },
+    create: {
+      firstName: "Super",
+      lastName: "Admin",
+      email: superAdminEmail,
+      password: await hashPassword(superAdminPassword),
+      isActive: true,
+      isTwoFactorEnabled: false,
+    },
+  });
 
   console.log('✅ First user created successfully!');
   console.log('📧 Email:', firstUser.email);
   console.log('📱 Phone:', firstUser.phone);
   console.log('🔑 Referral Code:', firstUser.referralCode);
   console.log('⚠️  Remember to change the password after first login!');
+  console.log("✅ SuperAdmin ready:", superAdmin.email);
 }
 
 main()

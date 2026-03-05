@@ -214,3 +214,19 @@ export async function verify2fa(req: Request, res: Response) {
         return res.status(500).json({ error: "Internal server error" });
     }
 }
+
+export async function signout(req: Request, res: Response) {
+    try {
+        const { refreshToken } = req.body;
+        if (!refreshToken) {
+            return res.status(401).json({ error: "Refresh Token not found" });
+        }
+        await prisma.refreshToken.deleteMany({
+            where: { token: refreshToken }
+        });
+        return res.status(200).json({ message: "Logged out successfully" });
+    } catch (error) {
+        console.error("signout error:", error);
+        return res.status(500).json({ error: "Internal server error" });
+    }
+}

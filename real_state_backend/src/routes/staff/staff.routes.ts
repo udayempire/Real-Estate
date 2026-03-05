@@ -1,10 +1,8 @@
 import express from "express";
 const router = express.Router();
-
-router.get('/',(req,res)=>{
-    res.status(200).json({
-        message: 'Hello World'
-    })
-})
+import staffManagementRoutes from "./staff.management";
+import staffAuthRoutes from "./staff.auth";
+router.use('/auth', staffAuthRoutes);
+router.use('/management', staffManagementRoutes);
 
 export default router;
