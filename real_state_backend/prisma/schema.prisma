@@ -36,23 +36,24 @@ enum StaffRole {
 }
 
 model Staff {
-  id                 String           @id @default(cuid())
-  firstName          String
-  lastName           String
-  age                Int?
-  gender             Gender?
-  phone              String?          @unique
-  email              String           @unique
-  passwordHash       String?
-  role               StaffRole
-  twoFactorSecret    String?
-  isTwoFactorEnabled Boolean          @default(false)
-  isActive           Boolean          @default(true)
-  createdAt          DateTime         @default(now())
-  updatedAt          DateTime         @updatedAt
-  requestedGemRequests GemRequest[] @relation("GemRequestedBy")
-  reviewedGemRequests GemRequest[] @relation("GemReviewedBy")
-  gemTransactions GemTransaction[] @relation("GemTransactionCreatedBy")
+  id                   String           @id @default(cuid())
+  firstName            String
+  lastName             String
+  age                  Int?
+  gender               Gender?
+  phone                String?          @unique
+  email                String           @unique
+  passwordHash         String?
+  role                 StaffRole
+  twoFactorSecret      String?
+  isTwoFactorEnabled   Boolean          @default(false)
+  isActive             Boolean          @default(true)
+  createdAt            DateTime         @default(now())
+  updatedAt            DateTime         @updatedAt
+  requestedGemRequests GemRequest[]     @relation("GemRequestedBy")
+  reviewedGemRequests  GemRequest[]     @relation("GemReviewedBy")
+  gemTransactions      GemTransaction[] @relation("GemTransactionCreatedBy")
+  staffPropertyBookmarks StaffPropertyBookmark[] 
 
   @@index([role])
   @@index([isActive])
@@ -81,18 +82,19 @@ model User {
   //verification
   isEmailVerified Boolean @default(false)
 
-  createdAt       DateTime          @default(now())
-  updatedAt       DateTime          @updatedAt
-  kyc             Kyc[]
-  properties      Property[]
-  otps            Otp[]
-  refreshTokens   RefreshToken[]
-  supportTickets  CustomerSupport[]
-  savedProperties SavedProperty[]
-  appointments    Appointment[]
-  gemTransactions GemTransaction[]
-  gemRequestsAsTarget GemRequest[] @relation("GemRequestTargetUser")
-  gemRequestsAsReferral GemRequest[] @relation("GemRequestReferralUser")
+  createdAt             DateTime            @default(now())
+  updatedAt             DateTime            @updatedAt
+  kyc                   Kyc[]
+  properties            Property[]
+  otps                  Otp[]
+  refreshTokens         RefreshToken[]
+  supportTickets        CustomerSupport[]
+  savedProperties       SavedProperty[]
+  appointments          Appointment[]
+  gemTransactions       GemTransaction[]
+  gemRequestsAsTarget   GemRequest[]        @relation("GemRequestTargetUser")
+  gemRequestsAsReferral GemRequest[]        @relation("GemRequestReferralUser")
+  exclusiveProperties   ExclusiveProperty[] @relation("ExclusiveOriginalUser")
 
   @@index([id, email])
   @@map("users")
@@ -228,12 +230,14 @@ model Property {
   updatedAt DateTime @updatedAt
 
   //Relations
-  userId       String
-  user         User            @relation(fields: [userId], references: [id], onDelete: Cascade)
-  media        PropertyMedia[]
-  savedBy      SavedProperty[]
-  appointments Appointment[]
-  gemRequests  GemRequest[]    @relation("GemRequestTargetProperty")
+  userId            String
+  user              User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  media             PropertyMedia[]
+  savedBy           SavedProperty[]
+  appointments      Appointment[]
+  gemRequests       GemRequest[]       @relation("GemRequestTargetProperty")
+  exclusiveProperty ExclusiveProperty? @relation("ExclusiveSourceProperty")
+  staffPropertyBookmarks StaffPropertyBookmark[]
 
   @@index([userId])
   @@index([propertyType])
@@ -263,6 +267,124 @@ model PropertyMedia {
 
   @@index([propertyId])
   @@map("property_media")
+}
+
+enum ExclusivePropertyStatus {
+  ACTIVE
+  SOLD_OUT
+  ARCHIVED
+}
+
+model ExclusiveProperty {
+  id String @id @default(cuid())
+
+  // Link to original normal property (for trace/audit)
+  sourcePropertyId String   @unique
+  sourceProperty   Property @relation("ExclusiveSourceProperty", fields: [sourcePropertyId], references: [id], onDelete: Restrict)
+
+  // Copy of all property fields
+  title        String
+  description  String?
+  propertyType PropertyType?
+  status       ExclusivePropertyStatus @default(ACTIVE)
+
+  // Price
+  listingPrice Float?
+  priceMin     Float?
+  priceMax     Float?
+
+  // Location
+  state       String?
+  city        String?
+  locality    String?
+  subLocality String?
+  flatNo      String?
+  area        String?
+  address     String?
+  latitude    Float?
+  longitude   Float?
+
+  // Size
+  carpetArea       Float?
+  carpetAreaUnit   CarpetAreaUnit?
+  plotLandArea     Float?
+  plotLandAreaUnit CarpetAreaUnit?
+  size             Float?
+  sizeUnit         SizeUnit?
+
+  // Basic details
+  category           Category?
+  furnishingStatus   FurnishingStatus?
+  availabilityStatus AvailabilityStatus?
+  ageOfProperty      AgeOfProperty?
+
+  // Property details
+  numberOfRooms     Int?
+  numberOfBathrooms Int?
+  numberOfBalcony   Int?
+  numberOfFloors    Int?
+  propertyFloor     String?
+
+  // Price flags
+  allInclusivePrice      Boolean @default(false)
+  negotiablePrice        Boolean @default(false)
+  govtChargesTaxIncluded Boolean @default(false)
+
+  // Other details
+  propertyFacing     PropertyFacing?
+  amenities          String[]
+  locationAdvantages String[]
+  coveredParking     Int             @default(0)
+  uncoveredParking   Int             @default(0)
+
+  // Exclusive-specific
+  fixedRewardGems   Int
+  migratedByStaffId String?
+  migratedAt        DateTime  @default(now())
+  soldOutAt         DateTime?
+  notes             String?
+
+  // Keep owner reference
+  originalUserId String
+  originalUser   User   @relation("ExclusiveOriginalUser", fields: [originalUserId], references: [id], onDelete: Restrict)
+
+  // Relations
+  media ExclusivePropertyMedia[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+  @@index([city, state])
+  @@index([listingPrice])
+  @@index([originalUserId])
+  @@map("exclusive_properties")
+}
+
+model ExclusivePropertyMedia {
+  id                  String            @id @default(cuid())
+  exclusivePropertyId String
+  exclusiveProperty   ExclusiveProperty @relation(fields: [exclusivePropertyId], references: [id], onDelete: Cascade)
+
+  url       String
+  key       String
+  mediaType MediaType
+  order     Int       @default(0)
+
+  createdAt DateTime @default(now())
+
+  @@index([exclusivePropertyId])
+  @@map("exclusive_property_media")
+}
+
+model StaffPropertyBookmark {
+  id String @id @default(cuid())
+  staffId String
+  staff Staff @relation(fields: [staffId], references: [id], onDelete: Cascade)
+  propertyId String
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 enum KycType {
@@ -457,7 +579,6 @@ model GemRequest {
   propertyId String?
   property   Property? @relation("GemRequestTargetProperty", fields: [propertyId], references: [id], onDelete: SetNull)
 
-
   // values snapshot at request time
   baseGems          Int
   referralPercent   Float   @default(5.0)
@@ -498,7 +619,7 @@ model GemTransaction {
   balanceAfter  Int
 
   createdByStaffId String?
-  createdByStaff   Staff?   @relation("GemTransactionCreatedBy", fields: [createdByStaffId], references: [id], onDelete: SetNull)
+  createdByStaff   Staff?  @relation("GemTransactionCreatedBy", fields: [createdByStaffId], references: [id], onDelete: SetNull)
 
   createdAt DateTime @default(now())
 

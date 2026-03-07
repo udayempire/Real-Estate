@@ -49,6 +49,21 @@ async function main() {
       points: 0,
     }
   });
+  // create property for first user
+  const property = await prisma.property.create({
+    data: {
+      title: "Test Property",
+      description: "Test Description",
+      status: "ACTIVE",
+      propertyType: "FLAT",
+      userId: firstUser.id,
+      amenities: [],
+      locationAdvantages: [],
+      listingPrice: 2500000,
+      city: "Bhopal",
+      state: "Madhya Pradesh",
+    },
+  });
 
   console.log('✅ First user created successfully!');
   console.log('📧 Email:', firstUser.email);
@@ -56,6 +71,7 @@ async function main() {
   console.log('🔑 Referral Code:', firstUser.referralCode);
   console.log('⚠️  Remember to change the password after first login!');
   console.log("✅ SuperAdmin ready:", superAdmin.email);
+  console.log("✅ Property created successfully:", property.id);
 }
 
 main()
