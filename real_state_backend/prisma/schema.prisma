@@ -54,6 +54,7 @@ model Staff {
   reviewedGemRequests  GemRequest[]     @relation("GemReviewedBy")
   gemTransactions      GemTransaction[] @relation("GemTransactionCreatedBy")
   staffPropertyBookmarks StaffPropertyBookmark[] 
+  propertyAcquisitionRequests PropertyAcquisitionRequest[] @relation("PropertyAcquisitionRequest")
 
   @@index([role])
   @@index([isActive])
@@ -115,7 +116,6 @@ enum PropertyStatus {
   SOLDTOREALBRO
   SOLDFROMLISTINGS
   DRAFT
-  UNDER_ACQUISITION
 }
 
 enum SizeUnit {
@@ -239,6 +239,7 @@ model Property {
   gemRequests       GemRequest[]       @relation("GemRequestTargetProperty")
   exclusiveProperty ExclusiveProperty? @relation("ExclusiveSourceProperty")
   staffPropertyBookmarks StaffPropertyBookmark[]
+  acquisitionRequests PropertyAcquisitionRequest[] @relation("PropertyAcquisitionRequest")
 
   @@index([userId])
   @@index([propertyType])
@@ -391,6 +392,25 @@ model StaffPropertyBookmark {
   @@index([staffId])
   @@index([propertyId])
   @@map("staff_property_bookmarks") 
+}
+
+enum PropertyAcquisitionRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model PropertyAcquisitionRequest {
+  id String @id @default(cuid())
+  propertyId String @unique
+  requestedByStaffId String
+  status PropertyAcquisitionRequestStatus @default(PENDING)
+  property Property @relation("PropertyAcquisitionRequest", fields: [propertyId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  requestedByStaff Staff @relation("PropertyAcquisitionRequest", fields: [requestedByStaffId], references: [id], onDelete: Cascade)
+
+  @@index([propertyId])
 }
 
 enum KycType {
