@@ -1,8 +1,23 @@
+"use client";
 import Image from "next/image";
 import { Avatar, AvatarImage, AvatarFallback } from "./avatar";
 import { LogOut } from "lucide-react";
-import Link from "next/link";
+import { api } from "@/lib/api";
+import { Button } from "./button";
+import { useRouter } from "next/navigation";
 export const Navbar = () => {
+    const router = useRouter();
+
+    const signout = async () => {
+        try {
+            await api.post("/staff/auth/signout", {});
+        } catch (error) {
+            console.error("signout error:", error);
+        } finally {
+            router.push("/signin");
+        }
+    };
+
     return (
         <div>
             <div className="flex justify-between p-4  border-b-2 shadow- border-zinc-300 h-18">
@@ -18,9 +33,14 @@ export const Navbar = () => {
                         <AvatarImage src="https://github.com/shadcn.png" />
                         <AvatarFallback>CN</AvatarFallback>
                     </Avatar>
-                    <Link href="/signin">
-                        <LogOut className="w-8 h-8 text-red-500" />
-                    </Link>
+                    <Button
+                        variant="ghost"
+                        size="icon-lg"
+                        className="text-red-500 hover:text-red-600"
+                        onClick={signout}
+                    >
+                        <LogOut className="size-7 text-red-500" />
+                    </Button>
                 </div>
             </div>
         </div>

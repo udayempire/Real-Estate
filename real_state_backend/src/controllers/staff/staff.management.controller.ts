@@ -91,3 +91,12 @@ export async function deleteStaff(req: Request, res: Response) {
     }
 };
 
+export async function getAllStaffs(req: Request, res: Response) {
+    try{
+        const staffs = await prisma.staff.findMany();
+        return res.status(200).json({ staffs });
+    } catch (error) {
+        console.error("Get all staffs error:", error);
+        return res.status(500).json({ message: "Internal server error" });
+    }
+};
