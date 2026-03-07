@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { prisma } from "../../config/prisma";
 import z from "zod";
-import { createExclusivePropertySchema } from "../../validators/property.validators";
+import { createExclusivePropertySchema, updateExclusivePropertySchema } from "../../validators/property.validators";
 export async function addBookMark(req: Request, res: Response) {
     try {
         const staffId = req.user?.id;
@@ -283,6 +283,77 @@ export async function createExclusiveProperty(req: Request, res: Response) {
         });
     } catch (error) {
         console.error("Create exclusive property error:", error);
+        return res.status(500).json({ message: "Internal server error" });
+    }
+}
+
+export async function updateExclusiveProperty(req: Request, res: Response) {
+    try {
+        const role = req.user?.role;
+        if (!req.user?.id || !role) {
+            return res.status(401).json({ message: "Unauthorized" });
+        }
+        if (!["SUPER_ADMIN"].includes(role)) {
+            return res.status(403).json({ message: "Forbidden" });
+        }
+
+        const { exclusivePropertyId } = req.params as { exclusivePropertyId: string };
+        if (!exclusivePropertyId) {
+            return res.status(400).json({ message: "exclusivePropertyId is required" });
+        }
+
+        type UpdateExclusiveInput = z.infer<typeof updateExclusivePropertySchema>;
+        const body = req.body as UpdateExclusiveInput;
+
+        const { media: bodyMedia, ...updateData } = body;
+
+        const existing = await prisma.exclusiveProperty.findUnique({
+            where: { id: exclusivePropertyId },
+            include: { media: true },
+        });
+        if (!existing) {
+            return res.status(404).json({ message: "Exclusive property not found" });
+        }
+
+        if (bodyMedia !== undefined) {
+            await prisma.exclusivePropertyMedia.deleteMany({
+                where: { exclusivePropertyId },
+            });
+        }
+
+        const exclusiveProperty = await prisma.exclusiveProperty.update({
+            where: { id: exclusivePropertyId },
+            data: {
+                ...updateData,
+                ...(bodyMedia !== undefined && bodyMedia.length > 0
+                    ? {
+                          media: {
+                              createMany: {
+                                  data: bodyMedia.map((m, index) => ({
+                                      url: m.url,
+                                      key: m.key,
+                                      mediaType: m.mediaType,
+                                      order: m.order ?? index,
+                                  })),
+                              },
+                          },
+                      }
+                    : {}),
+            },
+            include: {
+                sourceProperty: { select: { id: true, title: true, status: true } },
+                originalUser: { select: { id: true, firstName: true, lastName: true, email: true } },
+                media: true,
+            },
+        });
+
+        return res.status(200).json({
+            success: true,
+            message: "Exclusive property updated successfully",
+            data: exclusiveProperty,
+        });
+    } catch (error) {
+        console.error("Update exclusive property error:", error);
         return res.status(500).json({ message: "Internal server error" });
     }
 }
