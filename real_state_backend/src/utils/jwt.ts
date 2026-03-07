@@ -20,22 +20,21 @@ export interface StaffChallengePayload extends JwtPayload {
     purpose: "STAFF_2FA_CHALLENGE"
 }
 
-//sign access token 15 mins(short)
-
+//sign access token 7 days
 export function signAccessToken(payload: {
     id: string,
     role: string
 }){
-    return Jwt.sign(payload,ACCESS_TOKEN_SECRET,{expiresIn:'15m'})
+    return Jwt.sign(payload,ACCESS_TOKEN_SECRET,{expiresIn:'7d'})
 }
 
 
-//sign access token 7 days(long)
+//sign refresh token 28 days
 export function signRefreshToken(payload: {
     id: string,
     role: string
 }){
-    return Jwt.sign(payload,REFRESH_TOKEN_SECRET,{expiresIn:'7d'})
+    return Jwt.sign(payload,REFRESH_TOKEN_SECRET,{expiresIn:'28d'})
 }
 
 export function verifyAccessToken(token:string): TokenPayload {

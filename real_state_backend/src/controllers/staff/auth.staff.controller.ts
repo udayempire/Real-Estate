@@ -1,7 +1,7 @@
 import { prisma } from "../../config/prisma";
 import { Request, Response } from "express";
 import { comparePassword } from "../../utils/password";
-import { signAccessToken, signRefreshToken, signStaffChallengeToken, verifyStaffChallengeToken } from "../../utils/jwt";
+import { signAccessToken, signRefreshToken, signStaffChallengeToken, verifyRefreshToken, verifyStaffChallengeToken } from "../../utils/jwt";
 import speakeasy from "speakeasy";
 import QRCode from "qrcode";
 
@@ -256,8 +256,8 @@ export async function confirm2faSetup(req: Request, res: Response) {
             path: "/",
         };
 
-        res.cookie("accessToken", accessToken, { ...cookieOptions, maxAge: 30 * 60 * 1000 }); // 15 min
-        res.cookie("refreshToken", refreshToken, { ...cookieOptions, maxAge: 7 * 24 * 60 * 60 * 1000 }); // 7 days
+        res.cookie("accessToken", accessToken, { ...cookieOptions, maxAge: 7 * 24 * 60 * 60 * 1000 }); // 7 days
+        res.cookie("refreshToken", refreshToken, { ...cookieOptions, maxAge: 28 * 24 * 60 * 60 * 1000 }); // 28 days
 
         return res.status(200).json({
             message: "2FA setup confirmed",
@@ -319,8 +319,8 @@ export async function verify2fa(req: Request, res: Response) {
             path: "/",
         };
 
-        res.cookie("accessToken", accessToken, { ...cookieOptions, maxAge: 30 * 60 * 1000 }); // 15 min
-        res.cookie("refreshToken", refreshToken, { ...cookieOptions, maxAge: 7 * 24 * 60 * 60 * 1000 }); // 7 days
+        res.cookie("accessToken", accessToken, { ...cookieOptions, maxAge: 7 * 24 * 60 * 60 * 1000 }); // 7 days
+        res.cookie("refreshToken", refreshToken, { ...cookieOptions, maxAge: 28 * 24 * 60 * 60 * 1000 }); // 28 days
         res.cookie("role", user.role, { ...cookieOptions, maxAge: 7 * 24 * 60 * 60 * 1000 }); // 7 days
 
         return res.status(200).json({
@@ -358,6 +358,41 @@ export async function signout(req: Request, res: Response) {
         return res.status(200).json({ message: "Logged out successfully" });
     } catch (error) {
         console.error("signout error:", error);
+        return res.status(500).json({ error: "Internal server error" });
+    }
+}
+
+export async function refreshAccessToken(req: Request, res: Response) {
+    try {
+        // Read refreshToken from cookie (httpOnly) or body (backward compatibility)
+        const refreshToken = req.cookies?.refreshToken ?? req.body?.refreshToken;
+        if (!refreshToken) {
+            return res.status(401).json({ error: "Refresh token required" });
+        }
+
+        const payload = verifyRefreshToken(refreshToken);
+        if (!payload) {
+            return res.status(401).json({ error: "Invalid or expired refresh token" });
+        }
+
+        const newAccessToken = signAccessToken({ id: payload.id, role: payload.role! });
+
+        const isProd = process.env.NODE_ENV === "production";
+        const cookieOptions = {
+            httpOnly: true,
+            secure: isProd,
+            sameSite: "lax" as const,
+            path: "/",
+        };
+
+        res.cookie("accessToken", newAccessToken, { ...cookieOptions, maxAge: 7 * 24 * 60 * 60 * 1000 }); // 7 days
+
+        return res.status(200).json({
+            message: "Access token refreshed",
+            user: { id: payload.id, role: payload.role },
+        });
+    } catch (error) {
+        console.error("refreshAccessToken error:", error);
         return res.status(500).json({ error: "Internal server error" });
     }
 }
