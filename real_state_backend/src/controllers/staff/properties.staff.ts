@@ -447,18 +447,90 @@ export async function getAllProperties(req: Request, res: Response) {
         const page = Math.max(Number(req.query.page ?? 1), 1);
         const limit = Math.min(Math.max(Number(req.query.limit ?? 10), 1), 100);
         const skip = (page - 1) * limit;
+
+        const formatStatus = (status: string) => {
+            if (status === "ACTIVE") return "Active";
+            if (status === "UNLISTED") return "Unlisted";
+            if (status === "DRAFT") return "Pending";
+            if (status === "UNDER_ACQUISITION") return "Pending";
+            return "Sold";
+        };
+
+        const formatFurnishing = (value?: string | null) => {
+            if (!value) return "N/A";
+            return value.replace(/([a-z])([A-Z])/g, "$1 $2");
+        };
+
+        const formatPostedDate = (date: Date) =>
+            date.toLocaleDateString("en-GB", {
+                day: "2-digit",
+                month: "long",
+                year: "numeric",
+            });
+
+        const formatArea = (area?: string | null, carpetArea?: number | null, carpetAreaUnit?: string | null) => {
+            if (area) return area;
+            if (carpetArea) return `${carpetArea} ${carpetAreaUnit ?? ""}`.trim();
+            return "N/A";
+        };
+
+        const formatLocation = (subLocality?: string | null, locality?: string | null, city?: string | null) => {
+            const parts = [subLocality, locality, city].filter(Boolean);
+            return parts.length ? parts.join(", ") : "N/A";
+        };
+
         const [properties, total] = await Promise.all([
             prisma.property.findMany({
                 skip,
                 take: limit,
                 orderBy: { createdAt: "desc" },
-                include: { media: true, user: { select: { id: true, firstName: true, lastName: true, email: true, phone: true } } },
+                select: {
+                    id: true,
+                    title: true,
+                    listingPrice: true,
+                    area: true,
+                    carpetArea: true,
+                    carpetAreaUnit: true,
+                    numberOfRooms: true,
+                    numberOfBathrooms: true,
+                    numberOfBalcony: true,
+                    numberOfFloors: true,
+                    furnishingStatus: true,
+                    status: true,
+                    createdAt: true,
+                    subLocality: true,
+                    locality: true,
+                    city: true,
+                    media: {
+                        where: { mediaType: "IMAGE" },
+                        orderBy: { order: "asc" },
+                        take: 1,
+                        select: { url: true },
+                    },
+                },
             }),
             prisma.property.count(),
         ]);
+
+        const data = properties.map((property) => ({
+            id: property.id,
+            title: property.title,
+            location: formatLocation(property.subLocality, property.locality, property.city),
+            price: property.listingPrice != null ? String(property.listingPrice) : "N/A",
+            area: formatArea(property.area, property.carpetArea, property.carpetAreaUnit),
+            bedrooms: property.numberOfRooms ?? 0,
+            bathrooms: property.numberOfBathrooms ?? 0,
+            balconies: property.numberOfBalcony ?? 0,
+            floors: property.numberOfFloors ?? 0,
+            furnishing: formatFurnishing(property.furnishingStatus),
+            status: formatStatus(property.status),
+            imageUrl: property.media[0]?.url ?? "/largeBuilding2.png",
+            postedDate: formatPostedDate(property.createdAt),
+        }));
+
         return res.status(200).json({
             success: true,
-            data: properties,
+            data,
             pagination: { total, page, limit, totalPages: Math.ceil(total / limit) },
         });
     } catch (error) {

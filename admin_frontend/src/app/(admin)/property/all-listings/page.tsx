@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { Filter } from "@/components/appointments/filterAppointments"
 import { ExportButton } from "@/components/role_management/exportButton"
 import { Input } from "@/components/ui/input"
@@ -10,117 +10,63 @@ import { Button } from "@/components/ui/button"
 import { ArrowUpDown, ChevronDown } from "lucide-react"
 import type { PropertyCardData } from "@/components/properties/propertyCard"
 import type { PendingApprovalData } from "@/components/properties/pendingApprovalCard"
-
-const mockProperties: PropertyCardData[] = [
-    {
-        id: "1",
-        title: "3BHK Flat in Arera Colony",
-        location: "Arera Colony, Bhopal",
-        price: "42 Lakh",
-        area: "1440 sqft",
-        bedrooms: 3,
-        bathrooms: 2,
-        balconies: 1,
-        floors: 1,
-        furnishing: "Fully Furnished",
-        status: "Active",
-        imageUrl: "/largeBuilding2.png",
-        postedDate: "12 January, 2025",
-    },
-    {
-        id: "2",
-        title: "3BHK Flat in Arera Colony",
-        location: "Arera Colony, Bhopal",
-        price: "42 Lakh",
-        area: "1440 sqft",
-        bedrooms: 3,
-        bathrooms: 2,
-        balconies: 1,
-        floors: 1,
-        furnishing: "Fully Furnished",
-        status: "Active",
-        imageUrl: "/largeBuilding2.png",
-        postedDate: "12 January, 2025",
-        isFeatured: true,
-        gems: 44588,
-    },
-    {
-        id: "3",
-        title: "3BHK Flat in Arera Colony",
-        location: "Arera Colony, Bhopal",
-        price: "42 Lakh",
-        area: "1440 sqft",
-        bedrooms: 3,
-        bathrooms: 2,
-        balconies: 1,
-        floors: 1,
-        furnishing: "Semi Furnished",
-        status: "Active",
-        imageUrl: "/largeBuilding2.png",
-        postedDate: "12 January, 2025",
-    },
-    {
-        id: "4",
-        title: "3BHK Flat in Arera Colony",
-        location: "Arera Colony, Bhopal",
-        price: "42 Lakh",
-        area: "1440 sqft",
-        bedrooms: 3,
-        bathrooms: 2,
-        balconies: 1,
-        floors: 1,
-        furnishing: "Fully Furnished",
-        status: "Active",
-        imageUrl: "/largeBuilding2.png",
-        postedDate: "12 January, 2025",
-    },
-    {
-        id: "5",
-        title: "2BHK Apartment in MP Nagar",
-        location: "MP Nagar, Bhopal",
-        price: "35 Lakh",
-        area: "1100 sqft",
-        bedrooms: 2,
-        bathrooms: 1,
-        balconies: 1,
-        floors: 1,
-        furnishing: "Unfurnished",
-        status: "Sold",
-        imageUrl: "/largeBuilding2.png",
-        postedDate: "5 February, 2025",
-    },
-    {
-        id: "6",
-        title: "4BHK Villa in Hoshangabad Road",
-        location: "Hoshangabad Road, Bhopal",
-        price: "1.2 Cr",
-        area: "2800 sqft",
-        bedrooms: 4,
-        bathrooms: 3,
-        balconies: 2,
-        floors: 2,
-        furnishing: "Fully Furnished",
-        status: "Active",
-        imageUrl: "/largeBuilding2.png",
-        postedDate: "20 January, 2025",
-        isFeatured: true,
-        gems: 12500,
-    },
-]
+import { api } from "@/lib/api"
 
 const mockPendingApprovals: PendingApprovalData[] = [
     { id: "p1", title: "3BHK Villa in Arera Colony", location: "Arera Colony, Bhopal", imageUrl: "/smallBuilding.png" },
-    { id: "p2", title: "3BHK Villa in Arera Colony", location: "Arera Colony, Bhopal", imageUrl: "/largeBuilding.png" },
-    { id: "p3", title: "3BHK Villa in Arera Colony", location: "Arera Colony, Bhopal", imageUrl: "/largeBuilding.png" },
-    { id: "p4", title: "3BHK Villa in Arera Colony", location: "Arera Colony, Bhopal", imageUrl: "/largeBuilding.png" },
-    { id: "p5", title: "3BHK Villa in Arera Colony", location: "Arera Colony, Bhopal", imageUrl: "/largeBuilding.png" },
-    { id: "p6", title: "3BHK Villa in Arera Colony", location: "Arera Colony, Bhopal", imageUrl: "/largeBuilding.png" },
-    { id: "p6", title: "3BHK Villa in Arera Colony", location: "Arera Colony, Bhopal", imageUrl: "/largeBuilding.png" },
-    { id: "p6", title: "3BHK Villa in Arera Colony", location: "Arera Colony, Bhopal", imageUrl: "/largeBuilding.png" },
 ]
 
 export default function AllPropertiesPage() {
     const [globalFilter, setGlobalFilter] = useState("")
+    const [properties, setProperties] = useState<PropertyCardData[]>([])
+    const [isLoading, setIsLoading] = useState(false)
+    const [error, setError] = useState<string | null>(null)
+
+    useEffect(() => {
+        let isMounted = true
+
+        const loadProperties = async () => {
+            try {
+                setIsLoading(true)
+                setError(null)
+                const response = await api.get<{
+                    success: boolean
+                    data: PropertyCardData[]
+                }>("/staff/properties", {
+                    params: { page: 1, limit: 20 },
+                })
+
+                if (!isMounted) return
+                setProperties(response.data.data ?? [])
+            } catch (err) {
+                if (!isMounted) return
+                setError("Failed to load properties")
+                console.error("Failed to fetch properties:", err)
+            } finally {
+                if (isMounted) {
+                    setIsLoading(false)
+                }
+            }
+        }
+
+        loadProperties()
+        return () => {
+            isMounted = false
+        }
+    }, [])
+
+    const filteredProperties = useMemo(() => {
+        const query = globalFilter.trim().toLowerCase()
+        if (!query) return properties
+
+        return properties.filter((property) => {
+            return (
+                property.title.toLowerCase().includes(query) ||
+                property.location.toLowerCase().includes(query) ||
+                property.status.toLowerCase().includes(query)
+            )
+        })
+    }, [globalFilter, properties])
 
     return (
         <div>
@@ -145,7 +91,9 @@ export default function AllPropertiesPage() {
 
             <div className="flex gap-4 mt-4 px-2">
                 <div className="w-2/3">
-                    <PropertyGrid properties={mockProperties} />
+                    {isLoading && <p className="text-sm text-gray-500">Loading properties...</p>}
+                    {error && <p className="text-sm text-red-500">{error}</p>}
+                    {!isLoading && !error && <PropertyGrid properties={filteredProperties} />}
                 </div>
                 <div className="w-1/3">
                     <PendingApprovalList approvals={mockPendingApprovals} />
