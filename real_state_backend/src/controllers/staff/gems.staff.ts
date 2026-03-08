@@ -97,18 +97,18 @@ export async function previewGemAllocation(req: Request, res: Response) {
             return res.status(403).json({ message: "Forbidden" });
         }
 
-        const { userId, baseGems, propertyId } = req.body as {
+        const { userId, email, baseGems } = req.body as {
             userId?: string;
+            email?: string;
             baseGems?: number;
-            propertyId?: string;
         };
 
-        if (!userId || !baseGems || baseGems <= 0) {
-            return res.status(400).json({ message: "userId and positive baseGems are required" });
+        if ((!userId && !email) || !baseGems || baseGems <= 0) {
+            return res.status(400).json({ message: "userId or email and positive baseGems are required" });
         }
 
         const user = await prisma.user.findUnique({
-            where: { id: userId },
+            where: userId ? { id: userId } : { email: email as string },
             select: {
                 id: true,
                 firstName: true,
@@ -143,16 +143,6 @@ export async function previewGemAllocation(req: Request, res: Response) {
             });
         }
 
-        if (propertyId) {
-            const property = await prisma.property.findUnique({
-                where: { id: propertyId },
-                select: { id: true },
-            });
-            if (!property) {
-                return res.status(404).json({ message: "Property not found" });
-            }
-        }
-
         const referralPercent = 5;
         const referralGems = referralUser ? Math.floor(baseGems * 0.05) : 0;
         const totalGems = baseGems + referralGems;
@@ -164,7 +154,7 @@ export async function previewGemAllocation(req: Request, res: Response) {
                 referralPercent,
                 referralGems,
                 totalGems,
-                propertyId: propertyId ?? null,
+                propertyId: null,
                 targetUser: {
                     id: user.id,
                     firstName: user.firstName,
@@ -192,20 +182,20 @@ export async function sendGemOtp(req: Request, res: Response) {
             return res.status(403).json({ message: "Forbidden" });
         }
 
-        const { userId } = req.body as { userId?: string };
-        if (!userId) {
-            return res.status(400).json({ message: "userId is required" });
+        const { userId, email } = req.body as { userId?: string; email?: string };
+        if (!userId && !email) {
+            return res.status(400).json({ message: "userId or email is required" });
         }
 
         const user = await prisma.user.findUnique({
-            where: { id: userId },
+            where: userId ? { id: userId } : { email: email as string },
             select: { id: true, email: true, firstName: true },
         });
         if (!user) {
             return res.status(404).json({ message: "User not found" });
         }
 
-        const { code } = await createOtp(userId, "GEM_TXN");
+        const { code } = await createOtp(user.id, "GEM_TXN");
         await sendOtpEmail(user.email, code);
 
         return res.status(200).json({
@@ -214,7 +204,7 @@ export async function sendGemOtp(req: Request, res: Response) {
         });
     } catch (error) {
         console.error("Send gem OTP error:", error);
-        return res.status(500).json({ message: "Internal server error" });
+        return res.status(500).json({ message: "Internal server error" ,error});
     }
 }
 
@@ -229,17 +219,64 @@ export async function giveAcquisitionRewardToUser(req: Request, res: Response) {
             return res.status(403).json({ message: "Forbidden" });
         }
 
-        const { userId, baseGems, propertyId, otpCode, type, comment } = req.body as {
+        let actorStaffId = staffId;
+        if (role === "SUPER_ADMIN") {
+            const superAdmin = await prisma.superAdmin.findUnique({
+                where: { id: staffId },
+                select: {
+                    email: true,
+                    firstName: true,
+                    lastName: true,
+                    isActive: true,
+                },
+            });
+
+            if (!superAdmin) {
+                return res.status(401).json({ message: "Unauthorized" });
+            }
+
+            let requesterStaff = await prisma.staff.findFirst({
+                where: {
+                    OR: [
+                        { id: staffId },
+                        { email: superAdmin.email, role: "SUPER_ADMIN" },
+                    ],
+                },
+                select: { id: true },
+            });
+
+            if (!requesterStaff) {
+                requesterStaff = await prisma.staff.upsert({
+                    where: { email: superAdmin.email },
+                    update: {
+                        role: "SUPER_ADMIN",
+                        isActive: superAdmin.isActive,
+                    },
+                    create: {
+                        email: superAdmin.email,
+                        firstName: superAdmin.firstName ?? "Super",
+                        lastName: superAdmin.lastName ?? "Admin",
+                        role: "SUPER_ADMIN",
+                        isActive: superAdmin.isActive,
+                    },
+                    select: { id: true },
+                });
+            }
+
+            actorStaffId = requesterStaff.id;
+        }
+
+        const { userId, email, baseGems, otpCode, type, comment } = req.body as {
             userId?: string;
+            email?: string;
             baseGems?: number;
-            propertyId?: string;
             otpCode?: string;
             type?: GemRequestType;
             comment?: string;
         };
 
-        if (!userId || !baseGems || baseGems <= 0 || !otpCode) {
-            return res.status(400).json({ message: "userId, positive baseGems and otpCode are required" });
+        if ((!userId && !email) || !baseGems || baseGems <= 0 || !otpCode) {
+            return res.status(400).json({ message: "userId or email, positive baseGems and otpCode are required" });
         }
 
         const requestType = type ?? "EXCLUSIVE_ACQUISITION_REWARD";
@@ -251,7 +288,7 @@ export async function giveAcquisitionRewardToUser(req: Request, res: Response) {
         }
 
         const user = await prisma.user.findUnique({
-            where: { id: userId },
+            where: userId ? { id: userId } : { email: email as string },
             select: {
                 id: true,
                 firstName: true,
@@ -265,16 +302,8 @@ export async function giveAcquisitionRewardToUser(req: Request, res: Response) {
             return res.status(404).json({ message: "Target user not found" });
         }
 
-        if (propertyId) {
-            const property = await prisma.property.findUnique({
-                where: { id: propertyId },
-                select: { id: true },
-            });
-            if (!property) {
-                return res.status(404).json({ message: "Property not found" });
-            }
-        }
-        const otpResult = await verifyOtp(userId, otpCode, "GEM_TXN");
+        const targetUserId = user.id;
+        const otpResult = await verifyOtp(targetUserId, otpCode, "GEM_TXN");
         if (!otpResult.valid) {
             return res.status(400).json({ message: otpResult.message });
         }
@@ -300,39 +329,32 @@ export async function giveAcquisitionRewardToUser(req: Request, res: Response) {
                     data: {
                         type: requestType,
                         status: "APPROVED",
-                        requestedByStaffId: staffId,
-                        reviewedByStaffId: staffId,
-                        userId,
+                        requestedByStaffId: actorStaffId,
+                        reviewedByStaffId: actorStaffId,
+                        userId: targetUserId,
                         referralUserId,
-                        propertyId: propertyId ?? null,
+                        propertyId: null,
                         baseGems,
                         referralPercent,
                         referralGems,
                         totalGems,
                         comment: comment ?? null,
                         otpVerifiedAt: new Date(),
-                        otpVerifiedByStaffId: staffId,
+                        otpVerifiedByStaffId: actorStaffId,
                     },
                 });
 
                 await creditAndCreateTransactions(tx, {
                     id: createdRequest.id,
                     type: requestType,
-                    userId,
+                    userId: targetUserId,
                     referralUserId,
                     baseGems,
                     referralGems,
-                    requestedByStaffId: staffId,
+                    requestedByStaffId: actorStaffId,
                     reason: GemTxnReason.ACQUISITION_REWARD,
                     creditRefferee: true,
                 });
-
-                if (propertyId) {
-                    await tx.property.update({
-                        where: { id: propertyId },
-                        data: { status: "SOLDTOREALBRO" },
-                    });
-                }
 
                 return tx.gemRequest.findUnique({
                     where: { id: createdRequest.id },
@@ -377,17 +399,17 @@ export async function giveAcquisitionRewardToUser(req: Request, res: Response) {
             data: {
                 type: requestType,
                 status: "PENDING_SUPERADMIN",
-                requestedByStaffId: staffId,
-                userId,
+                requestedByStaffId: actorStaffId,
+                userId: targetUserId,
                 referralUserId,
-                propertyId: propertyId ?? null,
+                propertyId: null,
                 baseGems,
                 referralPercent,
                 referralGems,
                 totalGems,
                 comment: comment ?? null,
                 otpVerifiedAt: new Date(),
-                otpVerifiedByStaffId: staffId,
+                otpVerifiedByStaffId: actorStaffId,
             },
             include: {
                 user: {
@@ -425,7 +447,7 @@ export async function giveAcquisitionRewardToUser(req: Request, res: Response) {
         });
     } catch (error) {
         console.error("Give gems request error:", error);
-        return res.status(500).json({ message: "Internal server error" });
+        return res.status(500).json({ message: "Internal server error" ,error});
     }
 }
 
