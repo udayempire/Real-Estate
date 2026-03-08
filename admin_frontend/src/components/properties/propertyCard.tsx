@@ -3,6 +3,7 @@
 import { useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { useAuth } from "@/contexts/AuthContext"
@@ -70,6 +71,7 @@ const statusColors: Record<PropertyCardData["status"], string> = {
 }
 
 export function PropertyCard({ property, variant = "default", onEdit, onBuy, onMarkAsSold, onFavorite }: PropertyCardProps) {
+    const router = useRouter()
     const isExclusive = variant === "exclusive"
     const { user } = useAuth()
     const [buyDialogOpen, setBuyDialogOpen] = useState(false)
@@ -93,6 +95,15 @@ export function PropertyCard({ property, variant = "default", onEdit, onBuy, onM
     const propertyDetailsHref = isExclusive
         ? `/property/exclusive-listings/${property.id}`
         : `/property/${property.id}`
+    const handleEditClick = () => {
+        if (onEdit) {
+            onEdit(property.id)
+            return
+        }
+        if (isExclusive) {
+            router.push(`/property/exclusive-listings/${property.id}/edit`)
+        }
+    }
 
     return (
         <Card className="border py-0 gap-0 overflow-hidden">
@@ -194,11 +205,12 @@ export function PropertyCard({ property, variant = "default", onEdit, onBuy, onM
                         variant="outline"
                         size="sm"
                         className="flex-1 h-8 text-[11px] text-blue-600 border-blue-200 hover:bg-blue-50"
-                        onClick={() => onEdit?.(property.id)}
+                        onClick={handleEditClick}
                     >
                         <Pencil className="size-3 mr-1" />
                         Edit
                     </Button>
+
                     {isExclusive ? (
                         <Button
                             variant="outline"

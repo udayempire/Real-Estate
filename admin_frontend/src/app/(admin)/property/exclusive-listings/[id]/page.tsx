@@ -173,9 +173,8 @@ export default function PropertyPage() {
                 postedDate: "-",
             }
         }
-        const name = `${property.originalUser.firstName} ${property.originalUser.lastName}`.trim()
         return {
-            name: name || "RealBro",
+            name: "RealBro Exclusive",
             logoUrl: FALLBACK_IMAGE,
             isVerified: true,
             postedDate: new Date(property.createdAt).toLocaleDateString("en-GB", {

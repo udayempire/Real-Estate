@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button"
 import { Mail, Pencil, Bookmark, ShoppingCart, CheckCircle, EyeOff } from "lucide-react"
-import { useRouter, useParams } from "next/navigation"
+import { useRouter, useParams, usePathname } from "next/navigation"
 export type ActionBarVariant = "default" | "exclusive"
 
 interface PropertyActionBarProps {
@@ -30,7 +30,22 @@ export function PropertyActionBar({
 }: PropertyActionBarProps) {
     const isExclusive = variant === "exclusive"
     const router = useRouter()
-    const propertyId = useParams().id
+    const pathname = usePathname()
+    const params = useParams<{ id: string }>()
+    const propertyId = Array.isArray(params?.id) ? params.id[0] : params?.id
+    const handleEdit = () => {
+        if (onEdit) {
+            onEdit()
+            return
+        }
+        if (!propertyId) return
+        if (pathname?.includes("/property/exclusive-listings/")) {
+            router.push(`/property/exclusive-listings/${propertyId}/edit`)
+            return
+        }
+        router.push(`/property/all-listings/${propertyId}/edit`)
+    }
+
     return (
         <div className="space-y-4">
             <div className="flex items-center gap-2 mt-4">
@@ -46,7 +61,7 @@ export function PropertyActionBar({
                     variant="outline"
                     size="icon-sm"
                     className="border-2 shadow-none"
-                    onClick={onEdit}
+                    onClick={handleEdit}
                 >
                     <Pencil className="size-4" />
                 </Button>
@@ -100,7 +115,7 @@ export function PropertyActionBar({
             {showMakeExclusiveButton && (
                 <Button
                     className="bg-blue-600 hover:bg-blue-700"
-                    onClick={() => router.push(`/property/make-it-exclusive/${propertyId}`)}
+                    onClick={() => propertyId && router.push(`/property/make-it-exclusive/${propertyId}`)}
                 >
                     <CheckCircle className="size-3.5" />
                     Make It Exclusive

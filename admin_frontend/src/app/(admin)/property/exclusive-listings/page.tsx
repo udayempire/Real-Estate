@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
+import { useRouter } from "next/navigation"
 import { Filter } from "@/components/appointments/filterAppointments"
 import { ExportButton } from "@/components/role_management/exportButton"
 import { Input } from "@/components/ui/input"
@@ -40,6 +41,7 @@ type ExclusiveApiRow = {
 }
 
 export default function ExclusivePropertiesPage() {
+    const router = useRouter()
     const [globalFilter, setGlobalFilter] = useState("")
     const [exclusiveProperties, setExclusiveProperties] = useState<PropertyCardData[]>([])
     const [isLoading, setIsLoading] = useState(false)
@@ -150,6 +152,7 @@ export default function ExclusivePropertiesPage() {
                         <PropertyGrid
                             properties={filteredExclusiveProperties}
                             variant="exclusive"
+                            onEdit={(exclusivePropertyId) => router.push(`/property/exclusive-listings/${exclusivePropertyId}/edit`)}
                         />
                     )}
                 </div>
