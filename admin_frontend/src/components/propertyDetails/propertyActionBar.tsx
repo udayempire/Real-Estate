@@ -12,6 +12,7 @@ interface PropertyActionBarProps {
     onWhatsApp?: () => void
     onUnlist?: () => void
     onBookmark?: () => void
+    isBookmarked?: boolean
     onPrimaryAction?: () => void
 }
 
@@ -22,6 +23,7 @@ export function PropertyActionBar({
     onWhatsApp,
     onUnlist,
     onBookmark,
+    isBookmarked = false,
     onPrimaryAction,
 }: PropertyActionBarProps) {
     const isExclusive = variant === "exclusive"
@@ -67,8 +69,8 @@ export function PropertyActionBar({
                 className="border-2 shadow-none gap-1.5 text-xs"
                 onClick={onBookmark}
             >
-                <Bookmark className="size-3.5" />
-                Bookmark
+                <Bookmark className={`size-3.5 ${isBookmarked ? "fill-blue-600 text-blue-600" : "fill-none"}`} />
+                {isBookmarked ? "Bookmarked" : "Bookmark"}
             </Button>
             {isExclusive ? (
                 <Button

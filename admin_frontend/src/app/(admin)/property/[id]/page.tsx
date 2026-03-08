@@ -11,6 +11,7 @@ import { PropertyAbout } from "@/components/propertyDetails/propertyAbout"
 import type { BrokerInfoData } from "@/components/propertyDetails/propertyBrokerInfo"
 import type { PropertyDetailsPanelData } from "@/components/propertyDetails/propertyDetailsPanel"
 import { api } from "@/lib/api"
+import { fetchBookmarkedPropertyIds, toggleBookmark } from "@/lib/bookmarks"
 
 type PropertyResponse = {
     success: boolean
@@ -88,6 +89,7 @@ export default function PropertyPage() {
     const params = useParams<{ id: string }>()
     const propertyId = Array.isArray(params?.id) ? params.id[0] : params?.id
     const [property, setProperty] = useState<PropertyResponse["data"] | null>(null)
+    const [isBookmarked, setIsBookmarked] = useState(false)
     const [isLoading, setIsLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
 
@@ -103,9 +105,13 @@ export default function PropertyPage() {
             try {
                 setIsLoading(true)
                 setError(null)
-                const response = await api.get<PropertyResponse>(`/staff/properties/${propertyId}`)
+                const [response, bookmarkIds] = await Promise.all([
+                    api.get<PropertyResponse>(`/staff/properties/${propertyId}`),
+                    fetchBookmarkedPropertyIds(),
+                ])
                 if (!isMounted) return
                 setProperty(response.data.data)
+                setIsBookmarked(bookmarkIds.has(propertyId))
             } catch (err) {
                 if (!isMounted) return
                 setError("Failed to load property details")
@@ -122,6 +128,19 @@ export default function PropertyPage() {
             isMounted = false
         }
     }, [propertyId])
+
+    const handleToggleBookmark = async () => {
+        if (!property) return
+        const previous = isBookmarked
+        setIsBookmarked(!previous)
+        try {
+            const nowBookmarked = await toggleBookmark(property.id, previous)
+            setIsBookmarked(nowBookmarked)
+        } catch (err) {
+            setIsBookmarked(previous)
+            console.error("Failed to toggle bookmark:", err)
+        }
+    }
 
     const images = useMemo(() => {
         if (!property?.media?.length) return [FALLBACK_IMAGE]
@@ -209,7 +228,11 @@ export default function PropertyPage() {
                         gems={property.exclusiveProperty?.fixedRewardGems}
                     />
                     <PropertyBrokerInfo broker={broker} />
-                    <PropertyActionBar variant={property.exclusiveProperty ? "exclusive" : "default"} />
+                    <PropertyActionBar
+                        variant={property.exclusiveProperty ? "exclusive" : "default"}
+                        isBookmarked={isBookmarked}
+                        onBookmark={handleToggleBookmark}
+                    />
                 </div>
 
                 <div className="w-1/2">

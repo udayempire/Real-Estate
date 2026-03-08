@@ -13,13 +13,13 @@ import {
     Sun,
     Layers,
     Sofa,
-    Heart,
     MoreVertical,
     Pencil,
     ShoppingCart,
     CheckCircle,
     Gem,
     Crown,
+    Bookmark,
 } from "lucide-react"
 
 export interface PropertyCardData {
@@ -38,6 +38,7 @@ export interface PropertyCardData {
     postedDate: string
     isFeatured?: boolean
     gems?: number
+    isBookmarked?: boolean
 }
 
 export type PropertyCardVariant = "default" | "exclusive"
@@ -83,7 +84,9 @@ export function PropertyCard({ property, variant = "default", onEdit, onBuy, onM
                         onClick={() => onFavorite?.(property.id)}
                         className="h-7 w-7 rounded-full bg-white/80 flex items-center justify-center hover:bg-white transition"
                     >
-                        <Heart className="size-3.5 text-gray-600" />
+                        <Bookmark
+                            className={`size-3.5 ${property.isBookmarked ? "text-blue-600 fill-blue-600" : "fill-none"}`}
+                        />
                     </button>
                     <button className="h-7 w-7 rounded-full bg-black/50 flex items-center justify-center hover:bg-black/70 transition">
                         <MoreVertical className="size-3.5 text-white" />

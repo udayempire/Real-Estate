@@ -2,6 +2,57 @@ import { Request, Response } from "express";
 import { prisma } from "../../config/prisma";
 import z from "zod";
 import { createExclusivePropertySchema, updateExclusivePropertySchema } from "../../validators/property.validators";
+
+async function resolveStaffActorId(staffId: string, role: string): Promise<string | null> {
+    if (role !== "SUPER_ADMIN") {
+        return staffId;
+    }
+
+    const superAdmin = await prisma.superAdmin.findUnique({
+        where: { id: staffId },
+        select: {
+            email: true,
+            firstName: true,
+            lastName: true,
+            isActive: true,
+        },
+    });
+
+    if (!superAdmin) {
+        return null;
+    }
+
+    let requesterStaff = await prisma.staff.findFirst({
+        where: {
+            OR: [
+                { id: staffId },
+                { email: superAdmin.email, role: "SUPER_ADMIN" },
+            ],
+        },
+        select: { id: true },
+    });
+
+    if (!requesterStaff) {
+        requesterStaff = await prisma.staff.upsert({
+            where: { email: superAdmin.email },
+            update: {
+                role: "SUPER_ADMIN",
+                isActive: superAdmin.isActive,
+            },
+            create: {
+                email: superAdmin.email,
+                firstName: superAdmin.firstName ?? "Super",
+                lastName: superAdmin.lastName ?? "Admin",
+                role: "SUPER_ADMIN",
+                isActive: superAdmin.isActive,
+            },
+            select: { id: true },
+        });
+    }
+
+    return requesterStaff.id;
+}
+
 export async function addBookMark(req: Request, res: Response) {
     try {
         const staffId = req.user?.id;
@@ -12,6 +63,10 @@ export async function addBookMark(req: Request, res: Response) {
         if (!["ADMIN", "SUPER_ADMIN"].includes(role)) {
             return res.status(403).json({ message: "Forbidden" });
         }
+        const actorStaffId = await resolveStaffActorId(staffId, role);
+        if (!actorStaffId) {
+            return res.status(401).json({ message: "Unauthorized" });
+        }
         const { propertyId } = req.body as { propertyId: string };
         const property = await prisma.property.findUnique({
             where: { id: propertyId },
@@ -21,14 +76,14 @@ export async function addBookMark(req: Request, res: Response) {
             return res.status(404).json({ message: "Property not found" });
         }
         const bookmark = await prisma.staffPropertyBookmark.create({
-            data: { propertyId, staffId },
+            data: { propertyId, staffId: actorStaffId },
             select: { id: true },
         });
         return res.status(200).json({ message: "Bookmark added successfully", data: bookmark });
 
     } catch (error) {
         console.error("Add bookmark error:", error);
-        return res.status(500).json({ message: "Internal server error" });
+        return res.status(500).json({ message: "Internal server error",error });
     }
 };
 
@@ -42,6 +97,10 @@ export async function removeBookMark(req: Request, res: Response) {
         if (!["ADMIN", "SUPER_ADMIN"].includes(role)) {
             return res.status(403).json({ message: "Forbidden" });
         }
+        const actorStaffId = await resolveStaffActorId(staffId, role);
+        if (!actorStaffId) {
+            return res.status(401).json({ message: "Unauthorized" });
+        }
         const { propertyId } = req.body as { propertyId: string };
         const property = await prisma.property.findUnique({
             where: { id: propertyId },
@@ -51,7 +110,7 @@ export async function removeBookMark(req: Request, res: Response) {
             return res.status(404).json({ message: "Property not found" });
         }
         const bookmark = await prisma.staffPropertyBookmark.delete({
-            where: { staffId_propertyId: { staffId, propertyId } },
+            where: { staffId_propertyId: { staffId: actorStaffId, propertyId } },
             select: { id: true },
         });
         return res.status(200).json({ message: "Bookmark removed successfully", data: bookmark });
@@ -71,8 +130,12 @@ export async function getBookMarks(req: Request, res: Response) {
         if (!["ADMIN", "SUPER_ADMIN"].includes(role)) {
             return res.status(403).json({ message: "Forbidden" });
         }
+        const actorStaffId = await resolveStaffActorId(staffId, role);
+        if (!actorStaffId) {
+            return res.status(401).json({ message: "Unauthorized" });
+        }
         const bookmarks = await prisma.staffPropertyBookmark.findMany({
-            where: { staffId },
+            where: { staffId: actorStaffId },
             select: { id: true, property: { select: { id: true, title: true, status: true } } },
         });
         return res.status(200).json({ message: "Bookmarks fetched successfully", data: bookmarks });

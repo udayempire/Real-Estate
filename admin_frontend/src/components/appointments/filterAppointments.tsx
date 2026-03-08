@@ -1,15 +1,21 @@
 import { Button } from "@/components/ui/button"
 import {
     DropdownMenu,
+  DropdownMenuCheckboxItem,
     DropdownMenuContent,
     DropdownMenuGroup,
     DropdownMenuItem,
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { ChevronDown, Settings2Icon } from "lucide-react"
+import { Bookmark, ChevronDown, Settings2Icon } from "lucide-react"
 
-export function Filter() {
+interface FilterProps {
+    showOnlyBookmarked?: boolean
+    onToggleBookmarked?: (checked: boolean) => void
+}
+
+export function Filter({ showOnlyBookmarked = false, onToggleBookmarked }: FilterProps) {
     return (
         <div>
             <DropdownMenu>
@@ -22,6 +28,19 @@ export function Filter() {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-44">
                     <DropdownMenuGroup>
+                        {onToggleBookmarked && (
+                            <>
+                                <DropdownMenuCheckboxItem
+                                    checked={showOnlyBookmarked}
+                                    onCheckedChange={(checked) => onToggleBookmarked(Boolean(checked))}
+                                    className="font-medium text-start"
+                                >
+                                    <span><Bookmark className="size-3.5 text-gray-600" /></span>
+                                Bookmark
+                                </DropdownMenuCheckboxItem>
+                                <DropdownMenuSeparator />
+                            </>
+                        )}
                         <DropdownMenuItem className="font-medium">Completed</DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem className="font-medium">Rejected</DropdownMenuItem>

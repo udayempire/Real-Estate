@@ -11,6 +11,7 @@ import { ArrowUpDown, ChevronDown } from "lucide-react"
 import type { PropertyCardData } from "@/components/properties/propertyCard"
 import type { PendingApprovalData } from "@/components/properties/pendingApprovalCard"
 import { api } from "@/lib/api"
+import { fetchBookmarkedPropertyIds, toggleBookmark } from "@/lib/bookmarks"
 
 const mockPendingApprovals: PendingApprovalData[] = [
     { id: "p1", title: "3BHK Villa in Arera Colony", location: "Arera Colony, Bhopal", imageUrl: "/smallBuilding.png" },
@@ -18,7 +19,9 @@ const mockPendingApprovals: PendingApprovalData[] = [
 
 export default function AllPropertiesPage() {
     const [globalFilter, setGlobalFilter] = useState("")
+    const [showOnlyBookmarked, setShowOnlyBookmarked] = useState(false)
     const [properties, setProperties] = useState<PropertyCardData[]>([])
+    const [bookmarkedIds, setBookmarkedIds] = useState<Set<string>>(new Set())
     const [isLoading, setIsLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
 
@@ -29,15 +32,19 @@ export default function AllPropertiesPage() {
             try {
                 setIsLoading(true)
                 setError(null)
-                const response = await api.get<{
-                    success: boolean
-                    data: PropertyCardData[]
-                }>("/staff/properties", {
-                    params: { page: 1, limit: 20 },
-                })
+                const [propertiesResponse, bookmarkIds] = await Promise.all([
+                    api.get<{
+                        success: boolean
+                        data: PropertyCardData[]
+                    }>("/staff/properties", {
+                        params: { page: 1, limit: 20 },
+                    }),
+                    fetchBookmarkedPropertyIds(),
+                ])
 
                 if (!isMounted) return
-                setProperties(response.data.data ?? [])
+                setProperties(propertiesResponse.data.data ?? [])
+                setBookmarkedIds(bookmarkIds)
             } catch (err) {
                 if (!isMounted) return
                 setError("Failed to load properties")
@@ -57,16 +64,51 @@ export default function AllPropertiesPage() {
 
     const filteredProperties = useMemo(() => {
         const query = globalFilter.trim().toLowerCase()
-        if (!query) return properties
+        const withBookmarkState = properties.map((property) => ({
+            ...property,
+            isBookmarked: bookmarkedIds.has(property.id),
+        }))
+        const filteredByBookmark = showOnlyBookmarked
+            ? withBookmarkState.filter((property) => property.isBookmarked)
+            : withBookmarkState
+        if (!query) return filteredByBookmark
 
-        return properties.filter((property) => {
+        return filteredByBookmark.filter((property) => {
             return (
                 property.title.toLowerCase().includes(query) ||
                 property.location.toLowerCase().includes(query) ||
                 property.status.toLowerCase().includes(query)
             )
         })
-    }, [globalFilter, properties])
+    }, [globalFilter, properties, bookmarkedIds, showOnlyBookmarked])
+
+    const handleToggleBookmark = async (propertyId: string) => {
+        const currentlyBookmarked = bookmarkedIds.has(propertyId)
+        setBookmarkedIds((prev) => {
+            const next = new Set(prev)
+            if (currentlyBookmarked) next.delete(propertyId)
+            else next.add(propertyId)
+            return next
+        })
+
+        try {
+            const nowBookmarked = await toggleBookmark(propertyId, currentlyBookmarked)
+            setBookmarkedIds((prev) => {
+                const next = new Set(prev)
+                if (nowBookmarked) next.add(propertyId)
+                else next.delete(propertyId)
+                return next
+            })
+        } catch (err) {
+            setBookmarkedIds((prev) => {
+                const next = new Set(prev)
+                if (currentlyBookmarked) next.add(propertyId)
+                else next.delete(propertyId)
+                return next
+            })
+            console.error("Failed to toggle bookmark:", err)
+        }
+    }
 
     return (
         <div>
@@ -80,7 +122,10 @@ export default function AllPropertiesPage() {
                         className="h-10 pl-9 border-2 bg-white"
                     />
                     <ExportButton />
-                    <Filter />
+                    <Filter
+                        showOnlyBookmarked={showOnlyBookmarked}
+                        onToggleBookmarked={(checked) => setShowOnlyBookmarked(checked)}
+                    />
                     <Button variant="outline" className="hover:bg-zinc-50 gap-2 shadow-none border-2 h-10">
                         <ArrowUpDown className="size-4 text-blue-500" />
                         Sort by
@@ -93,7 +138,7 @@ export default function AllPropertiesPage() {
                 <div className="w-2/3">
                     {isLoading && <p className="text-sm text-gray-500">Loading properties...</p>}
                     {error && <p className="text-sm text-red-500">{error}</p>}
-                    {!isLoading && !error && <PropertyGrid properties={filteredProperties} />}
+                    {!isLoading && !error && <PropertyGrid properties={filteredProperties} onFavorite={handleToggleBookmark} />}
                 </div>
                 <div className="w-1/3">
                     <PendingApprovalList approvals={mockPendingApprovals} />
