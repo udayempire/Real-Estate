@@ -143,7 +143,7 @@ export default function AllPropertiesPage() {
     return (
         <div>
             <div className="flex items-center justify-between">
-                <h1 className="font-medium text-xl p-2 pl-4">All Listings</h1>
+                <h1 className="font-medium text-xl p-2 pl-4">User&apos;s Listings</h1>
                 <div className="flex items-center gap-4">
                     <Input
                         placeholder="Search Anything"
