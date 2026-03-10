@@ -23,7 +23,7 @@ import {
 import { Search, SlidersHorizontal, ArrowUpDown, ChevronDown } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { DataTablePagination } from "@/components/ui/data-table-pagination"
-import { ExportButton } from "@/components/role_management/exportButton"
+import { ExportButton, type ExportColumn } from "@/components/role_management/exportButton"
 
 interface DataTableProps<TData, TValue> {
     columns: ColumnDef<TData, TValue>[]
@@ -59,6 +59,13 @@ export function BlockedUsersDataTable<TData, TValue>({
         },
     })
 
+    const blockedUsersExportColumns: ExportColumn[] = [
+        { key: "username", header: "User Name" },
+        { key: "email", header: "Email" },
+        { key: "blockedOn", header: "Blocked On" },
+    ]
+    const exportData = table.getFilteredRowModel().rows.map((r) => r.original as Record<string, unknown>)
+
     return (
         <div>
             <div className="flex justify-between items-center py-4 gap-4">
@@ -73,17 +80,21 @@ export function BlockedUsersDataTable<TData, TValue>({
                             className="h-10 pl-9 border-2 bg-white"
                         />
                     </div>
-                    <ExportButton />
+                    <ExportButton
+                        data={exportData}
+                        columns={blockedUsersExportColumns}
+                        filename="blocked-users"
+                    />
                     <Button variant="outline" className="gap-2 shadow-none border-2 h-10">
                         <SlidersHorizontal className="size-4" />
                         Filters
                         <ChevronDown className="size-4" />
                     </Button>
-                    <Button variant="outline" className="gap-2 shadow-none border-2 h-10">
+                    {/* <Button variant="outline" className="gap-2 shadow-none border-2 h-10">
                         <ArrowUpDown className="size-4" />
                         Sort by
                         <ChevronDown className="size-4" />
-                    </Button>
+                    </Button> */}
                 </div>
             </div>
             <div className="overflow-hidden rounded-md border">
