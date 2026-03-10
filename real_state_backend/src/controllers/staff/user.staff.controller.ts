@@ -48,7 +48,8 @@ export async function getAllUsers(req: Request, res: Response) {
                 }
             }
         })
-        return res.status(200).json({ users: userWithStats });
+        const usersNotBlocked = userWithStats.filter((u) => !u.isBlocked);
+        return res.status(200).json({ users: usersNotBlocked });
     } catch (error) {
         console.error("Get all users error:", error);
         return res.status(500).json({ message: "Internal server error" });
