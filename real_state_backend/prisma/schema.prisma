@@ -48,6 +48,7 @@ model Staff {
   twoFactorSecret      String?
   isTwoFactorEnabled   Boolean          @default(false)
   isActive             Boolean          @default(true)
+  isBlocked            Boolean          @default(false)
   createdAt            DateTime         @default(now())
   updatedAt            DateTime         @updatedAt
   requestedGemRequests GemRequest[]     @relation("GemRequestedBy")

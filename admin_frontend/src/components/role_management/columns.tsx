@@ -3,7 +3,7 @@
 import { ColumnDef } from "@tanstack/react-table"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
-import { Eye, Pencil, Trash2, OctagonMinus } from "lucide-react"
+import { Pencil, Trash2, OctagonMinus, ShieldCheck } from "lucide-react"
 import { ArrowUpDown } from "lucide-react"
 
 export type RoleManagement = {
@@ -11,10 +11,16 @@ export type RoleManagement = {
     username: string;
     email: string;
     role: string;
+    isActive: boolean;
     blockDate?: string;
 }
 
-export const columns: ColumnDef<RoleManagement>[] = [
+interface ColumnActions {
+    onBlock: (staff: RoleManagement) => void;
+    onDelete: (staff: RoleManagement) => void;
+}
+
+export const getColumns = ({ onBlock, onDelete }: ColumnActions): ColumnDef<RoleManagement>[] => [
     {
         accessorKey: "username",
         header: ({ column }) => {
@@ -77,14 +83,6 @@ export const columns: ColumnDef<RoleManagement>[] = [
 
             return (
                 <div className="flex items-center gap-1">
-                    {/* <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-blue-600 hover:text-blue-800 hover:bg-blue-100"
-                        onClick={() => console.log("View", user)}
-                    >
-                        <Eye className="size-4" />
-                    </Button> */}
                     <Link
                         href={`/role-management/edit-staff/${user.id}`}
                         className="inline-flex items-center justify-center h-8 w-8 rounded-md text-amber-600 hover:text-amber-800 hover:bg-amber-100"
@@ -94,16 +92,23 @@ export const columns: ColumnDef<RoleManagement>[] = [
                     <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8 text-orange-600 hover:text-orange-800 hover:bg-orange-100"
-                        onClick={() => console.log("Block", user)}
+                        className={`h-8 w-8 ${user.isActive
+                            ? "text-orange-600 hover:text-orange-800 hover:bg-orange-100"
+                            : "text-green-600 hover:text-green-800 hover:bg-green-100"
+                            }`}
+                        onClick={() => onBlock(user)}
                     >
-                        <OctagonMinus className="size-4" />
+                        {user.isActive ? (
+                            <OctagonMinus className="size-4" />
+                        ) : (
+                            <ShieldCheck className="size-4" />
+                        )}
                     </Button>
                     <Button
                         variant="ghost"
                         size="icon"
                         className="h-8 w-8 text-red-600 hover:text-red-800 hover:bg-red-100"
-                        onClick={() => console.log("Delete", user)}
+                        onClick={() => onDelete(user)}
                     >
                         <Trash2 className="size-4" />
                     </Button>

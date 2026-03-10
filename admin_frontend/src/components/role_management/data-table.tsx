@@ -30,8 +30,15 @@ import { Search, PenLineIcon } from "lucide-react";
 import { Button } from "../ui/button";
 
 import { DataTablePagination } from "../ui/data-table-pagination"
-import { ExportButton } from "./exportButton";
+import { ExportButton, type ExportColumn } from "./exportButton";
 import { useRouter } from "next/navigation";
+
+const exportColumns: ExportColumn[] = [
+    { key: "username", header: "User Name" },
+    { key: "email", header: "Email" },
+    { key: "role", header: "Role" },
+    { key: "blockDate", header: "Block Date" },
+]
 
 export function DataTable<TData, TValue>({
     columns,
@@ -78,7 +85,11 @@ export function DataTable<TData, TValue>({
                             className="h-10 pl-9 border-2 bg-white"
                         />
                     </div>
-                    <ExportButton />
+                    <ExportButton
+                        data={data as Record<string, unknown>[]}
+                        columns={exportColumns}
+                        filename="admin-staff"
+                    />
                     <Button onClick={() => {
                         router.push("/role-management/add-new-staff");
                     }}>
