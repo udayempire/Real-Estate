@@ -61,15 +61,29 @@ export default function FinancialsPage() {
 
                 if (!isMounted) return;
 
-                const mapped = response.data.data.map((txn) => ({
-                    userName: txn.user,
-                    purpose: toTitleCase(txn.reason),
-                    staffHandler: txn.staffHandler,
-                    amount: txn.amount.toLocaleString(),
-                    details: new Date(txn.createdAt).toLocaleString(),
-                    status: txn.details.txnType === "CREDIT" ? "Completed" : "Pending",
-                    propertyId: txn.propertyId ?? null,
-                }));
+                const mapped = response.data.data.map((txn) => {
+                    const isDebit = txn.details.txnType === "DEBIT";
+                    const amountStr = isDebit
+                        ? `-${txn.amount.toLocaleString()}`
+                        : txn.amount.toLocaleString();
+                    const reasonLabels: Record<string, string> = {
+                        GEM_REDEEM: "Gem Redeem",
+                        REFERRAL_BONUS_5_PERCENT: "Referral Reward",
+                        ACQUISITION_REWARD: "Exclusive Acquisition Reward",
+                        EXCLUSIVE_SALE_REWARD: "Exclusive Sale Reward",
+                    };
+                    const purposeLabel =
+                        reasonLabels[txn.reason] ?? toTitleCase(txn.reason);
+                    return {
+                        userName: txn.user,
+                        purpose: purposeLabel,
+                        staffHandler: txn.staffHandler,
+                        amount: amountStr,
+                        details: new Date(txn.createdAt).toLocaleString(),
+                        status: txn.details.txnType === "CREDIT" ? "Completed" : "Completed",
+                        propertyId: txn.propertyId ?? null,
+                    };
+                });
 
                 setData(mapped);
             } catch (err) {

@@ -73,3 +73,37 @@ export async function creditAndCreateTransactions(tx: Tx, request: {
         };
     }
 }
+
+export async function debitAndCreateTransaction(tx: Tx, request: {
+    requestId: string;
+    userId: string;
+    amount: number;
+    requestedByStaffId: string;
+    reason: GemTxnReason;
+}) {
+    const userBefore = await tx.user.findUnique({
+        where: { id: request.userId },
+        select: { points: true },
+    });
+    if (!userBefore) throw new Error("User not found");
+    if (userBefore.points < request.amount) throw new Error("Insufficient gems");
+
+    const userAfter = await tx.user.update({
+        where: { id: request.userId },
+        data: { points: { decrement: request.amount } },
+        select: { points: true },
+    });
+
+    await tx.gemTransaction.create({
+        data: {
+            userId: request.userId,
+            requestId: request.requestId,
+            txnType: "DEBIT",
+            reason: request.reason,
+            amount: request.amount,
+            balanceBefore: userBefore.points,
+            balanceAfter: userAfter.points,
+            createdByStaffId: request.requestedByStaffId,
+        },
+    });
+}

@@ -13,14 +13,14 @@ import type { PropertyCardData } from "@/components/properties/propertyCard"
 import type { PendingApprovalData } from "@/components/properties/pendingApprovalCard"
 import { api } from "@/lib/api"
 
-const mockPendingExclusiveApprovals: PendingApprovalData[] = [
-    { id: "p1", title: "3BHK Villa in Arera Colony", location: "Arera Colony, Bhopal", imageUrl: "/smallBuilding.png" },
-    { id: "p2", title: "3BHK Villa in Arera Colony", location: "Arera Colony, Bhopal", imageUrl: "/largeBuilding.png" },
-    { id: "p3", title: "3BHK Villa in Arera Colony", location: "Arera Colony, Bhopal", imageUrl: "/largeBuilding.png" },
-    { id: "p4", title: "3BHK Villa in Arera Colony", location: "Arera Colony, Bhopal", imageUrl: "/largeBuilding.png" },
-    { id: "p5", title: "3BHK Villa in Arera Colony", location: "Arera Colony, Bhopal", imageUrl: "/largeBuilding.png" },
-    { id: "p6", title: "3BHK Villa in Arera Colony", location: "Arera Colony, Bhopal", imageUrl: "/largeBuilding.png" },
-]
+// const mockPendingExclusiveApprovals: PendingApprovalData[] = [
+//     { id: "p1", title: "3BHK Villa in Arera Colony", location: "Arera Colony, Bhopal", imageUrl: "/smallBuilding.png" },
+//     { id: "p2", title: "3BHK Villa in Arera Colony", location: "Arera Colony, Bhopal", imageUrl: "/largeBuilding.png" },
+//     { id: "p3", title: "3BHK Villa in Arera Colony", location: "Arera Colony, Bhopal", imageUrl: "/largeBuilding.png" },
+//     { id: "p4", title: "3BHK Villa in Arera Colony", location: "Arera Colony, Bhopal", imageUrl: "/largeBuilding.png" },
+//     { id: "p5", title: "3BHK Villa in Arera Colony", location: "Arera Colony, Bhopal", imageUrl: "/largeBuilding.png" },
+//     { id: "p6", title: "3BHK Villa in Arera Colony", location: "Arera Colony, Bhopal", imageUrl: "/largeBuilding.png" },
+// ]
 
 type ExclusiveApiRow = {
     id: string
@@ -145,7 +145,7 @@ export default function ExclusivePropertiesPage() {
             </div>
 
             <div className="flex gap-4 mt-4 px-2">
-                <div className="w-2/3">
+                <div>
                     {isLoading && <p className="text-sm text-gray-500">Loading exclusive properties...</p>}
                     {error && <p className="text-sm text-red-500">{error}</p>}
                     {!isLoading && !error && (
@@ -156,12 +156,12 @@ export default function ExclusivePropertiesPage() {
                         />
                     )}
                 </div>
-                <div className="w-1/3">
+                {/* <div className="w-1/3">
                     <PendingApprovalList
                         title="Pending Exclusive Approvals"
                         approvals={mockPendingExclusiveApprovals}
                     />
-                </div>
+                </div> */}
             </div>
         </div>
     )

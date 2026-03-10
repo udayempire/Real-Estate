@@ -13,8 +13,8 @@ interface PropertyGridProps {
 
 export function PropertyGrid({ properties, variant = "default", onEdit, onBuy, onMarkAsSold, onFavorite }: PropertyGridProps) {
     return (
-        <div className="overflow-y-auto pr-2" style={{ maxHeight: "calc(100vh - 140px)" }}>
-            <div className="grid grid-cols-2 gap-4">
+        <div className=" pr-2" style={{ maxHeight: "calc(100vh - 140px)" }}>
+            <div className="grid grid-cols-3 gap-4">
                 {properties.map((property) => (
                     <PropertyCard
                         key={property.id}

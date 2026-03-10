@@ -5,17 +5,17 @@ import { Filter } from "@/components/appointments/filterAppointments"
 import { ExportButton } from "@/components/role_management/exportButton"
 import { Input } from "@/components/ui/input"
 import { PropertyGrid } from "@/components/properties/propertyGrid"
-import { PendingApprovalList } from "@/components/properties/pendingApprovalList"
+// import { PendingApprovalList } from "@/components/properties/pendingApprovalList"
 import { Button } from "@/components/ui/button"
 import { ArrowUpDown, ChevronDown } from "lucide-react"
 import type { PropertyCardData } from "@/components/properties/propertyCard"
-import type { PendingApprovalData } from "@/components/properties/pendingApprovalCard"
+// import type { PendingApprovalData } from "@/components/properties/pendingApprovalCard"
 import { api } from "@/lib/api"
 import { fetchBookmarkedPropertyIds, toggleBookmark } from "@/lib/bookmarks"
 
-const mockPendingApprovals: PendingApprovalData[] = [
-    { id: "p1", title: "3BHK Villa in Arera Colony", location: "Arera Colony, Bhopal", imageUrl: "/smallBuilding.png" },
-]
+// const mockPendingApprovals: PendingApprovalData[] = [
+//     { id: "p1", title: "3BHK Villa in Arera Colony", location: "Arera Colony, Bhopal", imageUrl: "/smallBuilding.png" },
+// ]
 
 export default function AllPropertiesPage() {
     const [globalFilter, setGlobalFilter] = useState("")
@@ -149,7 +149,7 @@ export default function AllPropertiesPage() {
             </div>
 
             <div className="flex gap-4 mt-4 px-2">
-                <div className="w-2/3">
+                <div className="w-full">
                     {actionMessage && <p className="text-sm text-blue-600 mb-2">{actionMessage}</p>}
                     {isLoading && <p className="text-sm text-gray-500">Loading properties...</p>}
                     {error && <p className="text-sm text-red-500">{error}</p>}
@@ -161,9 +161,9 @@ export default function AllPropertiesPage() {
                         />
                     )}
                 </div>
-                <div className="w-1/3">
+                {/* <div className="w-1/3">
                     <PendingApprovalList approvals={mockPendingApprovals} />
-                </div>
+                </div> */}
             </div>
         </div>
     )

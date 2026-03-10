@@ -6,7 +6,7 @@ import { Input } from "../ui/input"
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Button } from "@/components/ui/button"
-import { X, Trash2, Pencil, OctagonMinus, XIcon } from "lucide-react"
+import { Pencil, OctagonMinus, XIcon } from "lucide-react"
 import { Label } from "@/components/ui/label"
 
 const roles = [
@@ -14,11 +14,6 @@ const roles = [
         value: "admin",
         label: "Admin",
         description: "Limited control. Can have view and add access for everything.",
-    },
-    {
-        value: "viewer",
-        label: "Viewer",
-        description: "No control. Only to manage and maintain.",
     },
     {
         value: "customer-support",
@@ -31,10 +26,6 @@ export function EditStaff() {
     return (
         <div className="p-6">
             <Card className="relative max-w-5xl">
-                <button className="absolute right-5 top-5 text-gray-400 hover:text-gray-600 cursor-pointer">
-                    <X className="size-6" />
-                </button>
-
                 <CardHeader className="pb-0">
                     <CardTitle className="text-xl font-semibold">
                         Edit Details

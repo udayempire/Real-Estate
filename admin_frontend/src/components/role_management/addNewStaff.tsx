@@ -6,7 +6,7 @@ import { Input } from "../ui/input"
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Button } from "@/components/ui/button"
-import { X, Trash2, Pencil } from "lucide-react"
+import { Trash2, Pencil } from "lucide-react"
 import { Label } from "@/components/ui/label"
 import { api } from "@/lib/api";
 import { AxiosError } from "axios";
@@ -19,11 +19,6 @@ const roles = [
         value: "ADMIN",
         label: "Admin",
         description: "Limited control. Can have view and add access for everything.",
-    },
-    {
-        value: "VIEWER",
-        label: "Viewer",
-        description: "No control. Only to manage and maintain.",
     },
     {
         value: "CUSTOMER_SUPPORT",
@@ -100,7 +95,6 @@ export function AddNewStaff() {
         <div className="p-6">
             <Card className="relative max-w-5xl">
                 <button className="absolute right-5 top-5 text-gray-400 hover:text-gray-600 cursor-pointer">
-                    <X className="size-6" />
                 </button>
 
                 <CardHeader className="pb-0">

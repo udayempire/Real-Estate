@@ -20,7 +20,7 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table"
-import { Search, SlidersHorizontal, ArrowUpDown, ChevronDown } from "lucide-react"
+import { Search, SlidersHorizontal, ChevronDown } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { DataTablePagination } from "@/components/ui/data-table-pagination"
 import { ExportButton, type ExportColumn } from "@/components/role_management/exportButton"

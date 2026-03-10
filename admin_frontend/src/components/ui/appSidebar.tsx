@@ -27,6 +27,7 @@ import {
     BarChart2,
     Home,
     LucideTickets,
+    Clock4Icon,
 } from "lucide-react"
 
 import {
@@ -43,8 +44,9 @@ const items = [
         url: "#",
         icon: Building2,
         children: [
-            { title: "All Listings", url: "/property/all-listings", icon: Home },
+            { title: "User's Listings", url: "/property/all-listings", icon: Home },
             { title: "Exclusive Listings", url: "/property/exclusive-listings", icon: Crown },
+            { title: "Pending Approvals", url: "/property/pending-approvals", icon: Clock4Icon},
         ],
     },
     {

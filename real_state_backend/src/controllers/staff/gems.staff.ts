@@ -365,7 +365,9 @@ export async function giveAcquisitionRewardToUser(req: Request, res: Response) {
                     baseGems,
                     referralGems,
                     requestedByStaffId: actorStaffId,
-                    reason: GemTxnReason.ACQUISITION_REWARD,
+                    reason: requestType === "EXCLUSIVE_SALE_REWARD"
+                        ? GemTxnReason.EXCLUSIVE_SALE_REWARD
+                        : GemTxnReason.ACQUISITION_REWARD,
                     creditRefferee: true,
                 });
 
@@ -821,6 +823,57 @@ export async function allGemTransactionHistory(req: Request, res: Response) {
         });
     } catch (error) {
         console.error("All gem transaction history error:", error);
+        return res.status(500).json({ message: "Internal server error" });
+    }
+}
+
+export async function getGemStats(req: Request, res: Response) {
+    try {
+        const role = req.user?.role;
+        if (!req.user?.id || !role) return res.status(401).json({ message: "Unauthorized" });
+        if (!["ADMIN", "SUPER_ADMIN"].includes(role)) return res.status(403).json({ message: "Forbidden" });
+
+        const [
+            redemptionResult,
+            allocatedResult,
+            referralResult,
+            acquisitionResult,
+            exclusiveSaleResult,
+        ] = await Promise.all([
+            prisma.gemTransaction.aggregate({
+                where: { reason: "GEM_REDEEM" },
+                _sum: { amount: true },
+            }),
+            prisma.gemTransaction.aggregate({
+                where: { txnType: "CREDIT" },
+                _sum: { amount: true },
+            }),
+            prisma.gemTransaction.aggregate({
+                where: { reason: "REFERRAL_BONUS_5_PERCENT" },
+                _sum: { amount: true },
+            }),
+            prisma.gemTransaction.aggregate({
+                where: { reason: "ACQUISITION_REWARD" },
+                _sum: { amount: true },
+            }),
+            prisma.gemTransaction.aggregate({
+                where: { reason: "EXCLUSIVE_SALE_REWARD" },
+                _sum: { amount: true },
+            }),
+        ]);
+
+        return res.status(200).json({
+            success: true,
+            data: {
+                totalGemRedemptionValue: redemptionResult._sum.amount ?? 0,
+                totalGemsAllocated: allocatedResult._sum.amount ?? 0,
+                totalReferralReward: referralResult._sum.amount ?? 0,
+                totalAcquisitionReward: acquisitionResult._sum.amount ?? 0,
+                totalExclusiveSaleReward: exclusiveSaleResult._sum.amount ?? 0,
+            },
+        });
+    } catch (error) {
+        console.error("Get gem stats error:", error);
         return res.status(500).json({ message: "Internal server error" });
     }
 }

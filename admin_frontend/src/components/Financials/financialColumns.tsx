@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation"
 import { ColumnDef } from "@tanstack/react-table"
 import { Button } from "@/components/ui/button"
-import { Check, Clock, Eye, X } from "lucide-react"
+import { Check, Clock, Eye, Gem, X } from "lucide-react"
 import { ArrowUpDown } from "lucide-react"
 
 export type financeTableInterface = {
@@ -78,7 +78,14 @@ export const columns: ColumnDef<financeTableInterface>[] = [
         },
         cell: ({ row }) => {
             const user = row.original
-            return <div className="font-medium pl-5">{user.amount}</div>
+            const isDeduct = String(user.amount).startsWith("-")
+            
+            return (
+              <div className={`flex items-center gap-1 font-medium pl-5 ${isDeduct ? "text-red-500" : "text-green-500"}`}>
+                <Gem className={`size-4 ${isDeduct ? "text-red-500" : "text-green-500"}`} />
+                {user.amount}
+              </div>
+            )
         },
     },
     {

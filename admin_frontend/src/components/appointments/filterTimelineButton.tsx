@@ -1,13 +1,6 @@
 import { Button } from "@/components/ui/button"
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuGroup,
-    DropdownMenuItem,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { Calendar, ChevronDown } from "lucide-react"
+
+import { Calendar } from "lucide-react"
 
 export function FilterTimelineButton() {
     return (

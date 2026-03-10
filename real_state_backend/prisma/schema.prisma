@@ -586,6 +586,7 @@ enum GemTxnReason {
   EXCLUSIVE_SALE_REWARD
   REFERRAL_BONUS_5_PERCENT
   REDEMPTION
+  GEM_REDEEM
 }
 
 model GemRequest {
