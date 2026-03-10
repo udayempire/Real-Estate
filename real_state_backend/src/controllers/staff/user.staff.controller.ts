@@ -127,3 +127,104 @@ export async function blockUser(req: Request, res: Response) {
 //             data: { firstName, lastName, email, phone, isBlocked, blockedBy, blockedOn },
 //         });
 //     }
+
+export async function fullUserDetails(req:Request, res:Response) {
+    try{
+        const {id} = req.params;
+        if(!id){
+            return res.status(400).json({ message: "User id is required" });
+        }
+        const user = await prisma.user.findUnique({
+            where: { id: id as string },
+            select: {
+                id: true,
+                firstName: true,
+                lastName: true,
+                avatar: true,
+                avatarKey: true,
+                age: true,
+                gender: true,
+                referralCode: true,
+                referrerId: true,
+                email: true,
+                phone: true,
+                isBlocked: true,
+                blockedBy: true,
+                blockedOn: true,
+                points: true,
+                isEmailVerified: true,
+                createdAt: true,
+                updatedAt: true,
+                kyc: {
+                    select: {
+                        type: true,
+                        status: true,
+                    }
+                },
+                properties:{
+                    select:{
+                        id: true,
+                        title: true,
+                        status: true,
+                        listingPrice: true,
+                        createdAt: true,
+                        state: true,
+                        city: true,
+                        locality: true,
+                        carpetArea: true,
+                        carpetAreaUnit: true,
+                        plotLandArea: true,
+                        plotLandAreaUnit: true,
+                        media: {
+                            select: { url: true },
+                            orderBy: { order: "asc" },
+                            take: 1,
+                        },
+                    },
+                    orderBy: { createdAt: "desc" },
+                }
+            }
+        })
+        if(!user){
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        const properties = user.properties;
+
+        const totalPropertiesWorth = properties.reduce(
+            (sum, p) => sum + (p.listingPrice ?? 0), 0
+        );
+        const soldToRealBroCount = properties.filter(
+            (p) => p.status === "SOLDTOREALBRO"
+        ).length;
+
+        const userStats = {
+            totalGems: user.points,
+            totalProperties: properties.length,
+            soldToRealBro: soldToRealBroCount,
+            totalPropertiesWorth,
+        };
+
+        const grouped = {
+            all: properties,
+            active: properties.filter((p) => p.status === "ACTIVE"),
+            unlisted: properties.filter((p) => p.status === "UNLISTED"),
+            soldToRealBro: properties.filter((p) => p.status === "SOLDTOREALBRO"),
+            soldFromExclusive: properties.filter(
+                (p) => (p.status as string) === "SOLDEXCLUSIVEPROPERTY"
+            ),
+        };
+
+        return res.status(200).json({
+            user: {
+                ...user,
+                properties: undefined,
+                userStats,
+                properties_by_status: grouped,
+            },
+        });
+    }catch(error){
+        console.error("Full user details error:", error);
+        return res.status(500).json({ message: "Internal server error" });
+    }
+}

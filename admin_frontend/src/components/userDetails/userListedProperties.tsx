@@ -2,12 +2,20 @@
 
 import { useState } from "react"
 import { PropertyCard } from "./propertyCard"
-import { demoProperties } from "./types"
+import type { PropertiesByStatus } from "./types"
 
-const tabs = ["All", "Exclusive", "Active", "Sold", "Unlisted", "Deleted"] as const
+const tabs = [
+    { label: "All", key: "all" as const },
+    { label: "Active", key: "active" as const },
+    { label: "Unlisted", key: "unlisted" as const },
+    { label: "Sold to RealBro", key: "soldToRealBro" as const },
+    { label: "Sold Exclusive", key: "soldFromExclusive" as const },
+]
 
-export function UserListedProperties() {
-    const [activeTab, setActiveTab] = useState<string>(tabs[0])
+export function UserListedProperties({ propertiesByStatus }: { propertiesByStatus: PropertiesByStatus }) {
+    const [activeTab, setActiveTab] = useState<(typeof tabs)[number]["key"]>("all")
+
+    const properties = propertiesByStatus[activeTab]
 
     return (
         <div className="flex flex-col h-full">
@@ -15,22 +23,26 @@ export function UserListedProperties() {
             <div className="flex gap-2 flex-wrap mb-3">
                 {tabs.map((tab) => (
                     <button
-                        key={tab}
-                        onClick={() => setActiveTab(tab)}
+                        key={tab.key}
+                        onClick={() => setActiveTab(tab.key)}
                         className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors cursor-pointer ${
-                            activeTab === tab
+                            activeTab === tab.key
                                 ? "bg-blue-500 text-white"
                                 : "border border-gray-300 text-gray-600 hover:bg-gray-50"
                         }`}
                     >
-                        {tab}
+                        {tab.label} ({propertiesByStatus[tab.key].length})
                     </button>
                 ))}
             </div>
             <div className="flex flex-col gap-3 overflow-y-auto flex-1 pr-1">
-                {demoProperties.map((property) => (
-                    <PropertyCard key={property.id} property={property} />
-                ))}
+                {properties.length === 0 ? (
+                    <p className="text-sm text-muted-foreground text-center py-8">No properties found</p>
+                ) : (
+                    properties.map((property) => (
+                        <PropertyCard key={property.id} property={property} />
+                    ))
+                )}
             </div>
         </div>
     )

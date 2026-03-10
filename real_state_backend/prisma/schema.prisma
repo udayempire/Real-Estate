@@ -119,6 +119,7 @@ enum PropertyStatus {
   SOLDTOREALBRO
   SOLDFROMLISTINGS
   DRAFT
+  SOLDEXCLUSIVEPROPERTY //property is sold from exclusive property
 }
 
 enum SizeUnit {
