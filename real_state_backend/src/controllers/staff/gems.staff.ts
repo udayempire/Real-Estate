@@ -736,6 +736,12 @@ export async function allGemTransactionHistory(req: Request, res: Response) {
                     txnType: true,
                     balanceBefore: true,
                     balanceAfter: true,
+                    requestId: true,
+                    request: {
+                        select: {
+                            propertyId: true,
+                        },
+                    },
                     user: {
                         select: {
                             firstName: true,
@@ -767,6 +773,7 @@ export async function allGemTransactionHistory(req: Request, res: Response) {
             staffHandler: txn.createdByStaff
                 ? `${txn.createdByStaff.firstName} ${txn.createdByStaff.lastName}`.trim()
                 : "SYSTEM",
+            propertyId: txn.request?.propertyId ?? null,
         }));
 
         return res.status(200).json({

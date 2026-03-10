@@ -21,6 +21,7 @@ type TransactionsResponse = {
             balanceAfter: number;
         };
         staffHandler: string;
+        propertyId: string | null;
     }>;
 };
 
@@ -55,6 +56,7 @@ export default function FinancialsPage() {
                     amount: txn.amount.toLocaleString(),
                     details: new Date(txn.createdAt).toLocaleString(),
                     status: txn.details.txnType === "CREDIT" ? "Completed" : "Pending",
+                    propertyId: txn.propertyId ?? null,
                 }));
 
                 setData(mapped);

@@ -1,5 +1,6 @@
 "use client"
 
+import { useRouter } from "next/navigation"
 import { ColumnDef } from "@tanstack/react-table"
 import { Button } from "@/components/ui/button"
 import { Check, Clock, Eye, X } from "lucide-react"
@@ -12,6 +13,7 @@ export type financeTableInterface = {
     amount: string;
     details: string;
     status: string;
+    propertyId?: string | null;
 }
 
 export const columns: ColumnDef<financeTableInterface>[] = [
@@ -126,22 +128,41 @@ export const columns: ColumnDef<financeTableInterface>[] = [
         },
     },
     {
-        id: "actions",
-        header: "Actions",
+        id: "propertyDetail",
+        header: "Property Details",
         cell: ({ row }) => {
             const user = row.original
+            const hasProperty = Boolean(user.propertyId)
             return (
-                <div className="flex items-center gap-1">
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-blue-600 hover:text-blue-800 hover:bg-blue-100"
-                        onClick={() => console.log("View", user)}
-                    >
-                        <Eye className="size-4" />
-                    </Button>
-                </div>
+                <ViewPropertyButton
+                    propertyId={user.propertyId ?? null}
+                    hasProperty={hasProperty}
+                />
             )
         },
     },
 ]
+
+function ViewPropertyButton({ propertyId, hasProperty }: { propertyId: string | null; hasProperty: boolean }) {
+    const router = useRouter()
+
+    return (
+        <div
+            className={`flex items-center gap-1 justify-center ${!hasProperty ? "cursor-not-allowed" : ""}`}
+        >
+            <Button
+                variant="ghost"
+                size="icon"
+                className={
+                    hasProperty
+                        ? "h-8 w-8 text-blue-600 hover:text-blue-800 hover:bg-blue-100"
+                        : "h-8 w-8 text-gray-400 opacity-50 cursor-not-allowed pointer-events-none"
+                }
+                onClick={() => hasProperty && propertyId && router.push(`/property/${propertyId}`)}
+                disabled={!hasProperty}
+            >
+                <Eye className="size-4" />
+            </Button>
+        </div>
+    )
+}
