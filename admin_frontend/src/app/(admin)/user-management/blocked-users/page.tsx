@@ -1,39 +1,69 @@
-import { BlockedUsersDataTable } from "@/components/user_management/blockedUsersDataTable";
-import { BlockedUserColumnInterface, BlockedUsersColumns } from "@/components/user_management/blockedUsersColumns";
+"use client"
 
-export type UserApiItem = {
-    id: string;
-    firstName: string;
-    lastName: string;
-    email: string;
-    isBlocked: boolean;
-    blockedBy: string;
-    blockedOn: string;
-};
+import { useCallback, useState, useEffect } from "react"
+import { BlockedUsersDataTable } from "@/components/user_management/blockedUsersDataTable"
+import { getBlockedUsersColumns, type BlockedUserColumnInterface } from "@/components/user_management/blockedUsersColumns"
+import { api } from "@/lib/api"
 
-async function getUsers(): Promise<BlockedUserColumnInterface[]> {
-        // const response = await fetch("https://api.example.com/users")
-        // const data = await response.json()
-        // return data;
-    return [
-        {
-            username: "Emilysadas White",
-            email: "ahhgdjsjh@gmail.com",
-            role: "User",
-            blockedOn: "2021-01-01",
-            blockedBy: "Rajun Kumar",
-            isBlocked: false,
-        },
-        
-    ]
-};
+type BlockedUserApiItem = {
+    id: string
+    firstName: string
+    lastName: string
+    email: string
+    blockedOn: string
+}
 
-export default async function AllUsersPage() {
-    const data = await getUsers();
+async function getBlockedUsers(): Promise<BlockedUserColumnInterface[]> {
+    const response = await api.get("/staff/users/blocked")
+    const users: BlockedUserApiItem[] = response.data?.users ?? []
+    return users.map((u) => ({
+        id: u.id,
+        username: `${u.firstName} ${u.lastName}`,
+        email: u.email,
+        blockedOn: u.blockedOn
+            ? new Date(u.blockedOn).toLocaleDateString("en-IN", {
+                day: "numeric",
+                month: "short",
+                year: "numeric",
+              })
+            : "—",
+    }))
+}
+
+export default function BlockedUsersPage() {
+    const [data, setData] = useState<BlockedUserColumnInterface[]>([])
+    const [isLoading, setIsLoading] = useState(true)
+
+    const refetch = useCallback(async () => {
+        try {
+            const rows = await getBlockedUsers()
+            setData(rows)
+        } catch (error) {
+            console.error("getBlockedUsers error:", error)
+            setData([])
+        }
+    }, [])
+
+    useEffect(() => {
+        const load = async () => {
+            setIsLoading(true)
+            try {
+                await refetch()
+            } finally {
+                setIsLoading(false)
+            }
+        }
+        void load()
+    }, [refetch])
+
     return (
         <div>
-            <BlockedUsersDataTable columns={BlockedUsersColumns} data={data} />
+            {isLoading ? (
+                <div className="p-4">Loading...</div>
+            ) : (
+                <BlockedUsersDataTable columns={getBlockedUsersColumns({ onUserUnblocked: refetch, onUserDeleted: refetch })} data={data} />
+            )}
         </div>
-    );
-};
+    )
+}
  

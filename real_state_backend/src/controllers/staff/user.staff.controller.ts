@@ -81,6 +81,32 @@ export async function getAllBlockedUsers(req: Request, res: Response) {
     }
 }
 
+export async function deleteUser(req: Request, res: Response) {
+    try {
+        const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+        if (!id) {
+            return res.status(400).json({ message: "User id is required" });
+        }
+
+        const existingUser = await prisma.user.findUnique({
+            where: { id },
+            select: { id: true },
+        });
+        if (!existingUser) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        await prisma.user.delete({
+            where: { id },
+        });
+
+        return res.status(200).json({ message: "User deleted successfully" });
+    } catch (error) {
+        console.error("Delete user error:", error);
+        return res.status(500).json({ message: "Internal server error" });
+    }
+}
+
 export async function blockUser(req: Request, res: Response) {
     try {
         const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
@@ -114,6 +140,42 @@ export async function blockUser(req: Request, res: Response) {
         return res.status(200).json({ message: "User blocked successfully" });
     } catch (error) {
         console.error("Block user error:", error);
+        return res.status(500).json({ message: "Internal server error" });
+    }
+}
+
+export async function unblockUser(req: Request, res: Response) {
+    try {
+        const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+        if (!id) {
+            return res.status(400).json({ message: "User id is required" });
+        }
+
+        const existingUser = await prisma.user.findUnique({
+            where: { id },
+            select: { id: true, isBlocked: true },
+        });
+
+        if (!existingUser) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        if (!existingUser.isBlocked) {
+            return res.status(200).json({ message: "User is not blocked" });
+        }
+
+        await prisma.user.update({
+            where: { id },
+            data: {
+                isBlocked: false,
+                blockedBy: null,
+                blockedOn: null,
+            },
+        });
+
+        return res.status(200).json({ message: "User unblocked successfully" });
+    } catch (error) {
+        console.error("Unblock user error:", error);
         return res.status(500).json({ message: "Internal server error" });
     }
 }

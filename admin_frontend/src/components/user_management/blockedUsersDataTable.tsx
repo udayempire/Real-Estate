@@ -54,15 +54,15 @@ export function BlockedUsersDataTable<TData, TValue>({
             const search = filterValue.toLowerCase()
             const username = String(row.getValue("username") ?? "").toLowerCase()
             const email = String(row.getValue("email") ?? "").toLowerCase()
-            const kycStatus = String(row.getValue("kycStatus") ?? "").toLowerCase()
-            return username.includes(search) || email.includes(search) || kycStatus.includes(search)
+            const blockedOn = String(row.getValue("blockedOn") ?? "").toLowerCase()
+            return username.includes(search) || email.includes(search) || blockedOn.includes(search)
         },
     })
 
     return (
         <div>
             <div className="flex justify-between items-center py-4 gap-4">
-                <h1 className="font-semibold text-xl whitespace-nowrap pl-4">Users</h1>
+                <h1 className="font-semibold text-xl whitespace-nowrap pl-4">Blocked Users</h1>
                 <div className="flex items-center gap-4">
                     <div className="relative w-full max-w-md">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-gray-400" />

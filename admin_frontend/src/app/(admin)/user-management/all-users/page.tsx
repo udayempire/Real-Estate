@@ -1,8 +1,8 @@
 "use client"
+import { useCallback, useState, useEffect } from "react"
 import { AllUsersDataTable } from "@/components/user_management/allUsersDataTable"
-import { allUsersColumns, type UserColumnInterface, KYCStatus } from "@/components/user_management/allUsersColumns"
-import { api } from "@/lib/api";
-import { useState, useEffect } from "react";
+import { getAllUsersColumns, type UserColumnInterface, KYCStatus } from "@/components/user_management/allUsersColumns"
+import { api } from "@/lib/api"
 
 type KycItem = {
     type: "AADHARCARD" | "PANCARD";
@@ -64,24 +64,34 @@ async function getUsers(): Promise<UserColumnInterface[]> {
 export default function AllUsers() {
     const [data, setData] = useState<UserColumnInterface[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+
+    const refetch = useCallback(async () => {
+        try {
+            const rows = await getUsers();
+            setData(rows);
+        } catch (error) {
+            console.error("getUsers error:", error);
+            setData([]);
+        }
+    }, []);
+
     useEffect(() => {
         const load = async () => {
+            setIsLoading(true);
             try {
-                const rows = await getUsers();
-                setData(rows);
-            } catch (error) {
-                console.error("getRoleManagement error:", error);
-                setData([]);
+                await refetch();
             } finally {
                 setIsLoading(false);
             }
         };
-
         void load();
-    }, []);
+    }, [refetch]);
+
+    const columns = getAllUsersColumns({ onUserDeleted: refetch, onUserBlocked: refetch });
+
     return (
         <div>
-            {isLoading ? <div>Loading...</div> : <AllUsersDataTable columns={allUsersColumns} data={data} />}
+            {isLoading ? <div>Loading...</div> : <AllUsersDataTable columns={columns} data={data} />}
         </div>
     )
 }
