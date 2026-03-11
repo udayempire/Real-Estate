@@ -728,6 +728,10 @@ export async function allGemTransactionHistory(req: Request, res: Response) {
         const date = req.query.date as string | undefined;
         const startDate = req.query.startDate as string | undefined;
         const endDate = req.query.endDate as string | undefined;
+        const reason = req.query.reason as string | undefined;
+        const status = req.query.status as string | undefined;
+        const amountMin = req.query.amountMin != null ? Number(req.query.amountMin) : undefined;
+        const amountMax = req.query.amountMax != null ? Number(req.query.amountMax) : undefined;
 
         const createdAtFilter: { gte?: Date; lte?: Date } = {};
         if (date) {
@@ -753,9 +757,30 @@ export async function allGemTransactionHistory(req: Request, res: Response) {
             }
         }
 
-        const where = Object.keys(createdAtFilter).length > 0
-            ? { createdAt: createdAtFilter }
-            : {};
+        const validReasons = ["ACQUISITION_REWARD", "EXCLUSIVE_SALE_REWARD", "REFERRAL_BONUS_5_PERCENT", "REDEMPTION", "GEM_REDEEM"];
+        const statusToRequestStatus: Record<string, string> = {
+            Completed: "APPROVED",
+            Pending: "PENDING_SUPERADMIN",
+            Rejected: "REJECTED",
+        };
+
+        const where: Record<string, unknown> = {};
+
+        if (Object.keys(createdAtFilter).length > 0) {
+            where.createdAt = createdAtFilter;
+        }
+        if (reason && validReasons.includes(reason)) {
+            where.reason = reason;
+        }
+        if (status && statusToRequestStatus[status]) {
+            where.request = { status: statusToRequestStatus[status] };
+        }
+        if (amountMin != null && !Number.isNaN(amountMin)) {
+            where.amount = { ...(where.amount as Record<string, number> || {}), gte: amountMin };
+        }
+        if (amountMax != null && !Number.isNaN(amountMax)) {
+            where.amount = { ...(where.amount as Record<string, number> || {}), lte: amountMax };
+        }
 
         const [transactions, total] = await Promise.all([
             prisma.gemTransaction.findMany({

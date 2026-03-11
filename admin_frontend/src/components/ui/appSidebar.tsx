@@ -28,6 +28,8 @@ import {
     Home,
     LucideTickets,
     Clock4Icon,
+    Watch,
+    WalletCardsIcon,
 } from "lucide-react"
 
 import {
@@ -60,7 +62,10 @@ const items = [
     },
     { title: "Appointments", url: "/appointments", icon: Calendar },
     { title: "Requirement Board", url: "requirement-board", icon: ClipboardList },
-    { title: "Financials", url: "/financials", icon: WalletIcon },
+    { title: "Financials", url: "#", icon: WalletIcon, children: [
+        { title: "Transaction History", url: "/financials", icon: WalletCardsIcon },
+        { title: "Pending Transactions", url: "/gems", icon: Watch },
+    ] },
     { title: "Banner Management", url: "/banner-management", icon: Image },
     { title: "Support Tickets", url: "/support-tickets", icon: LucideTickets },
     { title: "Role Management", url: "/role-management", icon: UserCog, roles: ["SUPER_ADMIN"] as const },

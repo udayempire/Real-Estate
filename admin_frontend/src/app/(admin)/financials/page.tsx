@@ -1,4 +1,4 @@
- "use client";
+"use client";
 
 import { useEffect, useState } from "react";
 import { columns } from "@/components/Financials/financialColumns";
@@ -7,6 +7,7 @@ import FinancialsTopBar from "@/components/Financials/financialsTopBar";
 import { financeTableInterface } from "@/components/Financials/financialColumns";
 import { api } from "@/lib/api";
 import type { DateFilterParams } from "@/components/Financials/filterTimelineButton";
+import type { FinancialsFilterState } from "@/components/Financials/filter";
 
 type TransactionsResponse = {
     success: boolean;
@@ -33,11 +34,25 @@ const toTitleCase = (value: string) =>
         .replace(/_/g, " ")
         .replace(/\b\w/g, (char) => char.toUpperCase());
 
+const reasonLabels: Record<string, string> = {
+    GEM_REDEEM: "Gem Redeem",
+    REFERRAL_BONUS_5_PERCENT: "Referral Reward",
+    ACQUISITION_REWARD: "Exclusive Acquisition Reward",
+    EXCLUSIVE_SALE_REWARD: "Exclusive Sale Reward",
+    REDEMPTION: "Redemption",
+};
+
 export default function FinancialsPage() {
     const [data, setData] = useState<financeTableInterface[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [dateFilter, setDateFilter] = useState<DateFilterParams | null>(null);
+    const [filters, setFilters] = useState<FinancialsFilterState>({
+        purpose: null,
+        status: null,
+        amountMin: "",
+        amountMax: "",
+    });
 
     useEffect(() => {
         let isMounted = true;
@@ -56,6 +71,11 @@ export default function FinancialsPage() {
                     params.startDate = dateFilter.startDate;
                     params.endDate = dateFilter.endDate;
                 }
+                if (filters.purpose) params.reason = filters.purpose;
+                if (filters.status) params.status = filters.status;
+                if (filters.amountMin) params.amountMin = Number(filters.amountMin) || 0;
+                if (filters.amountMax) params.amountMax = Number(filters.amountMax) || 0;
+
                 const response = await api.get<TransactionsResponse>("/staff/gems/transactions", {
                     params,
                 });
@@ -67,14 +87,7 @@ export default function FinancialsPage() {
                     const amountStr = isDebit
                         ? `-${txn.amount.toLocaleString()}`
                         : txn.amount.toLocaleString();
-                    const reasonLabels: Record<string, string> = {
-                        GEM_REDEEM: "Gem Redeem",
-                        REFERRAL_BONUS_5_PERCENT: "Referral Reward",
-                        ACQUISITION_REWARD: "Exclusive Acquisition Reward",
-                        EXCLUSIVE_SALE_REWARD: "Exclusive Sale Reward",
-                    };
-                    const purposeLabel =
-                        reasonLabels[txn.reason] ?? toTitleCase(txn.reason);
+                    const purposeLabel = reasonLabels[txn.reason] ?? toTitleCase(txn.reason);
                     return {
                         userId: txn.userId,
                         userName: txn.user,
@@ -82,7 +95,7 @@ export default function FinancialsPage() {
                         staffHandler: txn.staffHandler,
                         amount: amountStr,
                         details: new Date(txn.createdAt).toLocaleString(),
-                        status: txn.details.txnType === "CREDIT" ? "Completed" : "Completed",
+                        status: "Completed",
                         propertyId: txn.propertyId ?? null,
                     };
                 });
@@ -103,7 +116,7 @@ export default function FinancialsPage() {
         return () => {
             isMounted = false;
         };
-    }, [dateFilter]);
+    }, [dateFilter, filters]);
 
     return (
         <div className="mt-4">
@@ -116,6 +129,8 @@ export default function FinancialsPage() {
                     data={data}
                     onDateFilterChange={setDateFilter}
                     activeDateFilter={dateFilter}
+                    filters={filters}
+                    onFiltersChange={setFilters}
                 />
             )}
         </div>

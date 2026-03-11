@@ -1,7 +1,7 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { Mail, Pencil, Bookmark, ShoppingCart, CheckCircle, EyeOff, Eye, XCircle, Copy } from "lucide-react"
+import { Pencil, Bookmark, ShoppingCart, CheckCircle, EyeOff, Eye, XCircle, Copy } from "lucide-react"
 import { useRouter, useParams } from "next/navigation"
 import { useAuth } from "@/contexts/AuthContext"
 
@@ -41,8 +41,6 @@ export function PropertyActionBar({
     onBuy,
     onBookmark,
     isBookmarked = false,
-    onEmail,
-    onWhatsApp,
 }: PropertyActionBarProps) {
     const router = useRouter()
     const params = useParams<{ id: string }>()

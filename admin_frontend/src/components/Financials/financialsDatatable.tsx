@@ -30,12 +30,15 @@ import { Search } from "lucide-react";
 
 import { DataTablePagination } from "../ui/data-table-pagination"
 import { ExportButton, type ExportColumn } from "../role_management/exportButton"
-import { Filter, type StatusFilter } from "./filter";
-import { FilterTimelineButton, type DateFilterParams } from "./filterTimelineButton";
+import { Filter } from "./filter"
+import { FilterTimelineButton, type DateFilterParams } from "./filterTimelineButton"
+import type { FinancialsFilterState } from "./filter"
 
 interface FinancialsDataTableProps<TData, TValue> extends DataTableProps<TData, TValue> {
     onDateFilterChange?: (params: DateFilterParams | null) => void
     activeDateFilter?: DateFilterParams | null
+    filters?: FinancialsFilterState
+    onFiltersChange?: (f: FinancialsFilterState) => void
 }
 
 export function FinancialsDataTable<TData, TValue>({
@@ -43,21 +46,14 @@ export function FinancialsDataTable<TData, TValue>({
     data,
     onDateFilterChange,
     activeDateFilter,
+    filters,
+    onFiltersChange,
 }: FinancialsDataTableProps<TData, TValue>) {
     const [globalFilter, setGlobalFilter] = React.useState("");
     const [sorting, setSorting] = React.useState<SortingState>([]);
-    const [statusFilter, setStatusFilter] = React.useState<StatusFilter>(null);
-
-    const filteredData = React.useMemo(() => {
-        if (!statusFilter) return data;
-        return data.filter((row) => {
-            const r = row as { status?: string };
-            return r.status === statusFilter;
-        });
-    }, [data, statusFilter]);
 
     const table = useReactTable({
-        data: filteredData,
+        data,
         columns,
         getCoreRowModel: getCoreRowModel(),
         getPaginationRowModel: getPaginationRowModel(),
@@ -122,10 +118,9 @@ export function FinancialsDataTable<TData, TValue>({
                         onDateFilterChange={onDateFilterChange ?? undefined}
                         activeFilter={activeDateFilter ?? undefined}
                     />
-                    <Filter
-                        statusFilter={statusFilter}
-                        onStatusFilterChange={setStatusFilter}
-                    />
+                    {filters != null && onFiltersChange && (
+                        <Filter filters={filters} onFiltersChange={onFiltersChange} />
+                    )}
 
                 </div>
             </div>
