@@ -14,6 +14,7 @@ import { AxiosError } from "axios"
 import { useMemo, useState } from "react"
 import { useMutation, useQuery } from "@tanstack/react-query"
 import { useRouter } from "next/navigation"
+import { Eye, EyeOff } from "lucide-react"
 
 const roles = [
     {
@@ -107,6 +108,7 @@ export function EditStaff({ staffId }: { staffId: string }) {
     const [successMsg, setSuccessMsg] = useState<string | null>(null)
     const [confirmOpen, setConfirmOpen] = useState(false)
     const [overrides, setOverrides] = useState<Partial<UpdateStaffInput>>({})
+    const [showPassword, setShowPassword] = useState(false)
 
     const { data: staff, isLoading, isError, error: fetchError } = useQuery({
         queryKey: ["staff", staffId],
@@ -313,14 +315,27 @@ export function EditStaff({ staffId }: { staffId: string }) {
                                             (leave blank to keep current)
                                         </span>
                                     </FieldLabel>
-                                    <Input
-                                        type="password"
-                                        className="h-10 border bg-white"
-                                        placeholder="Enter new password"
-                                        value={input.password}
-                                        onChange={(e) => setOverrides((p) => ({ ...p, password: e.target.value }))}
-                                        minLength={6}
-                                    />
+
+                                    <div className="relative">
+                                        <Input
+                                            type={showPassword ? "text" : "password"}
+                                            className="h-10 border bg-white pr-10"
+                                            placeholder="Enter new password"
+                                            value={input.password}
+                                            onChange={(e) =>
+                                                setOverrides((p) => ({ ...p, password: e.target.value }))
+                                            }
+                                            minLength={6}
+                                        />
+
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowPassword((p) => !p)}
+                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+                                        >
+                                            {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                        </button>
+                                    </div>
                                 </div>
 
                                 <div className="space-y-4 border-2 rounded-lg p-4">
