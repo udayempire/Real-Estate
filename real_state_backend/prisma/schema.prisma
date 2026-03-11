@@ -85,7 +85,8 @@ model User {
 
   //verification
   isEmailVerified Boolean @default(false)
-  isVerifiedSeller Boolean @default(false)
+  isKycVerified Boolean @default(false) //green tick
+  isVerifiedSeller Boolean @default(false) //blue tick
 
   createdAt             DateTime            @default(now())
   updatedAt             DateTime            @updatedAt

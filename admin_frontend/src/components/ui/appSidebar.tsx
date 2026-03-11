@@ -31,6 +31,7 @@ import {
     Clock4Icon,
     Watch,
     WalletCardsIcon,
+    Hammer,
 } from "lucide-react"
 
 import {
@@ -59,6 +60,7 @@ const items = [
         children: [
             { title: "All Users", url: "/user-management/all-users", icon: Users2 },
             { title: "Blocked Users", url: "/user-management/blocked-users", icon: OctagonMinus },
+            { title: "Ban Requests", url: "/user-management/ban-requests", icon: Hammer },
         ],
     },
     { title: "Appointments", url: "/appointments", icon: Calendar },
