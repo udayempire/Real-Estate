@@ -6,6 +6,14 @@ import { Input } from "../ui/input"
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Button } from "@/components/ui/button"
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog"
 import { Trash2, Pencil } from "lucide-react"
 import { Label } from "@/components/ui/label"
 import { api } from "@/lib/api";
@@ -72,11 +80,24 @@ export function AddNewStaff() {
         role: "ADMIN",
     });
     const [showPassword, setShowPassword] = useState(false)
+    const [confirmOpen, setConfirmOpen] = useState(false)
+    const [successMessage, setSuccessMessage] = useState<string | null>(null)
 
     const addNewStaffMutation = useMutation({
         mutationFn: createStaff,
         onSuccess: () => {
-            console.log("Staff created successfully");
+            setSuccessMessage("Admin staff created successfully.");
+            setApiError(null);
+            setInput({
+                firstName: "",
+                lastName: "",
+                age: 0,
+                gender: "MALE",
+                phone: "",
+                email: "",
+                password: "",
+                role: "ADMIN",
+            });
         },
         onError: (error) => {
             if (error instanceof AxiosError && error.response?.status === 401) {
@@ -91,6 +112,11 @@ export function AddNewStaff() {
     });
     const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
+        setConfirmOpen(true);
+    };
+
+    const runCreate = () => {
+        setConfirmOpen(false);
         addNewStaffMutation.mutate(input);
     };
     return (
@@ -110,6 +136,11 @@ export function AddNewStaff() {
 
                 <form onSubmit={handleSubmit}>
                     <CardContent className="p-6 pt-2">
+                        {successMessage && (
+                            <div className="mb-4 p-3 rounded-lg bg-green-50 text-green-700 text-sm font-medium">
+                                {successMessage}
+                            </div>
+                        )}
                         {apiError && (
                             <div className="mb-4 p-3 rounded-lg bg-red-50 text-red-600 text-sm">
                                 {apiError}
@@ -277,6 +308,34 @@ export function AddNewStaff() {
                         </Button>
                     </CardFooter>
                 </form>
+
+                <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+                    <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle>Confirm Create Admin Staff</DialogTitle>
+                            <DialogDescription>
+                                Are you sure you want to create admin staff for{" "}
+                                <strong>
+                                    {input.firstName} {input.lastName}
+                                </strong>
+                                ? They will receive access based on the selected role.
+                            </DialogDescription>
+                        </DialogHeader>
+                        <DialogFooter>
+                            <Button variant="outline" onClick={() => setConfirmOpen(false)}>
+                                Cancel
+                            </Button>
+                            <Button
+                                className="gap-2 bg-blue-500 hover:bg-blue-700 text-white"
+                                onClick={runCreate}
+                                disabled={addNewStaffMutation.isPending}
+                            >
+                                <Pencil className="size-4" />
+                                {addNewStaffMutation.isPending ? "Creating..." : "Confirm"}
+                            </Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
             </Card>
         </div>
     )
