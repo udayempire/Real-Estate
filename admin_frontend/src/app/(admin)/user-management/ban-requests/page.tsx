@@ -22,6 +22,8 @@ type BanRequestApiItem = {
         points: number
         kyc: KycItem[]
         properties: PropertyItem[]
+        blueTick: boolean
+        isVerifiedSeller: boolean
     }
     banReqByStaff: {
         firstName: string
@@ -58,13 +60,16 @@ export default function BanRequestsPage() {
             )
             const mapped: BanRequestRow[] = (response.data.data ?? []).map((r) => {
                 const hasAnyVerifiedKyc = r.user.kyc?.some((k) => k.status === "VERIFIED") ?? false
+                const name = `${r.user.firstName} ${r.user.lastName}`.trim() || "—"
                 return {
                     id: r.id,
                     userId: r.user.id,
-                    userName: `${r.user.firstName} ${r.user.lastName}`.trim() || "—",
+                    username: name,
                     email: r.user.email,
                     gems: r.user.points ?? 0,
                     kycStatus: hasAnyVerifiedKyc ? KYCStatus.Verified : KYCStatus.Pending,
+                    isBlueTick: r.user.blueTick,
+                    isVerifiedSeller: r.user.isVerifiedSeller,
                     propertyListings: computePropertyStats(r.user.properties ?? []),
                     requestedByStaff: `${r.banReqByStaff.firstName} ${r.banReqByStaff.lastName}`.trim() || "—",
                     status: statusMap[r.status] ?? "Pending",

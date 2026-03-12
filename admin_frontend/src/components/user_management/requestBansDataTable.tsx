@@ -51,7 +51,7 @@ export function RequestBansDataTable<TData, TValue>({
         onGlobalFilterChange: setGlobalFilter,
         globalFilterFn: (row, _columnId, filterValue) => {
             const search = filterValue.toLowerCase()
-            const userName = String(row.getValue("userName") ?? "").toLowerCase()
+            const userName = String(row.getValue("username") ?? "").toLowerCase()
             const email = String(row.getValue("email") ?? "").toLowerCase()
             const kycStatus = String(row.getValue("kycStatus") ?? "").toLowerCase()
             const requestedByStaff = String(row.getValue("requestedByStaff") ?? "").toLowerCase()
@@ -67,7 +67,7 @@ export function RequestBansDataTable<TData, TValue>({
     })
 
     const exportColumns: ExportColumn[] = [
-        { key: "userName", header: "User Name" },
+        { key: "username", header: "User Name" },
         { key: "email", header: "Email" },
         { key: "gems", header: "Gems" },
         { key: "kycStatus", header: "KYC Status" },

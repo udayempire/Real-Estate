@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { ColumnDef } from "@tanstack/react-table"
 import { Button } from "@/components/ui/button"
-import { Eye, Pencil, ArrowUpDown, Unlock, Loader2, Trash2, Gem } from "lucide-react"
+import { Eye, Pencil, ArrowUpDown, Unlock, Loader2, Trash2, Gem, BadgeCheck } from "lucide-react"
 import Link from "next/link"
 import {
     Dialog,
@@ -50,12 +50,16 @@ export function getBlockedUsersColumns(options?: BlockedUsersColumnsOptions): Co
                 </Button>
             )
         },
-        cell: ({ row }) => (
-            <div className="flex items-center gap-2 pl-2">
-                <span className="size-2 rounded-full shrink-0 bg-red-500" />
-                <span className="font-medium">{row.original.username}</span>
-            </div>
-        ),
+        cell: ({ row }) => {
+            const { username, isBlueTick, isVerifiedSeller } = row.original
+            return (
+                <div className="flex items-center gap-2 pl-2">
+                    <span className={`size-2 rounded-full shrink-0 ${isVerifiedSeller ? "bg-green-500" : "bg-red-500"}`} />
+                    <span className="font-medium">{username}</span>
+                    {isBlueTick && <BadgeCheck className="size-5 fill-blue-500 text-white " />}
+                </div>
+            )
+        },
     },
 
     {
@@ -89,7 +93,7 @@ export function getBlockedUsersColumns(options?: BlockedUsersColumnsOptions): Co
             <div className="flex items-center gap-1.5 font-semibold text-green-600">
                 <span className="text-orange-500"><Gem className="size-4 text-green-400" /></span>
                 <p className="text-black font-medium">
-                    {row.original.gems.toLocaleString()}
+                    {row.original.gems?.toLocaleString()}
                 </p>
             </div>
         ),
