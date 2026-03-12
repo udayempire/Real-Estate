@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { ColumnDef } from "@tanstack/react-table"
 import { Button } from "@/components/ui/button"
-import { Eye, Pencil, ArrowUpDown, Unlock, Loader2, Trash2 } from "lucide-react"
+import { Eye, Pencil, ArrowUpDown, Unlock, Loader2, Trash2, Gem } from "lucide-react"
 import Link from "next/link"
 import {
     Dialog,
@@ -21,6 +21,7 @@ export type BlockedUserColumnInterface = {
     username: string
     email: string
     blockedOn: string
+    blockedOnRaw?: string | null
     gems?: number
     isVerifiedSeller?: boolean
     isBlueTick?: boolean
@@ -70,6 +71,28 @@ export function getBlockedUsersColumns(options?: BlockedUsersColumnsOptions): Co
                 </Button>
             )
         },
+    },
+    {
+        accessorKey: "gems",
+        header: ({ column }) => {
+            return (
+                <Button
+                    variant="ghost"
+                    onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+                >
+                    Gems
+                    <ArrowUpDown className="ml-2 h-4 w-4" />
+                </Button>
+            )
+        },
+        cell: ({ row }) => (
+            <div className="flex items-center gap-1.5 font-semibold text-green-600">
+                <span className="text-orange-500"><Gem className="size-4 text-green-400" /></span>
+                <p className="text-black font-medium">
+                    {row.original.gems.toLocaleString()}
+                </p>
+            </div>
+        ),
     },
     {
         accessorKey: "blockedOn",

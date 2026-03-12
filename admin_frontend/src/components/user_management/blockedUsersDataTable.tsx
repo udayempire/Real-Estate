@@ -43,6 +43,8 @@ export function BlockedUsersDataTable<TData extends FilterableUser, TValue>({
         blueTick: "all",
         gemsMin: "",
         gemsMax: "",
+        blockedOnMin: "",
+        blockedOnMax: "",
     })
 
     const filteredData = React.useMemo(
@@ -98,7 +100,7 @@ export function BlockedUsersDataTable<TData extends FilterableUser, TValue>({
                         columns={blockedUsersExportColumns}
                         filename="blocked-users"
                     />
-                    <UsersFilter filters={filters} onFiltersChange={setFilters} />
+                    <UsersFilter filters={filters} onFiltersChange={setFilters} showBlockedOnDateRange />
                     {/* <Button variant="outline" className="gap-2 shadow-none border-2 h-10">
                         <ArrowUpDown className="size-4" />
                         Sort by

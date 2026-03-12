@@ -37,6 +37,8 @@ const defaultUsersFilter: UsersFilterState = {
     blueTick: "all",
     gemsMin: "",
     gemsMax: "",
+    blockedOnMin: "",
+    blockedOnMax: "",
 }
 
 export function AllUsersDataTable<TData extends FilterableUser, TValue>({

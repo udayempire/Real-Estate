@@ -20,6 +20,8 @@ export type UsersFilterState = {
     blueTick: BlueTickFilter
     gemsMin: string
     gemsMax: string
+    blockedOnMin: string
+    blockedOnMax: string
 }
 
 export const defaultUsersFilterState: UsersFilterState = {
@@ -27,11 +29,14 @@ export const defaultUsersFilterState: UsersFilterState = {
     blueTick: "all",
     gemsMin: "",
     gemsMax: "",
+    blockedOnMin: "",
+    blockedOnMax: "",
 }
 
 type UsersFilterProps = {
     filters: UsersFilterState
     onFiltersChange: (f: UsersFilterState) => void
+    showBlockedOnDateRange?: boolean
 }
 
 const VERIFIED_OPTIONS: { value: VerifiedSellerFilter; label: string }[] = [
@@ -46,7 +51,7 @@ const BLUETICK_OPTIONS: { value: BlueTickFilter; label: string }[] = [
     { value: "no", label: "No Blue Tick" },
 ]
 
-export function UsersFilter({ filters, onFiltersChange }: UsersFilterProps) {
+export function UsersFilter({ filters, onFiltersChange, showBlockedOnDateRange }: UsersFilterProps) {
     const [open, setOpen] = useState(false)
     const [draft, setDraft] = useState<UsersFilterState>(filters)
 
@@ -59,7 +64,9 @@ export function UsersFilter({ filters, onFiltersChange }: UsersFilterProps) {
         filters.verifiedSeller !== "all" ||
         filters.blueTick !== "all" ||
         filters.gemsMin !== "" ||
-        filters.gemsMax !== ""
+        filters.gemsMax !== "" ||
+        filters.blockedOnMin !== "" ||
+        filters.blockedOnMax !== ""
 
     const handleApply = () => {
         onFiltersChange(draft)
@@ -153,6 +160,28 @@ export function UsersFilter({ filters, onFiltersChange }: UsersFilterProps) {
                         </div>
                     </div>
 
+                    {showBlockedOnDateRange && (
+                        <div>
+                            <Label className="text-sm font-medium">Blocked on date range</Label>
+                            <div className="mt-2 flex gap-2">
+                                <Input
+                                    type="date"
+                                    placeholder="From"
+                                    value={draft.blockedOnMin}
+                                    onChange={(e) => setDraft((p) => ({ ...p, blockedOnMin: e.target.value }))}
+                                    className="h-9"
+                                />
+                                <Input
+                                    type="date"
+                                    placeholder="To"
+                                    value={draft.blockedOnMax}
+                                    onChange={(e) => setDraft((p) => ({ ...p, blockedOnMax: e.target.value }))}
+                                    className="h-9"
+                                />
+                            </div>
+                        </div>
+                    )}
+
                     <div className="flex gap-2 pt-2">
                         <Button size="sm" variant="outline" onClick={handleClear} className="flex-1">
                             Clear
@@ -167,7 +196,7 @@ export function UsersFilter({ filters, onFiltersChange }: UsersFilterProps) {
     )
 }
 
-export function applyUsersFilter<T extends { isVerifiedSeller?: boolean; isBlueTick?: boolean; blueTick?: boolean; gems?: number }>(
+export function applyUsersFilter<T extends { isVerifiedSeller?: boolean; isBlueTick?: boolean; blueTick?: boolean; gems?: number; blockedOnRaw?: string | null }>(
     data: T[],
     filters: UsersFilterState
 ): T[] {
@@ -185,6 +214,20 @@ export function applyUsersFilter<T extends { isVerifiedSeller?: boolean; isBlueT
         const max = filters.gemsMax ? parseInt(filters.gemsMax, 10) : null
         if (min != null && !Number.isNaN(min) && gems < min) return false
         if (max != null && !Number.isNaN(max) && gems > max) return false
+
+        if (row.blockedOnRaw && (filters.blockedOnMin || filters.blockedOnMax)) {
+            const rowTime = new Date(row.blockedOnRaw).getTime()
+            if (filters.blockedOnMin) {
+                const minDate = new Date(filters.blockedOnMin)
+                minDate.setHours(0, 0, 0, 0)
+                if (rowTime < minDate.getTime()) return false
+            }
+            if (filters.blockedOnMax) {
+                const maxDate = new Date(filters.blockedOnMax)
+                maxDate.setHours(23, 59, 59, 999)
+                if (rowTime > maxDate.getTime()) return false
+            }
+        }
 
         return true
     })

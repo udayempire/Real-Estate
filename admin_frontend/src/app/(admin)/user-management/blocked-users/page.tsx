@@ -30,6 +30,7 @@ async function getBlockedUsers(): Promise<BlockedUserColumnInterface[]> {
                 year: "numeric",
               })
             : "—",
+        blockedOnRaw: u.blockedOn ?? null,
         gems: u.points ?? 0,
         isVerifiedSeller: u.isVerifiedSeller ?? false,
         isBlueTick: u.blueTick ?? false,
