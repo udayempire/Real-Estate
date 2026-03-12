@@ -643,7 +643,7 @@ export async function getAllProperties(req: Request, res: Response) {
         const formatStatus = (status: string) => {
             if (status === "ACTIVE") return "Active";
             if (status === "UNLISTED") return "Unlisted";
-            if (status === "DRAFT") return "Not Completed";
+            if (status === "DRAFT") return "Draft";
             if (status === "UNDER_ACQUISITION") return "Pending under acquisition";
             if (status === "SOLDTOREALBRO") return "Sold to RealBro";
             return "Sold";
@@ -674,9 +674,10 @@ export async function getAllProperties(req: Request, res: Response) {
 
         const [properties, total] = await Promise.all([
             prisma.property.findMany({
-                where: { exclusiveProperty: null,   status: {
-                    in: ["ACTIVE", "UNLISTED", "SOLDOFFLINE", "SOLDFROMLISTINGS","DRAFT"],
-                  }, },
+                where: {
+                    exclusiveProperty: null,
+                    status: { in: ["ACTIVE", "UNLISTED", "DRAFT"] },
+                },
                 skip,
                 take: limit,
                 orderBy: { createdAt: "desc" },
@@ -705,7 +706,7 @@ export async function getAllProperties(req: Request, res: Response) {
                     },
                 },
             }),
-            prisma.property.count({ where: { exclusiveProperty: null } }),
+            prisma.property.count({ where: { exclusiveProperty: null, status: { in: ["ACTIVE", "UNLISTED", "DRAFT"] } } }),
         ]);
 
         const data = properties.map((property) => ({

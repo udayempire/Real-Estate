@@ -178,6 +178,7 @@ export default function AllPropertiesPage() {
                             properties={filteredProperties}
                             onFavorite={handleToggleBookmark}
                             onBuy={handleBuyProperty}
+                            showEditButton={false}
                         />
                     )}
                 </div>

@@ -1,6 +1,15 @@
 "use client"
 
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog"
 import { Pencil, Bookmark, ShoppingCart, CheckCircle, EyeOff, Eye, XCircle, Copy } from "lucide-react"
 import { useRouter, useParams } from "next/navigation"
 import { useAuth } from "@/contexts/AuthContext"
@@ -59,6 +68,13 @@ export function PropertyActionBar({
     const isExclusiveSold = exclusiveStatus === "SOLD_OUT"
     const soldToggleLabel = isSold || isExclusiveSold ? "Mark as Available" : "Mark as Sold"
     const listUnlistLabel = isListed ? "Unlist Property" : "List Property"
+
+    const [soldConfirmOpen, setSoldConfirmOpen] = useState(false)
+    const isMarkingSold = soldToggleLabel === "Mark as Sold"
+    const handleSoldConfirm = async () => {
+        await onMarkSold?.()
+        setSoldConfirmOpen(false)
+    }
 
     return (
         <div className="space-y-4">
@@ -123,12 +139,35 @@ export function PropertyActionBar({
                 <Button
                     size="sm"
                     className={`gap-1.5 text-xs ${onMarkSold ? "bg-green-600 hover:bg-green-700" : `bg-gray-400 ${disabledBtnClass}`}`}
-                    onClick={onMarkSold}
+                    onClick={() => setSoldConfirmOpen(true)}
                     disabled={!onMarkSold}
                 >
                     {soldToggleLabel === "Mark as Sold" ? <CheckCircle className="size-3.5" /> : <XCircle className="size-3.5" />}
                     {soldToggleLabel}
                 </Button>
+                <Dialog open={soldConfirmOpen} onOpenChange={setSoldConfirmOpen}>
+                    <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle>Confirm</DialogTitle>
+                            <DialogDescription>
+                                {isMarkingSold
+                                    ? "Are you sure you want to mark this property as sold?"
+                                    : "Are you sure you want to mark this property as available?"}
+                            </DialogDescription>
+                        </DialogHeader>
+                        <DialogFooter>
+                            <Button variant="outline" onClick={() => setSoldConfirmOpen(false)}>
+                                Cancel
+                            </Button>
+                            <Button
+                                className={isMarkingSold ? "bg-green-600 hover:bg-green-700" : "bg-blue-600 hover:bg-blue-700"}
+                                onClick={handleSoldConfirm}
+                            >
+                                Confirm
+                            </Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
                 <div className="my-2">
                     <div className="flex items-center gap-2">
                         <h1 ><span className="font-semibold">Property ID -</span> {propertyId} </h1>

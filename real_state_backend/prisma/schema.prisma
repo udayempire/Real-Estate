@@ -146,6 +146,7 @@ enum PropertyStatus {
   SOLDFROMLISTINGS
   DRAFT
   SOLDEXCLUSIVEPROPERTY //property is sold from exclusive property
+  PENDING_EXCLUSIVE_ACQUISITION
 }
 
 enum SizeUnit {

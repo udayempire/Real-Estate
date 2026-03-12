@@ -63,6 +63,8 @@ interface PropertyCardProps {
     onBuy?: (id: string) => void | Promise<void>
     onMarkAsSold?: (id: string) => void
     onFavorite?: (id: string) => void
+    /** When false, hides the Edit button (e.g. on User's Listings page) */
+    showEditButton?: boolean
 }
 
 const statusColors: Record<PropertyCardData["status"], string> = {
@@ -72,7 +74,7 @@ const statusColors: Record<PropertyCardData["status"], string> = {
     Pending: "bg-yellow-500",
 }
 
-export function PropertyCard({ property, variant = "default", onEdit, onBuy, onMarkAsSold, onFavorite }: PropertyCardProps) {
+export function PropertyCard({ property, variant = "default", onEdit, onBuy, onMarkAsSold, onFavorite, showEditButton = true }: PropertyCardProps) {
     const router = useRouter()
     const isExclusive = variant === "exclusive"
     const { user } = useAuth()
@@ -132,9 +134,7 @@ export function PropertyCard({ property, variant = "default", onEdit, onBuy, onM
                             className={`size-3.5 ${property.isBookmarked ? "text-blue-600 fill-blue-600" : "fill-none"}`}
                         />
                     </button>
-                    <button className="h-7 w-7 rounded-full bg-black/50 flex items-center justify-center hover:bg-black/70 transition">
-                        <MoreVertical className="size-3.5 text-white" />
-                    </button>
+
                 </div>
                 <div className="absolute bottom-3 left-3 flex items-center gap-1.5">
                     {isExclusive && (
@@ -201,15 +201,17 @@ export function PropertyCard({ property, variant = "default", onEdit, onBuy, onM
                 </div>
 
                 <div className="flex items-center gap-2 pt-1">
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        className="flex-1 h-8 text-[11px] text-blue-600 border-blue-200 hover:bg-blue-50"
-                        onClick={handleEditClick}
-                    >
-                        <Pencil className="size-3 mr-1" />
-                        Edit
-                    </Button>
+                    {showEditButton && (
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            className="flex-1 h-8 text-[11px] text-blue-600 border-blue-200 hover:bg-blue-50"
+                            onClick={handleEditClick}
+                        >
+                            <Pencil className="size-3 mr-1" />
+                            Edit
+                        </Button>
+                    )}
 
                     {isExclusive ? (
                         <Button
