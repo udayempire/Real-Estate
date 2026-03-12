@@ -36,6 +36,8 @@ export type UserApiItem = {
     isBlocked: boolean;
     points: number;
     isEmailVerified: boolean;
+    isVerifiedSeller: boolean;
+    blueTick: boolean;
     createdAt: string;
     updatedAt: string;
     kyc: KycItem[];
@@ -52,7 +54,8 @@ async function getUsers(): Promise<UserColumnInterface[]> {
             id: user.id,
             username: `${user.firstName} ${user.lastName}`,
             email: user.email,
-            isVerified: user.isEmailVerified,
+            isBlueTick: user.blueTick,
+            isVerifiedSeller: user.isVerifiedSeller,
             propertyListings: user.propertyStats,
             gems: user.points,
             kycStatus: hasAnyVerifiedKyc ? KYCStatus.Verified : KYCStatus.Pending,

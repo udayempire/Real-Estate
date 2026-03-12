@@ -53,6 +53,8 @@ export type FullUserData = {
     blockedOn: string | null
     points: number
     isEmailVerified: boolean
+    blueTick?: boolean
+    isVerifiedSeller?: boolean
     createdAt: string
     updatedAt: string
     kyc: KycItem[]

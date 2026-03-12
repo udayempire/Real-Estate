@@ -18,9 +18,6 @@ import { Button } from "@/components/ui/button"
 import { X, Pencil, OctagonMinus, XIcon, Upload, ImageIcon, Eye, Loader2 } from "lucide-react"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
-import { BlueTick } from "../userDetails/blueTick"
-import { VerifiedSeller } from "../userDetails/verifiedSeller"
-
 type KycItem = {
     id: string
     type: "AADHARCARD" | "PANCARD"
@@ -40,6 +37,7 @@ type EditUserData = {
     gender: "MALE" | "FEMALE" | "OTHER" | null
     referralCode: string
     isVerifiedSeller: boolean
+    blueTick: boolean
     isBlocked: boolean
     kyc: KycItem[]
 }
@@ -103,6 +101,7 @@ export function EditUser() {
     const [gender, setGender] = useState("")
     const [referralCode, setReferralCode] = useState("")
     const [isVerifiedSeller, setIsVerifiedSeller] = useState(false)
+    const [blueTick, setBlueTick] = useState(false)
     const [aadharStatus, setAadharStatus] = useState<KycItem["status"] | "">("")
     const [panStatus, setPanStatus] = useState<KycItem["status"] | "">("")
     const [confirmOpen, setConfirmOpen] = useState(false)
@@ -123,6 +122,7 @@ export function EditUser() {
                 setGender(data.gender ?? "")
                 setReferralCode(data.referralCode)
                 setIsVerifiedSeller(data.isVerifiedSeller)
+                setBlueTick(data.blueTick ?? false)
                 const aadhar = data.kyc.find((k) => k.type === "AADHARCARD")
                 const pan = data.kyc.find((k) => k.type === "PANCARD")
                 if (aadhar) setAadharStatus(aadhar.status)
@@ -162,6 +162,7 @@ export function EditUser() {
                 age: age ? parseInt(age, 10) : undefined,
                 gender: gender || undefined,
                 isVerifiedSeller,
+                blueTick,
             })
             router.push(`/user/${userId}`)
         } catch (err) {
@@ -219,7 +220,6 @@ export function EditUser() {
                             <div className="flex justify-between items-center space-x-2">
                                 <Label htmlFor="verified-seller" className="font-medium text-sm">
                                     Verified Seller <span className="text-[12px] text-zinc-500">(Provide Verified Badge)</span>
-                                    <VerifiedSeller/>
                                 </Label>
                                 <Switch
                                     id="verified-seller"
@@ -228,14 +228,13 @@ export function EditUser() {
                                 />
                             </div>
                             <div className="flex justify-between items-center space-x-2">
-                                <Label htmlFor="verified-seller" className="font-medium text-sm">
+                                <Label htmlFor="blue-tick" className="font-medium text-sm">
                                     Blue Tick <span className="text-[12px] text-zinc-500">(Provide Blue Tick)</span>
-                                    <BlueTick />
                                 </Label>
                                 <Switch
-                                    id="verified-seller"
-                                    checked={isVerifiedSeller}
-                                    onCheckedChange={setIsVerifiedSeller}
+                                    id="blue-tick"
+                                    checked={blueTick}
+                                    onCheckedChange={setBlueTick}
                                 />
                             </div>
 

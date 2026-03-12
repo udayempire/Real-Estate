@@ -14,6 +14,8 @@ export async function getAllUsers(req: Request, res: Response) {
                 blockedOn: true,
                 points: true,
                 isEmailVerified: true,
+                blueTick: true,
+                isVerifiedSeller: true,
                 createdAt: true,
                 updatedAt: true,
                 kyc: {
@@ -417,6 +419,8 @@ export async function fullUserDetails(req: Request, res: Response) {
                 blockedOn: true,
                 points: true,
                 isEmailVerified: true,
+                blueTick: true,
+                isVerifiedSeller: true,
                 createdAt: true,
                 updatedAt: true,
                 kyc: {

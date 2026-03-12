@@ -26,7 +26,8 @@ export type UserColumnInterface = {
     email: string
     gems: number
     kycStatus: string
-    isVerified: boolean
+    isBlueTick: boolean
+    isVerifiedSeller: boolean
     propertyListings: {
         total: number
         sold: number
@@ -60,12 +61,12 @@ export function getAllUsersColumns(options?: AllUsersColumnsOptions): ColumnDef<
             )
         },
         cell: ({ row }) => {
-            const { username, isBlocked, isVerified } = row.original
+            const { username, isBlueTick, isVerifiedSeller } = row.original
             return (
                 <div className="flex items-center gap-2 pl-2">
-                    <span className={`size-2 rounded-full shrink-0 ${isBlocked ? "bg-red-500" : "bg-green-500"}`} />
+                    <span className={`size-2 rounded-full shrink-0 ${isVerifiedSeller ? "bg-green-500" : "bg-red-500"}`} />
                     <span className="font-medium">{username}</span>
-                    {isVerified && <BadgeCheck className="size-5 fill-blue-500 text-white " />}
+                    {isBlueTick && <BadgeCheck className="size-5 fill-blue-500 text-white " />}
                 </div>
             )
         },

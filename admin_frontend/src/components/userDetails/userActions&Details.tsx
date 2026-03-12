@@ -4,6 +4,8 @@ import { Building2, Gem, Handshake, IndianRupee, PenLine } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Button } from "../ui/button";
 import { OctagonMinus, BadgeCheck } from "lucide-react";
+import { BlueTick } from "./blueTick";
+import { VerifiedSeller } from "./verifiedSeller";
 import { UserSellingHistory } from "./userSellingHistory";
 import { SendGemsDialog } from "../shared/sendGemsDialog";
 import type { FullUserData } from "./types";
@@ -29,13 +31,12 @@ export function UserActionsAndDetails({ user }: { user: FullUserData }) {
                     <AvatarImage src={user.avatar ?? ""} />
                     <AvatarFallback>{initials}</AvatarFallback>
                 </Avatar>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
                     <div className="font-bold text-xl">
                         {name}
                     </div>
-                    {user.isEmailVerified && (
-                        <BadgeCheck className="size-8 fill-blue-500 text-white" />
-                    )}
+                    {user.blueTick && <BlueTick size={7} />}
+                    {user.isVerifiedSeller && <VerifiedSeller />}
                 </div>
             </div>
             <div className="flex gap-2 items-center flex-wrap">
