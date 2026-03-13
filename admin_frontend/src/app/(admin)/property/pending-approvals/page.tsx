@@ -82,8 +82,8 @@ export default function PendingApprovalsPage() {
         { key: "postedDate", header: "Posted Date" },
     ]
 
-    const handleEdit = (propertyId: string) => {
-        router.push(`/property/${propertyId}`)
+    const handleMakeExclusive = (propertyId: string) => {
+        router.push(`/property/make-it-exclusive/${propertyId}`)
     }
 
     const handleAcquisitionDecision = async (propertyId: string, decision: "APPROVED" | "REJECTED") => {
@@ -153,7 +153,8 @@ export default function PendingApprovalsPage() {
                     <PropertyGrid
                         properties={filteredProperties}
                         variant="default"
-                        onEdit={handleEdit}
+                        showEditButton={false}
+                        onEdit={undefined}
                         onApprove={
                             activeTab === "pending-approvals" && isSuperAdmin
                                 ? (id) => handleAcquisitionDecision(id, "APPROVED")
@@ -162,6 +163,11 @@ export default function PendingApprovalsPage() {
                         onReject={
                             activeTab === "pending-approvals" && isSuperAdmin
                                 ? (id) => handleAcquisitionDecision(id, "REJECTED")
+                                : undefined
+                        }
+                        onMakeExclusive={
+                            activeTab === "pending-exclusive" && isSuperAdmin
+                                ? handleMakeExclusive
                                 : undefined
                         }
                     />

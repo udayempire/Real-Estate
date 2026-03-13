@@ -33,6 +33,8 @@ import {
     Bookmark,
 } from "lucide-react"
 
+const MakeExclusiveIcon = Crown
+
 export interface PropertyCardData {
     id: string
     /** When set (e.g. for exclusive listings), use this for /property/:id link instead of id */
@@ -64,6 +66,7 @@ interface PropertyCardProps {
     onMarkAsSold?: (id: string) => void
     onApprove?: (id: string) => void | Promise<void>
     onReject?: (id: string) => void | Promise<void>
+    onMakeExclusive?: (id: string) => void
     onFavorite?: (id: string) => void
     /** When false, hides the Edit button (e.g. on User's Listings page) */
     showEditButton?: boolean
@@ -84,6 +87,7 @@ export function PropertyCard({
     onMarkAsSold,
     onApprove,
     onReject,
+    onMakeExclusive,
     onFavorite,
     showEditButton = true,
 }: PropertyCardProps) {
@@ -213,7 +217,17 @@ export function PropertyCard({
                 </div>
 
                 <div className="flex items-center gap-2 pt-1">
-                    {showEditButton && (
+                    {onMakeExclusive ? (
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            className="flex-1 h-8 text-[11px] text-blue-600 border-blue-200 hover:bg-blue-50"
+                            onClick={() => onMakeExclusive(property.id)}
+                        >
+                            <MakeExclusiveIcon className="size-3 mr-1" />
+                            Make it Exclusive
+                        </Button>
+                    ) : showEditButton && (
                         <Button
                             variant="outline"
                             size="sm"
@@ -225,7 +239,7 @@ export function PropertyCard({
                         </Button>
                     )}
 
-                    {property.status === "Pending" && (onApprove || onReject) ? (
+                    {!onMakeExclusive && property.status === "Pending" && (onApprove || onReject) ? (
                         <>
                             {onApprove && (
                                 <Button
@@ -250,7 +264,7 @@ export function PropertyCard({
                                 </Button>
                             )}
                         </>
-                    ) : isExclusive ? (
+                    ) : !onMakeExclusive && isExclusive ? (
                         <Button
                             variant="outline"
                             size="sm"
@@ -260,7 +274,7 @@ export function PropertyCard({
                             <CheckCircle className="size-3 mr-1" />
                             Mark as Sold
                         </Button>
-                    ) : property.status === "Active" ? (
+                    ) : !onMakeExclusive && property.status === "Active" ? (
                         <>
                             <Button
                                 variant="outline"
@@ -294,7 +308,7 @@ export function PropertyCard({
                                 </DialogContent>
                             </Dialog>
                         </>
-                    ) : (
+                    ) : !onMakeExclusive ? (
                         <Button
                             variant="outline"
                             size="sm"
@@ -304,7 +318,7 @@ export function PropertyCard({
                             <CheckCircle className="size-3 mr-1" />
                             Mark as Sold
                         </Button>
-                    )}
+                    ) : null}
                 </div>
             </div>
         </Card>
