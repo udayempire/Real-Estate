@@ -151,6 +151,13 @@ const lenientPropertyFloorForUpdate = z.preprocess((value) => {
     return undefined;
 }, z.string().optional().nullable());
 
+const nullableStringForUpdate = z.preprocess((value) => {
+    if (value === null) return null;
+    if (value === "") return undefined;
+    if (typeof value === "string") return value;
+    return undefined;
+}, z.string().optional().nullable());
+
 export const propertyMediaSchema = z.object({
     url: z.string().url(),
     key: z.string(),
@@ -173,7 +180,7 @@ export const addPropertySchema = z.object({
     city: z.string().min(1, "City is required"),
     locality: z.string().optional(),
     subLocality: z.string().optional(),
-    flatNo: z.string().optional(),
+    flatNo: nullableStringForUpdate,
     area: z.string().optional(), // For backward compatibility
     address: z.string().min(1, "Address is required"),
     longitude: z.number(),
@@ -229,7 +236,7 @@ export const addDraftPropertySchema = z.object({
     city: z.string().optional(),
     locality: z.string().optional(),
     subLocality: z.string().optional(),
-    flatNo: z.string().optional(),
+    flatNo: nullableStringForUpdate,
     area: z.string().optional(),
     address: z.string().optional(),
     longitude: z.number().optional(),
@@ -287,7 +294,7 @@ export const createExclusivePropertySchema = z.object({
     city: z.string().optional(),
     locality: z.string().optional(),
     subLocality: z.string().optional(),
-    flatNo: z.string().optional(),
+    flatNo: nullableStringForUpdate,
     area: z.string().optional(),
     address: z.string().optional(),
     longitude: z.number().optional(),
@@ -333,7 +340,7 @@ export const updateExclusivePropertySchema = z.object({
     city: z.string().optional().nullable(),
     locality: z.string().optional().nullable(),
     subLocality: z.string().optional().nullable(),
-    flatNo: z.string().optional().nullable(),
+    flatNo: nullableStringForUpdate,
     area: z.string().optional().nullable(),
     address: z.string().optional().nullable(),
     longitude: z.number().optional().nullable(),
@@ -379,7 +386,7 @@ export const updatePropertySchema = z.object({
     city: z.string().optional(),
     locality: z.string().optional(),
     subLocality: z.string().optional(),
-    flatNo: z.string().optional(),
+    flatNo: nullableStringForUpdate,
     area: z.string().optional(),
     address: z.string().optional(),
     longitude: z.number().optional(),
