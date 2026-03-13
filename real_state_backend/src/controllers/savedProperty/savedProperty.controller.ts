@@ -2,11 +2,13 @@ import { prisma } from "../../config/prisma";
 import { Request, Response } from "express";
 import { SavePropertyInput, GetSavedPropertiesQueryInput } from "../../validators/savedProperty.validators";
 
+const prismaClient = prisma as any;
+
 type Params = {
     propertyId: string;
 };
 
-// Save a property to user's favorites
+// Save an exclusive property to user's favorites
 export async function saveProperty(req: Request, res: Response) {
     try {
         const userId = req.user?.id;
@@ -14,23 +16,23 @@ export async function saveProperty(req: Request, res: Response) {
             return res.status(401).json({ message: "Unauthorized User" });
         }
 
-        const { propertyId } = req.body as SavePropertyInput;
+        const { propertyId: exclusivePropertyId } = req.body as SavePropertyInput;
 
-        // Check if property exists
-        const property = await prisma.property.findUnique({
-            where: { id: propertyId }
+        // Check if exclusive property exists
+        const property = await prismaClient.exclusiveProperty.findUnique({
+            where: { id: exclusivePropertyId }
         });
 
         if (!property) {
             return res.status(404).json({ message: "Property not found" });
         }
 
-        // Check if property is already saved
-        const existingSave = await prisma.savedProperty.findUnique({
+        // Check if already saved
+        const existingSave = await prismaClient.savedExclusiveProperty.findUnique({
             where: {
-                userId_propertyId: {
+                userId_exclusivePropertyId: {
                     userId,
-                    propertyId
+                    exclusivePropertyId
                 }
             }
         });
@@ -42,27 +44,17 @@ export async function saveProperty(req: Request, res: Response) {
             });
         }
 
-        // Save the property
-        const savedProperty = await prisma.savedProperty.create({
+        // Save the exclusive property
+        const savedProperty = await prismaClient.savedExclusiveProperty.create({
             data: {
                 userId,
-                propertyId
+                exclusivePropertyId
             },
             include: {
-                property: {
+                exclusiveProperty: {
                     include: {
                         media: {
                             orderBy: { order: 'asc' }
-                        },
-                        user: {
-                            select: {
-                                id: true,
-                                firstName: true,
-                                lastName: true,
-                                email: true,
-                                phone: true,
-                                avatar: true
-                            }
                         }
                     }
                 }
@@ -80,7 +72,7 @@ export async function saveProperty(req: Request, res: Response) {
     }
 }
 
-// Remove a saved property
+// Remove a saved exclusive property
 export async function unsaveProperty(req: Request<Params>, res: Response) {
     try {
         const userId = req.user?.id;
@@ -88,14 +80,14 @@ export async function unsaveProperty(req: Request<Params>, res: Response) {
             return res.status(401).json({ message: "Unauthorized User" });
         }
 
-        const { propertyId } = req.params;
+        const exclusivePropertyId = req.params.propertyId;
 
         // Check if property is saved
-        const savedProperty = await prisma.savedProperty.findUnique({
+        const savedProperty = await prismaClient.savedExclusiveProperty.findUnique({
             where: {
-                userId_propertyId: {
+                userId_exclusivePropertyId: {
                     userId,
-                    propertyId
+                    exclusivePropertyId
                 }
             }
         });
@@ -105,11 +97,11 @@ export async function unsaveProperty(req: Request<Params>, res: Response) {
         }
 
         // Remove the saved property
-        await prisma.savedProperty.delete({
+        await prismaClient.savedExclusiveProperty.delete({
             where: {
-                userId_propertyId: {
+                userId_exclusivePropertyId: {
                     userId,
-                    propertyId
+                    exclusivePropertyId
                 }
             }
         });
@@ -124,7 +116,7 @@ export async function unsaveProperty(req: Request<Params>, res: Response) {
     }
 }
 
-// Get all saved properties for the user
+// Get all saved exclusive properties for the user
 export async function getSavedProperties(req: Request, res: Response) {
     try {
         const userId = req.user?.id;
@@ -138,32 +130,22 @@ export async function getSavedProperties(req: Request, res: Response) {
         const skip = (page - 1) * limit;
 
         const [savedProperties, totalCount] = await Promise.all([
-            prisma.savedProperty.findMany({
+            prismaClient.savedExclusiveProperty.findMany({
                 where: { userId },
                 orderBy: { createdAt: 'desc' },
                 skip,
                 take: limit,
                 include: {
-                    property: {
+                    exclusiveProperty: {
                         include: {
                             media: {
                                 orderBy: { order: 'asc' }
-                            },
-                            user: {
-                                select: {
-                                    id: true,
-                                    firstName: true,
-                                    lastName: true,
-                                    email: true,
-                                    phone: true,
-                                    avatar: true
-                                }
                             }
                         }
                     }
                 }
             }),
-            prisma.savedProperty.count({ where: { userId } })
+            prismaClient.savedExclusiveProperty.count({ where: { userId } })
         ]);
 
         const totalPages = Math.ceil(totalCount / limit);
@@ -186,7 +168,7 @@ export async function getSavedProperties(req: Request, res: Response) {
     }
 }
 
-// Check if a property is saved by the user
+// Check if an exclusive property is saved by the user
 export async function checkIfPropertySaved(req: Request<Params>, res: Response) {
     try {
         const userId = req.user?.id;
@@ -194,13 +176,13 @@ export async function checkIfPropertySaved(req: Request<Params>, res: Response) 
             return res.status(401).json({ message: "Unauthorized User" });
         }
 
-        const { propertyId } = req.params;
+        const exclusivePropertyId = req.params.propertyId;
 
-        const savedProperty = await prisma.savedProperty.findUnique({
+        const savedProperty = await prismaClient.savedExclusiveProperty.findUnique({
             where: {
-                userId_propertyId: {
+                userId_exclusivePropertyId: {
                     userId,
-                    propertyId
+                    exclusivePropertyId
                 }
             }
         });

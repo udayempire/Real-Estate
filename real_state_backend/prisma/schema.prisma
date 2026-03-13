@@ -96,13 +96,14 @@ model User {
   otps                  Otp[]
   refreshTokens         RefreshToken[]
   supportTickets        CustomerSupport[]
-  savedProperties       SavedProperty[]
-  appointments          Appointment[]
-  gemTransactions       GemTransaction[]
-  gemRequestsAsTarget   GemRequest[]        @relation("GemRequestTargetUser")
-  gemRequestsAsReferral GemRequest[]        @relation("GemRequestReferralUser")
-  exclusiveProperties   ExclusiveProperty[] @relation("ExclusiveOriginalUser")
-  banRequests           BanRequest[]        @relation("BanRequestTargetUser")
+  savedProperties          SavedProperty[]
+  savedExclusiveProperties SavedExclusiveProperty[]
+  appointments             Appointment[]
+  gemTransactions          GemTransaction[]
+  gemRequestsAsTarget      GemRequest[]        @relation("GemRequestTargetUser")
+  gemRequestsAsReferral    GemRequest[]        @relation("GemRequestReferralUser")
+  exclusiveProperties      ExclusiveProperty[] @relation("ExclusiveOriginalUser")
+  banRequests              BanRequest[]        @relation("BanRequestTargetUser")
 
   @@index([id, email])
   @@map("users")
@@ -380,7 +381,8 @@ model ExclusiveProperty {
   originalUser   User   @relation("ExclusiveOriginalUser", fields: [originalUserId], references: [id], onDelete: Restrict)
 
   // Relations
-  media ExclusivePropertyMedia[]
+  media   ExclusivePropertyMedia[]
+  savedBy SavedExclusiveProperty[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -539,6 +541,22 @@ model CustomerSupport {
   @@index([userId])
   @@index([ticketStatus])
   @@map("customer_support")
+}
+
+// Saved Exclusive Properties (User wishlist/bookmarks for exclusive properties)
+
+model SavedExclusiveProperty {
+  id                  String            @id @default(cuid())
+  userId              String
+  exclusivePropertyId String
+  user                User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  exclusiveProperty   ExclusiveProperty @relation(fields: [exclusivePropertyId], references: [id], onDelete: Cascade)
+  createdAt           DateTime          @default(now())
+
+  @@unique([userId, exclusivePropertyId])
+  @@index([userId])
+  @@index([exclusivePropertyId])
+  @@map("saved_exclusive_properties")
 }
 
 // Saved Properties (User wishlist/bookmarks)
