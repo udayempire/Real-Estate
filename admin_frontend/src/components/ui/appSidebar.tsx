@@ -66,7 +66,7 @@ const items = [
     { title: "Appointments", url: "/appointments", icon: Calendar },
     { title: "Requirement Board", url: "requirement-board", icon: ClipboardList },
     { title: "Financials", url: "#", icon: WalletIcon, children: [
-        { title: "Transaction History", url: "/financials", icon: WalletCardsIcon },
+        { title: "Manage Transactions", url: "/financials", icon: WalletCardsIcon },
         { title: "Gem Approvals", url: "/financials/gem-approvals", icon: Watch, roles: ["SUPER_ADMIN"] as const },
     ] },
     { title: "Banner Management", url: "/banner-management", icon: Image },

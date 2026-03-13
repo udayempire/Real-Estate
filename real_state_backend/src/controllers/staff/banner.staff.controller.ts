@@ -60,3 +60,37 @@ export async function deleteBanner(req: Request, res: Response) {
         return res.status(500).json({ message: "Internal server error" });
     }
 }
+
+export async function updateBannerStatus(req: Request, res: Response) {
+    try {
+        const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+        const { status } = req.body as { status?: "ACTIVE" | "INACTIVE" };
+        if (!id) {
+            return res.status(400).json({ message: "Banner id is required" });
+        }
+        if (status !== "ACTIVE" && status !== "INACTIVE") {
+            return res.status(400).json({ message: "Invalid status. Use ACTIVE or INACTIVE" });
+        }
+
+        if (status === "ACTIVE") {
+            const activeCount = await prisma.banner.count({ where: { status: "ACTIVE" } });
+            if (activeCount >= 4) {
+                return res.status(400).json({ message: "You can only have up to 4 active banners" });
+            }
+        }
+
+        const banner = await prisma.banner.update({
+            where: { id },
+            data: { status },
+        });
+
+        return res.status(200).json({
+            success: true,
+            message: `Banner marked as ${status.toLowerCase()}`,
+            data: banner,
+        });
+    } catch (error) {
+        console.error("Update banner status error:", error);
+        return res.status(500).json({ message: "Internal server error" });
+    }
+}
