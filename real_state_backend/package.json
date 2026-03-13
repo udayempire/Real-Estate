@@ -13,7 +13,7 @@
     "build": "tsup",
     "prisma:generate": "prisma generate",
     "prisma:push": "prisma db push",
-    "prisma:seed": "tsx prisma/seed.ts"
+    "prisma:seed": "tsx prisma/seed.ts",
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

@@ -48,7 +48,8 @@ export interface PropertyCardData {
     balconies: number
     floors: number
     furnishing: string
-    status: "Active" | "Sold" | "Unlisted" | "Pending"
+    /** Backend status: PropertyStatus (User's Listing, Pending) or ExclusivePropertyStatus (Exclusive tab) */
+    status: string
     imageUrl: string
     postedDate: string
     isFeatured?: boolean
@@ -72,11 +73,25 @@ interface PropertyCardProps {
     showEditButton?: boolean
 }
 
-const statusColors: Record<PropertyCardData["status"], string> = {
-    Active: "bg-green-500",
-    Sold: "bg-red-500",
-    Unlisted: "bg-gray-500",
-    Pending: "bg-yellow-500",
+/** PropertyStatus + ExclusivePropertyStatus color mapping */
+const statusColors: Record<string, string> = {
+    ACTIVE: "bg-green-500",
+    UNLISTED: "bg-gray-500",
+    SOLDOFFLINE: "bg-red-500",
+    SOLDTOREALBRO: "bg-blue-500",
+    SOLDFROMLISTINGS: "bg-teal-500",
+    DRAFT: "bg-yellow-500",
+    SOLDEXCLUSIVEPROPERTY: "bg-purple-500",
+    PENDING_EXCLUSIVE_ACQUISITION: "bg-amber-500",
+    SOLD_OUT: "bg-red-500",
+    ARCHIVED: "bg-gray-600",
+}
+const defaultStatusColor = "bg-gray-500"
+
+/** Display label for status (e.g. SOLD_OUT → "SOLD OUT") */
+function formatStatusLabel(status: string): string {
+    if (status === "SOLD_OUT") return "SOLD OUT"
+    return status
 }
 
 export function PropertyCard({
@@ -96,6 +111,8 @@ export function PropertyCard({
     const { user } = useAuth()
     const [buyDialogOpen, setBuyDialogOpen] = useState(false)
     const [isSubmittingBuy, setIsSubmittingBuy] = useState(false)
+    const [soldConfirmOpen, setSoldConfirmOpen] = useState(false)
+    const [isSubmittingSold, setIsSubmittingSold] = useState(false)
 
     const isSuperAdmin = user?.role === "SUPER_ADMIN"
     const buyConfirmationText = isSuperAdmin
@@ -112,6 +129,18 @@ export function PropertyCard({
             setIsSubmittingBuy(false)
         }
     }
+
+    const handleConfirmSold = async () => {
+        if (!onMarkAsSold) return
+        try {
+            setIsSubmittingSold(true)
+            await onMarkAsSold(property.detailId ?? property.id)
+            setSoldConfirmOpen(false)
+        } finally {
+            setIsSubmittingSold(false)
+        }
+    }
+
     const propertyDetailsHref = `/property/${property.detailId ?? property.id}`
     const handleEditClick = () => {
         if (onEdit) {
@@ -136,9 +165,9 @@ export function PropertyCard({
                 />
                 </Link>
                 <div className="absolute top-3 left-3 flex items-center gap-1.5">
-                    <span className={`${statusColors[property.status]} text-white text-[10px] font-semibold px-2 py-0.5 rounded-full flex items-center gap-1`}>
+                    <span className={`${statusColors[property.status] ?? defaultStatusColor} text-white text-[10px] font-semibold px-2 py-0.5 rounded-full flex items-center gap-1`}>
                         <span className="w-1.5 h-1.5 bg-white rounded-full" />
-                        {property.status}
+                        {formatStatusLabel(property.status)}
                     </span>
                 </div>
                 <div className="absolute top-3 right-3 flex items-center gap-1.5">
@@ -239,7 +268,7 @@ export function PropertyCard({
                         </Button>
                     )}
 
-                    {!onMakeExclusive && property.status === "Pending" && (onApprove || onReject) ? (
+                    {!onMakeExclusive && (onApprove || onReject) ? (
                         <>
                             {onApprove && (
                                 <Button
@@ -265,16 +294,55 @@ export function PropertyCard({
                             )}
                         </>
                     ) : !onMakeExclusive && isExclusive ? (
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            className="flex-1 h-8 text-[11px] text-green-600 border-green-200 hover:bg-green-50"
-                            onClick={() => onMarkAsSold?.(property.id)}
-                        >
-                            <CheckCircle className="size-3 mr-1" />
-                            Mark as Sold
-                        </Button>
-                    ) : !onMakeExclusive && property.status === "Active" ? (
+                        <>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                className="flex-1 h-8 text-[11px] text-green-600 border-green-200 hover:bg-green-50"
+                                onClick={() => setSoldConfirmOpen(true)}
+                            >
+                                {property.status === "SOLD_OUT" ? (
+                                    <>
+                                        <XCircle className="size-3 mr-1" />
+                                        Mark as Available
+                                    </>
+                                ) : (
+                                    <>
+                                        <CheckCircle className="size-3 mr-1" />
+                                        Mark as Sold
+                                    </>
+                                )}
+                            </Button>
+                            <Dialog open={soldConfirmOpen} onOpenChange={setSoldConfirmOpen}>
+                                <DialogContent>
+                                    <DialogHeader>
+                                        <DialogTitle>Confirm</DialogTitle>
+                                        <DialogDescription>
+                                            {property.status === "SOLD_OUT"
+                                                ? "Are you sure you want to mark this property as available?"
+                                                : "Are you sure you want to mark this property as sold?"}
+                                        </DialogDescription>
+                                    </DialogHeader>
+                                    <DialogFooter>
+                                        <Button
+                                            variant="outline"
+                                            onClick={() => setSoldConfirmOpen(false)}
+                                            disabled={isSubmittingSold}
+                                        >
+                                            Cancel
+                                        </Button>
+                                        <Button
+                                            className="bg-green-600 hover:bg-green-700"
+                                            onClick={handleConfirmSold}
+                                            disabled={isSubmittingSold || !onMarkAsSold}
+                                        >
+                                            {isSubmittingSold ? "Processing..." : "Confirm"}
+                                        </Button>
+                                    </DialogFooter>
+                                </DialogContent>
+                            </Dialog>
+                        </>
+                    ) : !onMakeExclusive && property.status === "ACTIVE" ? (
                         <>
                             <Button
                                 variant="outline"

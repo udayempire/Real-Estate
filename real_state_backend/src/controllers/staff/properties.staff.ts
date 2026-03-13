@@ -560,7 +560,7 @@ export async function getPendingApprovalProperties(req: Request, res: Response) 
             balconies: p.numberOfBalcony ?? 0,
             floors: p.numberOfFloors ?? 0,
             furnishing: formatFurnishing(p.furnishingStatus),
-            status: "Pending" as const,
+            status: p.status,
             imageUrl: p.media[0]?.url ?? "/largeBuilding2.png",
             postedDate: formatPostedDate(p.createdAt),
         }));
@@ -581,7 +581,6 @@ export async function getPendingExclusiveProperties(req: Request, res: Response)
         const limit = Math.min(Math.max(Number(req.query.limit ?? 50), 1), 100);
         const skip = (page - 1) * limit;
 
-        const formatStatus = (s: string) => (s === "ACTIVE" ? "Active" : s === "UNLISTED" ? "Unlisted" : s === "DRAFT" || s === "UNDER_ACQUISITION" ? "Pending" : "Sold");
         const formatFurnishing = (v?: string | null) => (v ? v.replace(/([a-z])([A-Z])/g, "$1 $2") : "N/A");
         const formatPostedDate = (d: Date) => d.toLocaleDateString("en-GB", { day: "2-digit", month: "long", year: "numeric" });
         const formatArea = (area?: string | null, carpetArea?: number | null, carpetAreaUnit?: string | null) => (area || (carpetArea != null ? `${carpetArea} ${carpetAreaUnit ?? ""}`.trim() : "N/A"));
@@ -622,7 +621,7 @@ export async function getPendingExclusiveProperties(req: Request, res: Response)
             balconies: p.numberOfBalcony ?? 0,
             floors: p.numberOfFloors ?? 0,
             furnishing: formatFurnishing(p.furnishingStatus),
-            status: formatStatus(p.status),
+            status: p.status,
             imageUrl: p.media[0]?.url ?? "/largeBuilding2.png",
             postedDate: formatPostedDate(p.createdAt),
         }));
@@ -642,15 +641,6 @@ export async function getAllProperties(req: Request, res: Response) {
         const page = Math.max(Number(req.query.page ?? 1), 1);
         const limit = Math.min(Math.max(Number(req.query.limit ?? 10), 1), 100);
         const skip = (page - 1) * limit;
-
-        const formatStatus = (status: string) => {
-            if (status === "ACTIVE") return "Active";
-            if (status === "UNLISTED") return "Unlisted";
-            if (status === "DRAFT") return "Draft";
-            if (status === "UNDER_ACQUISITION") return "Pending under acquisition";
-            if (status === "SOLDTOREALBRO") return "Sold to RealBro";
-            return "Sold";
-        };
 
         const formatFurnishing = (value?: string | null) => {
             if (!value) return "N/A";
@@ -723,7 +713,7 @@ export async function getAllProperties(req: Request, res: Response) {
             balconies: property.numberOfBalcony ?? 0,
             floors: property.numberOfFloors ?? 0,
             furnishing: formatFurnishing(property.furnishingStatus),
-            status: formatStatus(property.status),
+            status: property.status,
             imageUrl: property.media[0]?.url ?? "/largeBuilding2.png",
             postedDate: formatPostedDate(property.createdAt),
         }));

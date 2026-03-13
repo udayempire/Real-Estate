@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
 import { Filter } from "@/components/appointments/filterAppointments"
 import { ExportButton } from "@/components/role_management/exportButton"
@@ -47,71 +47,70 @@ export default function ExclusivePropertiesPage() {
     const [isLoading, setIsLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
 
-    useEffect(() => {
-        let isMounted = true
-
-        const fetchExclusiveProperties = async () => {
-            try {
-                setIsLoading(true)
-                setError(null)
-                const response = await api.get<{
-                    success: boolean
-                    data: ExclusiveApiRow[]
-                }>("/staff/properties/exclusive", {
-                    params: { page: 1, limit: 50 },
-                })
-
-                if (!isMounted) return
-
-                const mapped: PropertyCardData[] = (response.data.data ?? []).map((item) => {
-                    const uiStatus: PropertyCardData["status"] =
-                        item.status === "ACTIVE"
-                            ? "Active"
-                            : item.status === "SOLD_OUT"
-                                ? "Sold"
-                                : "Unlisted"
-
-                    const location = [item.subLocality, item.locality, item.city].filter(Boolean).join(", ") || "N/A"
-
-                    return {
-                        id: item.id,
-                        title: item.title,
-                        location,
-                        price: item.listingPrice != null ? String(item.listingPrice) : "N/A",
-                        area: "N/A",
-                        bedrooms: item.numberOfRooms ?? 0,
-                        bathrooms: item.numberOfBathrooms ?? 0,
-                        balconies: item.numberOfBalcony ?? 0,
-                        floors: item.numberOfFloors ?? 0,
-                        furnishing: item.furnishingStatus?.replace(/([a-z])([A-Z])/g, "$1 $2") ?? "N/A",
-                        status: uiStatus,
-                        imageUrl: item.media?.[0]?.url ?? "/largeBuilding2.png",
-                        postedDate: new Date(item.createdAt).toLocaleDateString("en-GB", {
-                            day: "2-digit",
-                            month: "long",
-                            year: "numeric",
-                        }),
-                        gems: item.fixedRewardGems,
-                    }
-                })
-
-                setExclusiveProperties(mapped)
-            } catch (err) {
-                if (!isMounted) return
-                setError("Failed to load exclusive properties")
-                console.error("Failed to fetch exclusive properties:", err)
-            } finally {
-                if (isMounted) {
-                    setIsLoading(false)
+    const fetchExclusiveProperties = useCallback(async () => {
+        try {
+            setIsLoading(true)
+            setError(null)
+            const response = await api.get<{
+                success: boolean
+                data: ExclusiveApiRow[]
+            }>("/staff/properties/exclusive", {
+                params: { page: 1, limit: 50 },
+            })
+            const mapped: PropertyCardData[] = (response.data.data ?? []).map((item) => {
+                const location = [item.subLocality, item.locality, item.city].filter(Boolean).join(", ") || "N/A"
+                return {
+                    id: item.id,
+                    detailId: item.sourceProperty.id,
+                    title: item.title,
+                    location,
+                    price: item.listingPrice != null ? String(item.listingPrice) : "N/A",
+                    area: "N/A",
+                    bedrooms: item.numberOfRooms ?? 0,
+                    bathrooms: item.numberOfBathrooms ?? 0,
+                    balconies: item.numberOfBalcony ?? 0,
+                    floors: item.numberOfFloors ?? 0,
+                    furnishing: item.furnishingStatus?.replace(/([a-z])([A-Z])/g, "$1 $2") ?? "N/A",
+                    status: item.status,
+                    imageUrl: item.media?.[0]?.url ?? "/largeBuilding2.png",
+                    postedDate: new Date(item.createdAt).toLocaleDateString("en-GB", {
+                        day: "2-digit",
+                        month: "long",
+                        year: "numeric",
+                    }),
+                    gems: item.fixedRewardGems,
                 }
-            }
-        }
-
-        fetchExclusiveProperties()
-        return () => {
-            isMounted = false
+            })
+            setExclusiveProperties(mapped)
+        } catch (err) {
+            setError("Failed to load exclusive properties")
+            console.error("Failed to fetch exclusive properties:", err)
+        } finally {
+            setIsLoading(false)
         }
     }, [])
+
+    const handleMarkAsSold = useCallback(
+        async (sourcePropertyId: string) => {
+            const card = exclusiveProperties.find((p) => p.detailId === sourcePropertyId)
+            const isCurrentlySold = card?.status === "SOLD_OUT"
+            const nextStatus = isCurrentlySold ? "ACTIVE" : "SOLD_OUT"
+            try {
+                await api.put(`/staff/properties/${sourcePropertyId}/status`, {
+                    status: nextStatus,
+                    target: "exclusive",
+                })
+                await fetchExclusiveProperties()
+            } catch (err) {
+                console.error("Failed to update exclusive property status:", err)
+            }
+        },
+        [exclusiveProperties, fetchExclusiveProperties],
+    )
+
+    useEffect(() => {
+        void fetchExclusiveProperties()
+    }, [fetchExclusiveProperties])
 
     const filteredExclusiveProperties = useMemo(() => {
         const query = globalFilter.trim().toLowerCase()
@@ -173,6 +172,7 @@ export default function ExclusivePropertiesPage() {
                             properties={filteredExclusiveProperties}
                             variant="exclusive"
                             onEdit={(exclusivePropertyId) => router.push(`/property/exclusive-listings/${exclusivePropertyId}/edit`)}
+                            onMarkAsSold={handleMarkAsSold}
                         />
                     )}
                 </div>
