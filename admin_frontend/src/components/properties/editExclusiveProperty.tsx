@@ -14,6 +14,9 @@ import { CheckCircle, Loader2, X } from "lucide-react";
 type ExclusiveStatus = "ACTIVE" | "SOLD_OUT" | "ARCHIVED";
 
 type ExistingProperty = {
+    fixedRewardGems?: number | null;
+    notes?: string | null;
+    status?: string | null;
     title?: string | null;
     description?: string | null;
     listingPrice?: number | null;
@@ -149,6 +152,48 @@ export function EditExclusiveProperty() {
     };
 
     useEffect(() => {
+        if (!existing) return;
+        setForm((prev) => ({
+            ...prev,
+            fixedRewardGems: existing.fixedRewardGems != null ? String(existing.fixedRewardGems) : "",
+            notes: existing.notes ?? "",
+            status: (existing.status as ExclusiveStatus) ?? "ACTIVE",
+            title: existing.title ?? "",
+            description: existing.description ?? "",
+            listingPrice: existing.listingPrice != null ? String(existing.listingPrice) : "",
+            priceMin: existing.priceMin != null ? String(existing.priceMin) : "",
+            priceMax: existing.priceMax != null ? String(existing.priceMax) : "",
+            state: existing.state ?? "",
+            city: existing.city ?? "",
+            locality: existing.locality ?? "",
+            subLocality: existing.subLocality ?? "",
+            address: existing.address ?? "",
+            category: (existing.category as FormState["category"]) ?? "",
+            propertyType: (existing.propertyType as FormState["propertyType"]) ?? "",
+            furnishingStatus: (existing.furnishingStatus as FormState["furnishingStatus"]) ?? "",
+            availabilityStatus: (existing.availabilityStatus as FormState["availabilityStatus"]) ?? "",
+            ageOfProperty: (existing.ageOfProperty as FormState["ageOfProperty"]) ?? "",
+            propertyFacing: (existing.propertyFacing as FormState["propertyFacing"]) ?? "",
+            numberOfRooms: existing.numberOfRooms != null ? String(existing.numberOfRooms) : "",
+            numberOfBathrooms: existing.numberOfBathrooms != null ? String(existing.numberOfBathrooms) : "",
+            numberOfBalcony: existing.numberOfBalcony != null ? String(existing.numberOfBalcony) : "",
+            numberOfFloors: existing.numberOfFloors != null ? String(existing.numberOfFloors) : "",
+            coveredParking: existing.coveredParking != null ? String(existing.coveredParking) : "",
+            uncoveredParking: existing.uncoveredParking != null ? String(existing.uncoveredParking) : "",
+            amenities: existing.amenities?.length ? existing.amenities.join(", ") : "",
+            locationAdvantages: existing.locationAdvantages?.length ? existing.locationAdvantages.join(", ") : "",
+            allInclusivePrice: existing.allInclusivePrice ?? false,
+            negotiablePrice: existing.negotiablePrice ?? false,
+            govtChargesTaxIncluded: existing.govtChargesTaxIncluded ?? false,
+        }));
+        setSwitchTouched({
+            allInclusivePrice: existing.allInclusivePrice != null,
+            negotiablePrice: existing.negotiablePrice != null,
+            govtChargesTaxIncluded: existing.govtChargesTaxIncluded != null,
+        });
+    }, [existing]);
+
+    useEffect(() => {
         let mounted = true;
         const loadExisting = async () => {
             try {
@@ -266,10 +311,9 @@ export function EditExclusiveProperty() {
                                 <SelectTrigger className="h-10 border-2 bg-white w-full">
                                     <SelectValue />
                                 </SelectTrigger>
-                                <SelectContent>
+                                <SelectContent className="font-medium">
                                     <SelectItem value="ACTIVE">ACTIVE</SelectItem>
-                                    <SelectItem value="SOLD_OUT">SOLD_OUT</SelectItem>
-                                    <SelectItem value="ARCHIVED">ARCHIVED</SelectItem>
+                                    <SelectItem value="SOLD_OUT">SOLD OUT</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
@@ -287,26 +331,26 @@ export function EditExclusiveProperty() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-1.5">
                             <FieldLabel>Title Override</FieldLabel>
-                            <Input value={form.title} onChange={(e) => setField("title", e.target.value)} className="h-10 border-2 bg-white" placeholder={existing?.title ?? ""} />
+                            <Input value={form.title} onChange={(e) => setField("title", e.target.value)} className="h-10 border-2 bg-white" placeholder="Property title" />
                         </div>
                         <div className="space-y-1.5">
                             <FieldLabel>Description Override</FieldLabel>
-                            <Input value={form.description} onChange={(e) => setField("description", e.target.value)} className="h-10 border-2 bg-white" placeholder={existing?.description ?? ""} />
+                            <Input value={form.description} onChange={(e) => setField("description", e.target.value)} className="h-10 border-2 bg-white" placeholder="Property description" />
                         </div>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div className="space-y-1.5">
                             <FieldLabel>Listing Price</FieldLabel>
-                            <Input type="number" value={form.listingPrice} onChange={(e) => setField("listingPrice", e.target.value)} className="h-10 border-2 bg-white" placeholder={existing?.listingPrice?.toString() ?? ""} />
+                            <Input type="number" value={form.listingPrice} onChange={(e) => setField("listingPrice", e.target.value)} className="h-10 border-2 bg-white" placeholder="0" />
                         </div>
                         <div className="space-y-1.5">
                             <FieldLabel>Price Min</FieldLabel>
-                            <Input type="number" value={form.priceMin} onChange={(e) => setField("priceMin", e.target.value)} className="h-10 border-2 bg-white" placeholder={existing?.priceMin?.toString() ?? ""} />
+                            <Input type="number" value={form.priceMin} onChange={(e) => setField("priceMin", e.target.value)} className="h-10 border-2 bg-white" placeholder="0" />
                         </div>
                         <div className="space-y-1.5">
                             <FieldLabel>Price Max</FieldLabel>
-                            <Input type="number" value={form.priceMax} onChange={(e) => setField("priceMax", e.target.value)} className="h-10 border-2 bg-white" placeholder={existing?.priceMax?.toString() ?? ""} />
+                            <Input type="number" value={form.priceMax} onChange={(e) => setField("priceMax", e.target.value)} className="h-10 border-2 bg-white" placeholder="0" />
                         </div>
                     </div>
 
@@ -314,7 +358,7 @@ export function EditExclusiveProperty() {
                         <div className="space-y-1.5">
                             <FieldLabel>Category</FieldLabel>
                             <Select value={form.category} onValueChange={(v) => setField("category", v as FormState["category"])}>
-                                <SelectTrigger className="h-10 border-2 bg-white w-full"><SelectValue placeholder={existing?.category ?? "Select category"} /></SelectTrigger>
+                                <SelectTrigger className="h-10 border-2 bg-white w-full"><SelectValue placeholder="Select category" /></SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="RESIDENTIAL">RESIDENTIAL</SelectItem>
                                     <SelectItem value="COMMERCIAL">COMMERCIAL</SelectItem>
@@ -325,7 +369,7 @@ export function EditExclusiveProperty() {
                         <div className="space-y-1.5">
                             <FieldLabel>Property Type</FieldLabel>
                             <Select value={form.propertyType} onValueChange={(v) => setField("propertyType", v as FormState["propertyType"])}>
-                                <SelectTrigger className="h-10 border-2 bg-white w-full"><SelectValue placeholder={existing?.propertyType ?? "Select property type"} /></SelectTrigger>
+                                <SelectTrigger className="h-10 border-2 bg-white w-full"><SelectValue placeholder="Select property type" /></SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="FARMLAND">FARMLAND</SelectItem>
                                     <SelectItem value="DUPLEX">DUPLEX</SelectItem>
@@ -339,38 +383,38 @@ export function EditExclusiveProperty() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-1.5">
                             <FieldLabel>State</FieldLabel>
-                            <Input value={form.state} onChange={(e) => setField("state", e.target.value)} className="h-10 border-2 bg-white" placeholder={existing?.state ?? ""} />
+                            <Input value={form.state} onChange={(e) => setField("state", e.target.value)} className="h-10 border-2 bg-white" placeholder="State" />
                         </div>
                         <div className="space-y-1.5">
                             <FieldLabel>City</FieldLabel>
-                            <Input value={form.city} onChange={(e) => setField("city", e.target.value)} className="h-10 border-2 bg-white" placeholder={existing?.city ?? ""} />
+                            <Input value={form.city} onChange={(e) => setField("city", e.target.value)} className="h-10 border-2 bg-white" placeholder="City" />
                         </div>
                         <div className="space-y-1.5">
                             <FieldLabel>Locality</FieldLabel>
-                            <Input value={form.locality} onChange={(e) => setField("locality", e.target.value)} className="h-10 border-2 bg-white" placeholder={existing?.locality ?? ""} />
+                            <Input value={form.locality} onChange={(e) => setField("locality", e.target.value)} className="h-10 border-2 bg-white" placeholder="Locality" />
                         </div>
                         <div className="space-y-1.5">
                             <FieldLabel>Sub Locality</FieldLabel>
-                            <Input value={form.subLocality} onChange={(e) => setField("subLocality", e.target.value)} className="h-10 border-2 bg-white" placeholder={existing?.subLocality ?? ""} />
+                            <Input value={form.subLocality} onChange={(e) => setField("subLocality", e.target.value)} className="h-10 border-2 bg-white" placeholder="Sub locality" />
                         </div>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                         <div className="space-y-1.5">
                             <FieldLabel>Rooms</FieldLabel>
-                            <Input type="number" min={0} value={form.numberOfRooms} onChange={(e) => setField("numberOfRooms", e.target.value)} className="h-10 border-2 bg-white" placeholder={existing?.numberOfRooms?.toString() ?? ""} />
+                            <Input type="number" min={0} value={form.numberOfRooms} onChange={(e) => setField("numberOfRooms", e.target.value)} className="h-10 border-2 bg-white" placeholder="0" />
                         </div>
                         <div className="space-y-1.5">
                             <FieldLabel>Bathrooms</FieldLabel>
-                            <Input type="number" min={0} value={form.numberOfBathrooms} onChange={(e) => setField("numberOfBathrooms", e.target.value)} className="h-10 border-2 bg-white" placeholder={existing?.numberOfBathrooms?.toString() ?? ""} />
+                            <Input type="number" min={0} value={form.numberOfBathrooms} onChange={(e) => setField("numberOfBathrooms", e.target.value)} className="h-10 border-2 bg-white" placeholder="0" />
                         </div>
                         <div className="space-y-1.5">
                             <FieldLabel>Balcony</FieldLabel>
-                            <Input type="number" min={0} value={form.numberOfBalcony} onChange={(e) => setField("numberOfBalcony", e.target.value)} className="h-10 border-2 bg-white" placeholder={existing?.numberOfBalcony?.toString() ?? ""} />
+                            <Input type="number" min={0} value={form.numberOfBalcony} onChange={(e) => setField("numberOfBalcony", e.target.value)} className="h-10 border-2 bg-white" placeholder="0" />
                         </div>
                         <div className="space-y-1.5">
                             <FieldLabel>Floors</FieldLabel>
-                            <Input type="number" min={0} value={form.numberOfFloors} onChange={(e) => setField("numberOfFloors", e.target.value)} className="h-10 border-2 bg-white" placeholder={existing?.numberOfFloors?.toString() ?? ""} />
+                            <Input type="number" min={0} value={form.numberOfFloors} onChange={(e) => setField("numberOfFloors", e.target.value)} className="h-10 border-2 bg-white" placeholder="0" />
                         </div>
                     </div>
 
@@ -414,7 +458,7 @@ export function EditExclusiveProperty() {
                                 value={form.amenities}
                                 onChange={(e) => setField("amenities", e.target.value)}
                                 className="h-10 border-2 bg-white"
-                                placeholder={existing?.amenities?.length ? existing.amenities.join(", ") : "Gym, Lift, Security"}
+                                placeholder="Gym, Lift, Security"
                             />
                         </div>
                         <div className="space-y-1.5">
@@ -423,7 +467,7 @@ export function EditExclusiveProperty() {
                                 value={form.locationAdvantages}
                                 onChange={(e) => setField("locationAdvantages", e.target.value)}
                                 className="h-10 border-2 bg-white"
-                                placeholder={existing?.locationAdvantages?.length ? existing.locationAdvantages.join(", ") : "Near metro, Near school"}
+                                placeholder="Near metro, Near school"
                             />
                         </div>
                     </div>
