@@ -81,6 +81,33 @@ const nullableUnitEnum = z.preprocess(
     z.enum(carpetAreaUnitEnum).optional().nullable()
 );
 
+const nullableNonNegativeInt = z.preprocess((value) => {
+    if (value === null || value === "") return undefined;
+    if (typeof value === "number" && Number.isFinite(value)) return value;
+    if (typeof value === "string") {
+        const parsed = Number.parseInt(value, 10);
+        return Number.isFinite(parsed) ? parsed : undefined;
+    }
+    return undefined;
+}, z.number().int().min(0).optional().nullable());
+
+const lenientAvailabilityStatus = z.preprocess((value) => {
+    if (value === null || value === "") return undefined;
+    return availabilityStatusEnum.includes(value as (typeof availabilityStatusEnum)[number]) ? value : undefined;
+}, z.enum(availabilityStatusEnum).optional().nullable());
+
+const lenientAgeOfProperty = z.preprocess((value) => {
+    if (value === null || value === "") return undefined;
+    return ageOfPropertyEnum.includes(value as (typeof ageOfPropertyEnum)[number]) ? value : undefined;
+}, z.enum(ageOfPropertyEnum).optional().nullable());
+
+const lenientPropertyFloor = z.preprocess((value) => {
+    if (value === null || value === "") return undefined;
+    if (typeof value === "string") return value;
+    if (typeof value === "number" && Number.isFinite(value)) return String(value);
+    return undefined;
+}, z.string().optional().nullable());
+
 export const propertyMediaSchema = z.object({
     url: z.string().url(),
     key: z.string(),
@@ -118,15 +145,15 @@ export const addPropertySchema = z.object({
     // Basic Details - New
     category: z.enum(categoryEnum).optional(),
     furnishingStatus: z.enum(furnishingStatusEnum).optional(),
-    availabilityStatus: z.enum(availabilityStatusEnum).optional(),
-    ageOfProperty: z.enum(ageOfPropertyEnum).optional(),
+    availabilityStatus: lenientAvailabilityStatus,
+    ageOfProperty: lenientAgeOfProperty,
     
     // Property Details - New
-    numberOfRooms: z.number().int().min(0).optional(),
-    numberOfBathrooms: z.number().int().min(0).optional(),
-    numberOfBalcony: z.number().int().min(0).optional(),
-    numberOfFloors: z.number().int().min(0).optional(),
-    propertyFloor: z.string().optional(),
+    numberOfRooms: nullableNonNegativeInt,
+    numberOfBathrooms: nullableNonNegativeInt,
+    numberOfBalcony: nullableNonNegativeInt,
+    numberOfFloors: nullableNonNegativeInt,
+    propertyFloor: lenientPropertyFloor,
     
     // Price Details - New
     allInclusivePrice: z.boolean().default(false),
@@ -174,15 +201,15 @@ export const addDraftPropertySchema = z.object({
     // Basic Details
     category: z.enum(categoryEnum).optional(),
     furnishingStatus: z.enum(furnishingStatusEnum).optional(),
-    availabilityStatus: z.enum(availabilityStatusEnum).optional(),
-    ageOfProperty: z.enum(ageOfPropertyEnum).optional(),
+    availabilityStatus: lenientAvailabilityStatus,
+    ageOfProperty: lenientAgeOfProperty,
     
     // Property Details
-    numberOfRooms: z.number().int().min(0).optional(),
-    numberOfBathrooms: z.number().int().min(0).optional(),
-    numberOfBalcony: z.number().int().min(0).optional(),
-    numberOfFloors: z.number().int().min(0).optional(),
-    propertyFloor: z.string().optional(),
+    numberOfRooms: nullableNonNegativeInt,
+    numberOfBathrooms: nullableNonNegativeInt,
+    numberOfBalcony: nullableNonNegativeInt,
+    numberOfFloors: nullableNonNegativeInt,
+    propertyFloor: lenientPropertyFloor,
     
     // Price Details
     allInclusivePrice: z.boolean().optional(),
@@ -230,13 +257,13 @@ export const createExclusivePropertySchema = z.object({
     sizeUnit: z.enum(sizeUnitEnum).optional(),
     category: z.enum(categoryEnum).optional(),
     furnishingStatus: z.enum(furnishingStatusEnum).optional(),
-    availabilityStatus: z.enum(availabilityStatusEnum).optional(),
-    ageOfProperty: z.enum(ageOfPropertyEnum).optional(),
-    numberOfRooms: z.number().int().min(0).optional(),
-    numberOfBathrooms: z.number().int().min(0).optional(),
-    numberOfBalcony: z.number().int().min(0).optional(),
-    numberOfFloors: z.number().int().min(0).optional(),
-    propertyFloor: z.string().optional(),
+    availabilityStatus: lenientAvailabilityStatus,
+    ageOfProperty: lenientAgeOfProperty,
+    numberOfRooms: nullableNonNegativeInt,
+    numberOfBathrooms: nullableNonNegativeInt,
+    numberOfBalcony: nullableNonNegativeInt,
+    numberOfFloors: nullableNonNegativeInt,
+    propertyFloor: lenientPropertyFloor,
     allInclusivePrice: z.boolean().optional(),
     negotiablePrice: z.boolean().optional(),
     govtChargesTaxIncluded: z.boolean().optional(),
@@ -276,13 +303,13 @@ export const updateExclusivePropertySchema = z.object({
     sizeUnit: z.enum(sizeUnitEnum).optional().nullable(),
     category: z.enum(categoryEnum).optional().nullable(),
     furnishingStatus: z.enum(furnishingStatusEnum).optional().nullable(),
-    availabilityStatus: z.enum(availabilityStatusEnum).optional().nullable(),
-    ageOfProperty: z.enum(ageOfPropertyEnum).optional().nullable(),
-    numberOfRooms: z.number().int().min(0).optional().nullable(),
-    numberOfBathrooms: z.number().int().min(0).optional().nullable(),
-    numberOfBalcony: z.number().int().min(0).optional().nullable(),
-    numberOfFloors: z.number().int().min(0).optional().nullable(),
-    propertyFloor: z.string().optional().nullable(),
+    availabilityStatus: lenientAvailabilityStatus,
+    ageOfProperty: lenientAgeOfProperty,
+    numberOfRooms: nullableNonNegativeInt,
+    numberOfBathrooms: nullableNonNegativeInt,
+    numberOfBalcony: nullableNonNegativeInt,
+    numberOfFloors: nullableNonNegativeInt,
+    propertyFloor: lenientPropertyFloor,
     allInclusivePrice: z.boolean().optional(),
     negotiablePrice: z.boolean().optional(),
     govtChargesTaxIncluded: z.boolean().optional(),
@@ -324,15 +351,15 @@ export const updatePropertySchema = z.object({
     // Basic Details
     category: z.enum(categoryEnum).optional(),
     furnishingStatus: z.enum(furnishingStatusEnum).optional(),
-    availabilityStatus: z.enum(availabilityStatusEnum).optional(),
-    ageOfProperty: z.enum(ageOfPropertyEnum).optional(),
+    availabilityStatus: lenientAvailabilityStatus,
+    ageOfProperty: lenientAgeOfProperty,
     
     // Property Details
-    numberOfRooms: z.number().int().min(0).optional(),
-    numberOfBathrooms: z.number().int().min(0).optional(),
-    numberOfBalcony: z.number().int().min(0).optional(),
-    numberOfFloors: z.number().int().min(0).optional(),
-    propertyFloor: z.string().optional(),
+    numberOfRooms: nullableNonNegativeInt,
+    numberOfBathrooms: nullableNonNegativeInt,
+    numberOfBalcony: nullableNonNegativeInt,
+    numberOfFloors: nullableNonNegativeInt,
+    propertyFloor: lenientPropertyFloor,
     
     // Price Details
     allInclusivePrice: z.boolean().optional(),
