@@ -1,6 +1,8 @@
 import { prisma } from "../../config/prisma";
 import { Request, Response } from "express";
 import { CreateSupportTicketInput, GetTicketsQueryInput } from "../../validators/support.validators";
+import { NotificationType } from "@prisma/client";
+import { createAndSendUserNotification } from "../../services/notification.service";
 import z from "zod";
 
 type Params = {
@@ -46,6 +48,20 @@ export async function createSupportTicket(req: Request, res: Response) {
                 }
             }
         });
+
+        try {
+            await createAndSendUserNotification({
+                userId,
+                type: NotificationType.SUPPORT_TICKET_CREATED,
+                title: "Support request created",
+                description: "Your support request has been received. Our team will contact you soon.",
+                data: {
+                    ticketId: ticket.id,
+                },
+            });
+        } catch (notificationError) {
+            console.error("Support notification error:", notificationError);
+        }
 
         return res.status(201).json({
             success: true,

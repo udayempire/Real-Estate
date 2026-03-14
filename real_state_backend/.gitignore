@@ -72,3 +72,7 @@ temp/
 
 # Prisma
 prisma/generated/
+
+# Firebase service account keys
+*firebase-adminsdk*.json
+*service-account*.json

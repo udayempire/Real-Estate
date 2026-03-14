@@ -1,10 +1,12 @@
 import { prisma } from "../../config/prisma";
 import { Request, Response } from "express";
+import { NotificationType } from "@prisma/client";
 import { 
     CreateAppointmentInput, 
     UpdateAppointmentInput,
     GetAppointmentsQueryInput 
 } from "../../validators/appointment.validators";
+import { createAndSendUserNotification } from "../../services/notification.service";
 
 type Params = {
     appointmentId: string;
@@ -60,6 +62,21 @@ export async function createAppointment(req: Request, res: Response) {
                 }
             }
         });
+
+        try {
+            await createAndSendUserNotification({
+                userId,
+                type: NotificationType.APPOINTMENT_CREATED,
+                title: "Appointment booked",
+                description: `Your appointment for ${property.title} has been scheduled successfully.`,
+                data: {
+                    appointmentId: appointment.id,
+                    propertyId: appointment.propertyId,
+                },
+            });
+        } catch (notificationError) {
+            console.error("Appointment notification error:", notificationError);
+        }
 
         return res.status(201).json({
             success: true,

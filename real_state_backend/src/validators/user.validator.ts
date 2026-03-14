@@ -65,7 +65,26 @@ export const updateProfileSchema = z.object({
     gender: z.enum(["MALE", "FEMALE", "OTHER"]).optional()
 })
 
+export const registerDeviceTokenSchema = z.object({
+    token: z.string().min(10, "Invalid device token"),
+    platform: z.enum(["IOS", "ANDROID", "WEB"]),
+});
+
+export const unregisterDeviceTokenSchema = z.object({
+    token: z.string().min(10, "Invalid device token"),
+});
+
+export const getNotificationsQuerySchema = z.object({
+    page: z.coerce.number().int().min(1).optional(),
+    limit: z.coerce.number().int().min(1).max(100).optional(),
+    isRead: z
+        .enum(["true", "false", "TRUE", "FALSE"])
+        .optional()
+});
+
 export type SignupInput = z.infer<typeof signupSchema>;
 export type SigninInput = z.infer<typeof signinSchema>;
 export type UpdateProfieInput = z.infer<typeof updateProfileSchema>
 export type ChangePasswordInput = z.infer<typeof changePasswordSchema>
+export type RegisterDeviceTokenInput = z.infer<typeof registerDeviceTokenSchema>;
+export type UnregisterDeviceTokenInput = z.infer<typeof unregisterDeviceTokenSchema>;
