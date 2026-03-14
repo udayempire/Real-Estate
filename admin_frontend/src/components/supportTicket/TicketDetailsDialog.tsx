@@ -8,14 +8,16 @@ import {
 } from "@/components/ui/dialog"
 import Link from "next/link"
 import { type TicketTableInterface } from "./ticketColumns"
+import { Button } from "../ui/button"
 
 interface TicketDetailsDialogProps {
     ticket: TicketTableInterface | null
     open: boolean
     onOpenChange: (open: boolean) => void
+    onRequestCloseTicket?: (ticket: TicketTableInterface) => void
 }
 
-export function TicketDetailsDialog({ ticket, open, onOpenChange }: TicketDetailsDialogProps) {
+export function TicketDetailsDialog({ ticket, open, onOpenChange, onRequestCloseTicket }: TicketDetailsDialogProps) {
     if (!ticket) return null
 
     return (
@@ -24,6 +26,7 @@ export function TicketDetailsDialog({ ticket, open, onOpenChange }: TicketDetail
                 <DialogHeader>
                     <DialogTitle>Ticket Details</DialogTitle>
                 </DialogHeader>
+                <div>
                 <div className="grid gap-4 py-4">
                     <div className="grid grid-cols-[120px_1fr] gap-2 text-sm">
                         <span className="font-medium text-muted-foreground">Ticket ID</span>
@@ -63,6 +66,22 @@ export function TicketDetailsDialog({ ticket, open, onOpenChange }: TicketDetail
                         <p className="text-muted-foreground">{ticket.description}</p>
                     </div>
                 </div>
+                {onRequestCloseTicket &&
+                    ticket.status !== "Resolved" &&
+                    ticket.status !== "CLOSED" && (
+                        <Button
+                            className="w-full"
+                            variant="destructive"
+                            onClick={() => {
+                                onOpenChange(false);
+                                onRequestCloseTicket(ticket);
+                            }}
+                        >
+                            Close Ticket
+                        </Button>
+                    )}
+                </div>
+
             </DialogContent>
         </Dialog>
     )

@@ -1,4 +1,4 @@
-import { GemTxnReason } from "@prisma/client";
+import { GemRequestStatus, GemTxnReason } from "@prisma/client";
 import { Request, Response } from "express";
 import { prisma } from "../../config/prisma";
 import { verifyOtp } from "../../services/otp.service";
@@ -113,9 +113,9 @@ export async function getRedeemRequests(req: Request, res: Response) {
         const skip = (page - 1) * limit;
         const status = req.query.status as string | undefined;
 
-        const where: { type: "REDEMPTION"; status?: string } = { type: "REDEMPTION" };
-        if (status && ["PENDING_SUPERADMIN", "APPROVED", "REJECTED"].includes(status)) {
-            where.status = status;
+        const where: { type: "REDEMPTION"; status?: GemRequestStatus } = { type: "REDEMPTION" };
+        if (status && Object.values(GemRequestStatus).includes(status as GemRequestStatus)) {
+            where.status = status as GemRequestStatus;
         }
 
         const [requests, total] = await Promise.all([

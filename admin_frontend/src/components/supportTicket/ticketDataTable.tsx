@@ -13,11 +13,6 @@ import {
 
 import { Input } from "@/components/ui/input";
 
-interface DataTableProps<TData, TValue> {
-    columns: ColumnDef<TData, TValue>[]
-    data: TData[]
-}
-
 import {
     Table,
     TableBody,
@@ -29,12 +24,31 @@ import {
 import { Search } from "lucide-react";
 
 import { DataTablePagination } from "../ui/data-table-pagination"
-import { ExportButton } from "../role_management/exportButton";
-import { TicketsFilters } from "./ticketsFilters";
+import { ExportButton, type ExportColumn } from "../role_management/exportButton";
+import { TicketsFilters, type TicketStatusFilter } from "./ticketsFilters";
+
+const TICKET_EXPORT_COLUMNS: ExportColumn[] = [
+    { key: "requestedBy", header: "Requested By" },
+    { key: "accountHolder", header: "Account Holder" },
+    { key: "phoneNo", header: "Phone No" },
+    { key: "description", header: "Description" },
+    { key: "date", header: "Date" },
+    { key: "requestForCall", header: "Request for Call" },
+    { key: "status", header: "Status" },
+];
+
+interface DataTableProps<TData, TValue> {
+    columns: ColumnDef<TData, TValue>[]
+    data: TData[]
+    ticketStatusFilter?: TicketStatusFilter
+    onFilterChange?: (filter: TicketStatusFilter) => void
+}
 
 export function TicketDataTable<TData, TValue>({
     columns,
     data,
+    ticketStatusFilter = "ALL",
+    onFilterChange,
 }: DataTableProps<TData, TValue>) {
     const [globalFilter, setGlobalFilter] = React.useState("");
     const [sorting, setSorting] = React.useState<SortingState>([])
@@ -86,8 +100,15 @@ export function TicketDataTable<TData, TValue>({
                             className="h-10 pl-9 border-2 bg-white"
                         />
                     </div>
-                    <ExportButton />
-                    <TicketsFilters/>
+                    <ExportButton
+                        data={data as Record<string, unknown>[]}
+                        columns={TICKET_EXPORT_COLUMNS}
+                        filename="support-tickets"
+                    />
+                    <TicketsFilters
+                        filter={ticketStatusFilter}
+                        onFilterChange={onFilterChange ?? (() => {})}
+                    />
 
                 </div>
             </div>

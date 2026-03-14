@@ -18,7 +18,7 @@ export async function getSupportTickets(req: Request, res: Response) {
         const [tickets, totalCount] = await Promise.all([
             prisma.customerSupport.findMany({
                 where,
-                orderBy: { createdAt: 'desc' },
+                orderBy: { createdAt: 'asc' },
                 skip,
                 take: limit,
                 include: {

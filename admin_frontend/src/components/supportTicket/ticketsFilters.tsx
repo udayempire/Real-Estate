@@ -1,3 +1,5 @@
+"use client"
+
 import { Button } from "@/components/ui/button"
 import {
     DropdownMenu,
@@ -7,9 +9,16 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { ChevronDown, Settings2Icon } from "lucide-react"
+import { ChevronDown, Check, Settings2Icon } from "lucide-react"
 
-export function TicketsFilters() {
+export type TicketStatusFilter = "ALL" | "OPEN" | "CLOSED"
+
+type TicketsFiltersProps = {
+    filter: TicketStatusFilter
+    onFilterChange: (filter: TicketStatusFilter) => void
+}
+
+export function TicketsFilters({ filter, onFilterChange }: TicketsFiltersProps) {
     return (
         <div>
             <DropdownMenu>
@@ -22,11 +31,29 @@ export function TicketsFilters() {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-44">
                     <DropdownMenuGroup>
-                        <DropdownMenuItem className="font-medium">Active</DropdownMenuItem>
+                        <DropdownMenuItem
+                            className="font-medium"
+                            onClick={() => onFilterChange("ALL")}
+                        >
+                            {filter === "ALL" && <Check className="mr-2 size-4" />}
+                            All
+                        </DropdownMenuItem>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem className="font-medium">Resolved</DropdownMenuItem>
+                        <DropdownMenuItem
+                            className="font-medium"
+                            onClick={() => onFilterChange("OPEN")}
+                        >
+                            {filter === "OPEN" && <Check className="mr-2 size-4" />}
+                            Active
+                        </DropdownMenuItem>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem className="font-medium">Unseen</DropdownMenuItem>
+                        <DropdownMenuItem
+                            className="font-medium"
+                            onClick={() => onFilterChange("CLOSED")}
+                        >
+                            {filter === "CLOSED" && <Check className="mr-2 size-4" />}
+                            Resolved
+                        </DropdownMenuItem>
                     </DropdownMenuGroup>
                 </DropdownMenuContent>
             </DropdownMenu>

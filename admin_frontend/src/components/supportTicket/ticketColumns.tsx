@@ -2,7 +2,7 @@
 
 import { ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
-import { Check, Clock, Eye, EyeOff } from "lucide-react";
+import { Check, Clock, Eye, EyeOff, X } from "lucide-react";
 import { ArrowUpDown } from "lucide-react";
 import Link from "next/link";
 
@@ -20,10 +20,11 @@ export type TicketTableInterface = {
 
 interface GetTicketColumnsOptions {
     onView: (ticket: TicketTableInterface) => void;
+    onCloseTicket: (ticket: TicketTableInterface) => void;
 }
 
 export function getTicketColumns({
-    onView,
+    onView, onCloseTicket
 }: GetTicketColumnsOptions): ColumnDef<TicketTableInterface>[] {
     return [
         {
@@ -167,6 +168,8 @@ export function getTicketColumns({
             header: "Actions",
             cell: ({ row }) => {
                 const ticket = row.original;
+                const isResolved =
+                    ticket.status === "Resolved" || ticket.status === "CLOSED";
                 return (
                     <div className="flex items-center gap-1">
                         <Button
@@ -177,8 +180,18 @@ export function getTicketColumns({
                             title="View details"
                         >
                             <Eye className="size-4" />
-                            View
                         </Button>
+                        {!isResolved && (
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-6 w-6 gap-1.5 hover:text-white bg-red-500 text-white hover:bg-red-600 rounded-full"
+                                onClick={() => onCloseTicket(ticket)}
+                                title="Close ticket"
+                            >
+                                <X className="size-4" />
+                            </Button>
+                        )}
                     </div>
                 );
             },
