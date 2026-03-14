@@ -53,19 +53,21 @@ export function TicketDataTable<TData, TValue>({
         },
         onGlobalFilterChange: setGlobalFilter,
         globalFilterFn: (row, _columnId, filterValue) => {
-            const search = filterValue.toLowerCase()
-            const userName = String(row.getValue("userName") ?? "").toLowerCase()
-            const email = String(row.getValue("email") ?? "").toLowerCase()
-            const date = String(row.getValue("date") ?? "").toLowerCase()
-            const status = String(row.getValue("status") ?? "").toLowerCase()
-            const description = String(row.getValue("description") ?? "").toLowerCase()
+            const search = filterValue.toLowerCase();
+            const requestedBy = String(row.getValue("requestedBy") ?? "").toLowerCase();
+            const accountHolder = String(row.getValue("accountHolder") ?? "").toLowerCase();
+            const phoneNo = String(row.getValue("phoneNo") ?? "").toLowerCase();
+            const date = String(row.getValue("date") ?? "").toLowerCase();
+            const status = String(row.getValue("status") ?? "").toLowerCase();
+            const description = String(row.getValue("description") ?? "").toLowerCase();
             return (
-                userName.includes(search) ||
-                email.includes(search) ||
+                requestedBy.includes(search) ||
+                accountHolder.includes(search) ||
+                phoneNo.includes(search) ||
                 date.includes(search) ||
                 status.includes(search) ||
-                description.includes(search) 
-            )
+                description.includes(search)
+            );
         },
     });
 

@@ -1,130 +1,187 @@
-"use client"
+"use client";
 
-import { ColumnDef } from "@tanstack/react-table"
-import { Button } from "@/components/ui/button"
-import { Check, Clock, EyeOff, LocationEditIcon } from "lucide-react"
-import { ArrowUpDown } from "lucide-react"
+import { ColumnDef } from "@tanstack/react-table";
+import { Button } from "@/components/ui/button";
+import { Check, Clock, Eye, EyeOff } from "lucide-react";
+import { ArrowUpDown } from "lucide-react";
+import Link from "next/link";
 
 export type TicketTableInterface = {
-    userName: string;
-    email: string;
+    id: string;
+    userId: string;
+    requestedBy: string;
+    accountHolder: string;
+    phoneNo: string;
     description: string;
     date: string;
+    requestForCall: boolean;
     status: string;
+};
+
+interface GetTicketColumnsOptions {
+    onView: (ticket: TicketTableInterface) => void;
 }
 
-export const columns: ColumnDef<TicketTableInterface>[] = [
-    {
-        accessorKey: "userName",
-        header: ({ column }) => {
-            return (
+export function getTicketColumns({
+    onView,
+}: GetTicketColumnsOptions): ColumnDef<TicketTableInterface>[] {
+    return [
+        {
+            accessorKey: "requestedBy",
+            header: ({ column }) => (
                 <Button
                     variant="ghost"
-                    className=""
                     onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
                 >
-                    User Name
+                    Requested By
                     <ArrowUpDown className="ml-2 h-4 w-4" />
                 </Button>
-            )
+            ),
+            cell: ({ row }) => (
+                <div className="font-medium pl-4">{row.original.requestedBy}</div>
+            ),
         },
-        cell: ({ row }) => {
-            const user = row.original
-            return <div className="font-medium pl-4">{user.userName}</div>
-        },
-    },
-    {
-        accessorKey: "email",
-        header: () => {
-            return (
+        {
+            accessorKey: "accountHolder",
+            header: ({ column }) => (
                 <Button
                     variant="ghost"
-                    className=""
+                    onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
                 >
-                    Email
+                    Account Holder
+                    <ArrowUpDown className="ml-2 h-4 w-4" />
                 </Button>
-            )
+            ),
+            cell: ({ row }) => {
+                const { accountHolder, userId } = row.original;
+                return (
+                    <Link
+                        href={`/user/${userId}`}
+                        className="font-medium pl-4 text-blue-600 hover:text-blue-800 hover:underline"
+                    >
+                        {accountHolder}
+                    </Link>
+                );
+            },
         },
-        cell: ({ row }) => {
-            const user = row.original
-            return <div className="font-medium text-blue-500">{user.email}</div>
-
-        }
-    },
-    {
-        accessorKey: "description",
-        header: ({ column }) => {
-            return (
+        {
+            accessorKey: "phoneNo",
+            header: () => (
+                <Button variant="ghost">Phone No</Button>
+            ),
+            cell: ({ row }) => (
+                <div className="font-medium text-blue-500 pl-4">
+                    {row.original.phoneNo}
+                </div>
+            ),
+        },
+        {
+            accessorKey: "description",
+            header: ({ column }) => (
                 <Button
                     variant="ghost"
-                    className=""
                     onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
                 >
                     Description
+                    <ArrowUpDown className="ml-2 h-4 w-4" />
                 </Button>
-            )
+            ),
+            cell: ({ row }) => {
+                const desc = row.original.description;
+                const truncated =
+                    desc.length > 30 ? desc.slice(0, 30) + "..." : desc;
+                return <div className="font-medium">{truncated}</div>;
+            },
         },
-        cell: ({ row }) => {
-            const user = row.original;
-            const truncatedDescription = user.description.length > 30 ? user.description.slice(0, 30) + '...' : user.description;
-            return <div className="font-medium">
-                {truncatedDescription}</div>
-        },
-    },
-    {
-        accessorKey: "date",
-        header: ({ column }) => {
-            return (
+        {
+            accessorKey: "date",
+            header: ({ column }) => (
                 <Button
                     variant="ghost"
-                    className=""
                     onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
                 >
                     Date
                     <ArrowUpDown className="ml-2 h-4 w-4" />
                 </Button>
-            )
+            ),
+            cell: ({ row }) => (
+                <div className="font-medium">{row.original.date}</div>
+            ),
         },
-        cell: ({ row }) => {
-            const user = row.original
-            return <div className="font-medium ">{user.date}</div>
-        },
-    },
-    {
-        accessorKey: "status",
-        header: "Status",
-        cell: ({ row }) => {
-            const { status } = row.original
-
-            const statusConfig: Record<
-                string,
-                { className: string; icon: React.ReactNode }
-            > = {
-                Active: {
-                    className: "text-green-700",
-                    icon: <Clock className="size-4" />,
-                },
-                Resolved: {
-                    className: "text-blue-500",
-                    icon: <Check className="size-4" />,
-                },
-                Unseen: {
-                    className: "text-orange-700",
-                    icon: <EyeOff className="size-4" />,
-                },
-            }
-
-            const config = statusConfig[status]
-
-            return (
-                <div
-                    className={`flex items-center gap-1 py-1 rounded-full font-medium w-fit ${config?.className || "bg-gray-100 text-gray-700 "
-                        }`}
-                >
-                    {config?.icon}
-                    {status}
+        {
+            accessorKey: "requestForCall",
+            header: "Request for Call",
+            cell: ({ row }) => (
+                <div className="font-medium">
+                    {row.original.requestForCall ? "Yes" : "No"}
                 </div>
-            )
+            ),
         },
-    },
-]
+        {
+            accessorKey: "status",
+            header: "Status",
+            cell: ({ row }) => {
+                const { status } = row.original;
+                const statusConfig: Record<
+                    string,
+                    { className: string; icon: React.ReactNode }
+                > = {
+                    Active: {
+                        className: "text-green-700",
+                        icon: <Clock className="size-4" />,
+                    },
+                    Resolved: {
+                        className: "text-blue-500",
+                        icon: <Check className="size-4" />,
+                    },
+                    OPEN: {
+                        className: "text-green-700",
+                        icon: <Clock className="size-4" />,
+                    },
+                    CLOSED: {
+                        className: "text-blue-500",
+                        icon: <Check className="size-4" />,
+                    },
+                    Unseen: {
+                        className: "text-orange-700",
+                        icon: <EyeOff className="size-4" />,
+                    },
+                };
+                const config =
+                    statusConfig[status] || statusConfig.Unseen || {
+                        className: "bg-gray-100 text-gray-700",
+                        icon: null,
+                    };
+                return (
+                    <div
+                        className={`flex items-center gap-1 py-1 rounded-full font-medium w-fit ${config.className}`}
+                    >
+                        {config.icon}
+                        {status}
+                    </div>
+                );
+            },
+        },
+        {
+            id: "actions",
+            header: "Actions",
+            cell: ({ row }) => {
+                const ticket = row.original;
+                return (
+                    <div className="flex items-center gap-1">
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 gap-1.5"
+                            onClick={() => onView(ticket)}
+                            title="View details"
+                        >
+                            <Eye className="size-4" />
+                            View
+                        </Button>
+                    </div>
+                );
+            },
+        },
+    ];
+}

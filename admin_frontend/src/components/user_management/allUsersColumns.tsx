@@ -151,7 +151,7 @@ export function getAllUsersColumns(options?: AllUsersColumnsOptions): ColumnDef<
                     <p className="text-foreground font-bold">UID: </p>
 
                     {/* {kycStatus == "Verified"
-                        ? <ShieldCheck className="size-4 text-green-600" />
+                        ? <ShieldCheck className="size-4 text-gree                                          n-600" />
                         : <Clock className="size-4 text-orange-500" />
                     } */}
                     <p className="text-foreground font-medium">
