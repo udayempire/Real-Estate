@@ -7,6 +7,7 @@ import staffPropertyRoutes from "./property.routes";
 import userRoutes from "./user.routes";
 import bannerRoutes from "./banner.routes";
 import supportTicketsRoutes from "./supportTickets.routes";
+import appointmentsRoutes from "./appointments.routes";
 
 
 router.use('/auth', staffAuthRoutes);
@@ -16,4 +17,5 @@ router.use('/properties', staffPropertyRoutes);
 router.use('/users', userRoutes);
 router.use('/banners', bannerRoutes);
 router.use('/support-tickets', supportTicketsRoutes);
+router.use('/appointments', appointmentsRoutes);
 export default router;

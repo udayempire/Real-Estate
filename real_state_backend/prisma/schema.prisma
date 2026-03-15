@@ -57,7 +57,7 @@ model Staff {
   staffPropertyBookmarks      StaffPropertyBookmark[]
   propertyAcquisitionRequests PropertyAcquisitionRequest[] @relation("PropertyAcquisitionRequest")
   banRequests                 BanRequest[]                 @relation("BanRequestedBy")
-
+  appointments                Appointment[]                
   @@index([role])
   @@index([isActive])
   @@index([email])
@@ -648,6 +648,8 @@ model Appointment {
   status          AppointmentStatus @default(SCHEDULED)
   notes           String?           @db.Text
   isPreBooked     Boolean           @default(false) // Whether user has pre-booked this appointment
+  staffHandlerId  String?
+  staffHandler    Staff?            @relation(fields: [staffHandlerId], references: [id], onDelete: SetNull)
 
   user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)

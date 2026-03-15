@@ -1,21 +1,32 @@
+"use client"
+
 import { Button } from "@/components/ui/button"
 import {
     DropdownMenu,
-  DropdownMenuCheckboxItem,
     DropdownMenuContent,
     DropdownMenuGroup,
     DropdownMenuItem,
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Bookmark, ChevronDown, Settings2Icon } from "lucide-react"
+import { ChevronDown, Check, Settings2Icon } from "lucide-react"
 
-interface FilterProps {
-    showOnlyBookmarked?: boolean
-    onToggleBookmarked?: (checked: boolean) => void
+export type AppointmentStatusFilter = "ALL" | "SCHEDULED" | "COMPLETED" | "CANCELLED" | "WAITING"
+
+const STATUS_LABELS: Record<AppointmentStatusFilter, string> = {
+    ALL: "All",
+    SCHEDULED: "Scheduled",
+    COMPLETED: "Completed",
+    CANCELLED: "Cancelled",
+    WAITING: "Waiting",
 }
 
-export function Filter({ showOnlyBookmarked = false, onToggleBookmarked }: FilterProps) {
+type FilterProps = {
+    filter: AppointmentStatusFilter
+    onFilterChange: (filter: AppointmentStatusFilter) => void
+}
+
+export function Filter({ filter, onFilterChange }: FilterProps) {
     return (
         <div>
             <DropdownMenu>
@@ -28,24 +39,20 @@ export function Filter({ showOnlyBookmarked = false, onToggleBookmarked }: Filte
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-44">
                     <DropdownMenuGroup>
-                        {onToggleBookmarked && (
-                            <>
-                                <DropdownMenuCheckboxItem
-                                    checked={showOnlyBookmarked}
-                                    onCheckedChange={(checked) => onToggleBookmarked(Boolean(checked))}
-                                    className="font-medium text-start"
-                                >
-                                    <span><Bookmark className="size-3.5 text-gray-600" /></span>
-                                Bookmark
-                                </DropdownMenuCheckboxItem>
-                                <DropdownMenuSeparator />
-                            </>
+                        {(Object.entries(STATUS_LABELS) as [AppointmentStatusFilter, string][]).map(
+                            ([value, label]) => (
+                                <div key={value}>
+                                    <DropdownMenuItem
+                                        className="font-medium"
+                                        onClick={() => onFilterChange(value)}
+                                    >
+                                        {filter === value && <Check className="mr-2 size-4" />}
+                                        {label}
+                                    </DropdownMenuItem>
+                                    <DropdownMenuSeparator />
+                                </div>
+                            )
                         )}
-                        <DropdownMenuItem className="font-medium">Completed</DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem className="font-medium">Rejected</DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem className="font-medium">Pending</DropdownMenuItem>
                     </DropdownMenuGroup>
                 </DropdownMenuContent>
             </DropdownMenu>

@@ -122,10 +122,7 @@ export async function getAppointments(req: Request, res: Response) {
                 where,
                 skip,
                 take: limit,
-                orderBy: [
-                    { appointmentDate: 'asc' },
-                    { appointmentTime: 'asc' }
-                ],
+                orderBy: [{ appointmentDate: "asc" }],
                 include: {
                     property: {
                         include: {
@@ -429,10 +426,7 @@ export async function getPropertyAppointments(req: Request, res: Response) {
                 where,
                 skip,
                 take: limit,
-                orderBy: [
-                    { appointmentDate: 'asc' },
-                    { appointmentTime: 'asc' }
-                ]
+                orderBy: [{ appointmentDate: "asc" }]
             }),
             prisma.appointment.count({ where })
         ]);

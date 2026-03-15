@@ -13,11 +13,6 @@ import {
 
 import { Input } from "@/components/ui/input";
 
-interface DataTableProps<TData, TValue> {
-    columns: ColumnDef<TData, TValue>[]
-    data: TData[]
-}
-
 import {
     Table,
     TableBody,
@@ -29,20 +24,49 @@ import {
 import { Search } from "lucide-react";
 
 import { DataTablePagination } from "../ui/data-table-pagination"
-import { ExportButton } from "../role_management/exportButton";
-import { Filter } from "./filterAppointments";
-import { FilterTimelineButton } from "./filterTimelineButton";
+import { ExportButton, type ExportColumn } from "../role_management/exportButton"
+import { Filter } from "./filterAppointments"
+import { FilterTimelineButton } from "./filterTimelineButton"
+import type { AppointmentStatusFilter } from "./filterAppointments"
+import type { DateFilterParams } from "./filterTimelineButton"
+
+const APPOINTMENT_EXPORT_COLUMNS: ExportColumn[] = [
+    { key: "userName", header: "User Name" },
+    { key: "purpose", header: "Property" },
+    { key: "staffHandler", header: "Staff Handler" },
+    { key: "dateStr", header: "Date" },
+    { key: "timeStr", header: "Time" },
+    { key: "isPreBooked", header: "Pre-Booked" },
+    { key: "status", header: "Status" },
+]
+
+interface DataTableProps<TData, TValue> {
+    columns: ColumnDef<TData, TValue>[]
+    data: TData[]
+}
+
+interface DataTablePropsWithFilters<TData, TValue> extends DataTableProps<TData, TValue> {
+    statusFilter?: AppointmentStatusFilter
+    onStatusFilterChange?: (filter: AppointmentStatusFilter) => void
+    dateFilter?: DateFilterParams | null
+    onDateFilterChange?: (params: DateFilterParams | null) => void
+}
 
 export function AppointmentsDataTable<TData, TValue>({
     columns,
     data,
-}: DataTableProps<TData, TValue>) {
+    statusFilter = "ALL",
+    onStatusFilterChange,
+    dateFilter = null,
+    onDateFilterChange,
+}: DataTablePropsWithFilters<TData, TValue>) {
     const [globalFilter, setGlobalFilter] = React.useState("");
     const [sorting, setSorting] = React.useState<SortingState>([])
 
     const table = useReactTable({
         data,
         columns,
+        getRowId: (row) => (row as { id?: string }).id ?? "",
         getCoreRowModel: getCoreRowModel(),
         getPaginationRowModel: getPaginationRowModel(),
         getFilteredRowModel: getFilteredRowModel(),
@@ -58,13 +82,15 @@ export function AppointmentsDataTable<TData, TValue>({
             const userName = String(row.getValue("userName") ?? "").toLowerCase()
             const purpose = String(row.getValue("purpose") ?? "").toLowerCase()
             const staffHandler = String(row.getValue("staffHandler") ?? "").toLowerCase()
-            const details = String(row.getValue("details") ?? "").toLowerCase()
+            const dateStr = String(row.getValue("dateStr") ?? "").toLowerCase()
+            const timeStr = String(row.getValue("timeStr") ?? "").toLowerCase()
             const status = String(row.getValue("status") ?? "").toLowerCase()
             return (
                 userName.includes(search) ||
                 purpose.includes(search) ||
                 staffHandler.includes(search) ||
-                details.includes(search) ||
+                dateStr.includes(search) ||
+                timeStr.includes(search) ||
                 status.includes(search)
             )
         },
@@ -85,9 +111,19 @@ export function AppointmentsDataTable<TData, TValue>({
                             className="h-10 pl-9 border-2 bg-white"
                         />
                     </div>
-                    <ExportButton />
-                    <FilterTimelineButton/>
-                    <Filter/>
+                    <ExportButton
+                        data={data as Record<string, unknown>[]}
+                        columns={APPOINTMENT_EXPORT_COLUMNS}
+                        filename="appointments"
+                    />
+                    <FilterTimelineButton
+                        onDateFilterChange={onDateFilterChange}
+                        activeFilter={dateFilter}
+                    />
+                    <Filter
+                        filter={statusFilter}
+                        onFilterChange={onStatusFilterChange ?? (() => {})}
+                    />
 
                 </div>
             </div>

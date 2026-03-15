@@ -13,7 +13,7 @@ function chunkArray<T>(items: T[], chunkSize: number): T[][] {
   return chunks;
 }
 
-export async function createNotificaimage.pngtion(input: {
+export async function createNotification(input: {
   userId: string;
   type: NotificationType;
   title: string;
