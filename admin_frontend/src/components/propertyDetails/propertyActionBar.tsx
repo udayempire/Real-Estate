@@ -10,7 +10,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog"
-import { Pencil, Bookmark, ShoppingCart, CheckCircle, EyeOff, Eye, XCircle, Copy } from "lucide-react"
+import { Pencil, Bookmark, ShoppingCart, CheckCircle, EyeOff, Eye, XCircle, Copy, Trash2 } from "lucide-react"
 import { useRouter, useParams } from "next/navigation"
 import { useAuth } from "@/contexts/AuthContext"
 
@@ -34,6 +34,7 @@ interface PropertyActionBarProps {
     onBuy?: () => void | Promise<void>
     onBookmark?: () => void
     isBookmarked?: boolean
+    onDelete?: () => void | Promise<void>
     onEmail?: () => void
     onWhatsApp?: () => void
 }
@@ -50,6 +51,7 @@ export function PropertyActionBar({
     onBuy,
     onBookmark,
     isBookmarked = false,
+    onDelete,
 }: PropertyActionBarProps) {
     const router = useRouter()
     const params = useParams<{ id: string }>()
@@ -64,6 +66,8 @@ export function PropertyActionBar({
     const soldToRealbroNotExclusive = isBoughtByRealbro && !isExclusive
     const listUnlistEnabled = !soldToRealbroNotExclusive && !!onListUnlist
     const markSoldEnabled = !soldToRealbroNotExclusive && !!onMarkSold
+    /** Delete only when NOT exclusive and NOT sold to RealBro */
+    const deleteEnabled = !isExclusive && !isBoughtByRealbro && !!onDelete
 
     const editHref = isExclusive && exclusivePropertyId
         ? `/property/exclusive-listings/${exclusivePropertyId}/edit`
@@ -76,10 +80,22 @@ export function PropertyActionBar({
     const listUnlistLabel = isListed ? "Unlist Property" : "List Property"
 
     const [soldConfirmOpen, setSoldConfirmOpen] = useState(false)
+    const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
+    const [isDeleting, setIsDeleting] = useState(false)
     const isMarkingSold = soldToggleLabel === "Mark as Sold"
     const handleSoldConfirm = async () => {
         await onMarkSold?.()
         setSoldConfirmOpen(false)
+    }
+    const handleDeleteConfirm = async () => {
+        if (!onDelete) return
+        setIsDeleting(true)
+        try {
+            await onDelete()
+            setDeleteConfirmOpen(false)
+        } finally {
+            setIsDeleting(false)
+        }
     }
 
     return (
@@ -136,6 +152,43 @@ export function PropertyActionBar({
                     {soldToggleLabel === "Mark as Sold" ? <CheckCircle className="size-3.5" /> : <XCircle className="size-3.5" />}
                     {soldToggleLabel}
                 </Button>
+
+                {deleteEnabled && (
+                    <>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            className="border-2 shadow-none gap-1.5 text-xs text-red-600 border-red-300 hover:bg-red-50 hover:text-red-700"
+                            onClick={() => setDeleteConfirmOpen(true)}
+                        >
+                            <Trash2 className="size-3.5" />
+                            Delete Property
+                        </Button>
+                        <Dialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+                            <DialogContent>
+                                <DialogHeader>
+                                    <DialogTitle>Delete Property</DialogTitle>
+                                    <DialogDescription>
+                                        Are you sure you want to delete this property? This action cannot be undone.
+                                    </DialogDescription>
+                                </DialogHeader>
+                                <DialogFooter>
+                                    <Button variant="outline" onClick={() => setDeleteConfirmOpen(false)} disabled={isDeleting}>
+                                        Cancel
+                                    </Button>
+                                    <Button
+                                        variant="destructive"
+                                        onClick={handleDeleteConfirm}
+                                        disabled={isDeleting}
+                                    >
+                                        {isDeleting ? "Deleting..." : "Delete"}
+                                    </Button>
+                                </DialogFooter>
+                            </DialogContent>
+                        </Dialog>
+                    </>
+                )}
+
                 <Dialog open={soldConfirmOpen} onOpenChange={setSoldConfirmOpen}>
                     <DialogContent>
                         <DialogHeader>

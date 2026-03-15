@@ -991,3 +991,38 @@ export async function getExclusiveProperty(req: Request, res: Response) {
         return res.status(500).json({ message: "Internal server error" });
     }
 }
+
+export async function deleteUserListingProperty(req: Request, res: Response) {
+    try {
+        const propertyId = req.params.propertyId;
+        if (!propertyId) {
+            return res.status(400).json({ message: "propertyId is required" });
+        }
+        const property = await prisma.property.findUnique({
+            where: { id: propertyId },
+            select: {
+                id: true,
+                status: true,
+                exclusiveProperty: { select: { id: true } },
+            },
+        });
+        if (!property) {
+            return res.status(404).json({ message: "Property not found" });
+        }
+        if (property.exclusiveProperty) {
+            return res.status(400).json({
+                message: "Cannot delete property: it is an exclusive listing. Remove from exclusive listings first.",
+            });
+        }
+        if (property.status === "SOLDTOREALBRO") {
+            return res.status(400).json({
+                message: "Cannot delete property: it has been sold to RealBro.",
+            });
+        }
+        await prisma.property.delete({ where: { id: propertyId } });
+        return res.status(200).json({ message: "Property deleted successfully" });
+    } catch (error) {
+        console.error("Delete user listing property error:", error);
+        return res.status(500).json({ message: "Internal server error" });
+    }
+}

@@ -1,7 +1,7 @@
 "use client"
 
 import { useCallback, useEffect, useMemo, useState } from "react"
-import { useParams } from "next/navigation"
+import { useParams, useRouter } from "next/navigation"
 import { ParkingCircle } from "lucide-react"
 import { PropertyImageCarousel } from "@/components/propertyDetails/propertyImageCarousel"
 import type { ExclusivePropertyStatus, PropertyStatus } from "@/components/propertyDetails/propertyImageCarousel"
@@ -93,6 +93,7 @@ const FALLBACK_IMAGE = "/largeBuilding2.png"
 
 export default function PropertyPage() {
     const params = useParams<{ id: string }>()
+    const router = useRouter()
     const propertyId = Array.isArray(params?.id) ? params.id[0] : params?.id
     const [property, setProperty] = useState<PropertyResponse["data"] | null>(null)
     const [isBookmarked, setIsBookmarked] = useState(false)
@@ -176,6 +177,17 @@ export default function PropertyPage() {
             await loadProperty()
         } catch (err) {
             console.error("Failed to submit acquisition request:", err)
+        }
+    }
+
+    const handleDelete = async () => {
+        if (!property) return
+        try {
+            await api.delete(`/staff/properties/${property.id}`)
+            router.push("/property/all-listings")
+        } catch (err) {
+            console.error("Failed to delete property:", err)
+            throw err
         }
     }
 
@@ -287,6 +299,7 @@ export default function PropertyPage() {
                         onBuy={handleBuy}
                         onBookmark={handleToggleBookmark}
                         isBookmarked={isBookmarked}
+                        onDelete={handleDelete}
                     />
                 </div>
 
