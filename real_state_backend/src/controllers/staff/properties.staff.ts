@@ -4,7 +4,7 @@ import z from "zod";
 import { NotificationType } from "@prisma/client";
 import { createExclusivePropertySchema, updateExclusivePropertySchema } from "../../validators/property.validators";
 import { broadcastNotificationToAllUsers } from "../../services/notification.service";
-import { normalizeCategory, normalizePropertyType } from "../../utils/propertyTaxonomy";
+import { normalizeCategory } from "../../utils/propertyTaxonomy";
 
 async function resolveStaffActorId(staffId: string, role: string): Promise<string | null> {
     if (role !== "SUPER_ADMIN") {
@@ -662,7 +662,7 @@ export async function getPendingExclusiveProperties(req: Request, res: Response)
 function buildPropertyWhereFromQuery(query: Record<string, unknown>) {
     const where: Record<string, unknown> = {};
     const category = normalizeCategory(query.category);
-    const propertyType = normalizePropertyType(query.propertyType);
+    const propertyType = String(query.propertyType ?? "").trim();
     const furnishingStatus = String(query.furnishingStatus ?? "").trim();
     const priceMin = Number(query.priceMin);
     const priceMax = Number(query.priceMax);

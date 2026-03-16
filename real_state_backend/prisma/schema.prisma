@@ -187,14 +187,6 @@ model BanRequest {
   @@map("ban_requests")
 }
 
-//property
-enum PropertyType {
-  FARMLAND
-  DUPLEX
-  FLAT
-  PLOT
-}
-
 enum PropertyStatus {
   ACTIVE
   UNLISTED
@@ -263,7 +255,7 @@ model Property {
   id           String         @id @default(cuid())
   title        String
   description  String?
-  propertyType PropertyType?
+  propertyType String?
   status       PropertyStatus @default(ACTIVE)
 
   // Price - Updated
@@ -374,7 +366,7 @@ model ExclusiveProperty {
   // Copy of all property fields
   title        String
   description  String?
-  propertyType PropertyType?
+  propertyType String?
   status       ExclusivePropertyStatus @default(ACTIVE)
 
   // Price
