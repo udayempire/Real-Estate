@@ -13,11 +13,6 @@ import {
 
 import { Input } from "@/components/ui/input";
 
-interface DataTableProps<TData, TValue> {
-    columns: ColumnDef<TData, TValue>[]
-    data: TData[]
-}
-
 import {
     Table,
     TableBody,
@@ -29,13 +24,30 @@ import {
 import { Search } from "lucide-react";
 
 import { DataTablePagination } from "../ui/data-table-pagination"
-import { ExportButton } from "../role_management/exportButton";
-import { RequirementsFilters } from "./requirementsFilters";
+import { ExportButton, type ExportColumn } from "../role_management/exportButton";
+import { RequirementsFilters, type RequirementStatusFilter } from "./requirementsFilters";
+
+const REQUIREMENT_EXPORT_COLUMNS: ExportColumn[] = [
+    { key: "userName", header: "User Name" },
+    { key: "email", header: "Email" },
+    { key: "preferredLocation", header: "Preferred Location" },
+    { key: "amount", header: "Amount" },
+    { key: "status", header: "Status" },
+];
+
+interface RequirementDataTableProps<TData, TValue> {
+    columns: ColumnDef<TData, TValue>[];
+    data: TData[];
+    statusFilter?: RequirementStatusFilter;
+    onFilterChange?: (filter: RequirementStatusFilter) => void;
+}
 
 export function RequirementDataTable<TData, TValue>({
     columns,
     data,
-}: DataTableProps<TData, TValue>) {
+    statusFilter = "ALL",
+    onFilterChange,
+}: RequirementDataTableProps<TData, TValue>) {
     const [globalFilter, setGlobalFilter] = React.useState("");
     const [sorting, setSorting] = React.useState<SortingState>([])
 
@@ -58,7 +70,7 @@ export function RequirementDataTable<TData, TValue>({
             const email = String(row.getValue("email") ?? "").toLowerCase()
             const amount = String(row.getValue("amount") ?? "").toLowerCase()
             const status = String(row.getValue("status") ?? "").toLowerCase()
-            const location = String(row.getValue("location") ?? "").toLowerCase()
+            const location = String(row.getValue("preferredLocation") ?? "").toLowerCase()
             return (
                 userName.includes(search) ||
                 email.includes(search) ||
@@ -84,8 +96,17 @@ export function RequirementDataTable<TData, TValue>({
                             className="h-10 pl-9 border-2 bg-white"
                         />
                     </div>
-                    <ExportButton />
-                    <RequirementsFilters/>
+                    <ExportButton
+                        data={data as Record<string, unknown>[]}
+                        columns={REQUIREMENT_EXPORT_COLUMNS}
+                        filename="requirements"
+                    />
+                    {onFilterChange && (
+                        <RequirementsFilters
+                            filter={statusFilter}
+                            onFilterChange={onFilterChange}
+                        />
+                    )}
 
                 </div>
             </div>

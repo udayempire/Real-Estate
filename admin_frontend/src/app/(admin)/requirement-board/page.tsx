@@ -1,90 +1,264 @@
-import { RequirementBoardTableInterface, columns as requirementColumns } from "@/components/requirementBoard/requirementColumns";
-// import FinancialsDataTable from "@components/Financials/financialsDatatable"
-import { RequirementDataTable } from "@/components/requirementBoard/requirementDataTable";
+"use client"
 
-async function getRequirements(): Promise<RequirementBoardTableInterface[]> {
-    // const response = await axios.get("https://api.example.com/role-management")
-    // const data = await response.json()
-    // return data
-    return [
+import { useMemo, useState } from "react"
+import {
+    getRequirementColumns,
+    type RequirementBoardTableInterface,
+} from "@/components/requirementBoard/requirementColumns"
+import { RequirementDataTable } from "@/components/requirementBoard/requirementDataTable"
+import { RequirementDetailsDialog } from "@/components/requirementBoard/RequirementDetailsDialog"
+import { api } from "@/lib/api"
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogDescription,
+    DialogFooter,
+    DialogClose,
+} from "@/components/ui/dialog"
+import { Button } from "@/components/ui/button"
+import type { RequirementStatusFilter } from "@/components/requirementBoard/requirementsFilters"
 
-        {
-            userName: "John Doe",
-            email: "john.doe@example.com",
-            location: "123 Main St, Ludhiana, Punjab",
-            amount: "122200",
-            status: "Active",
-        },
-        {
-            userName: "Amanpreet Singh",
-            email: "aman.singh@gmail.com",
-            location: "45 Model Town, Jalandhar, Punjab",
-            amount: "84500",
-            status: "Completed",
-        },
-        {
-            userName: "Ritika Sharma",
-            email: "ritika.sharma@outlook.com",
-            location: "78 Sector 22, Chandigarh",
-            amount: "45200",
-            status: "Unseen",
-        },
-        {
-            userName: "Harpreet Kaur",
-            email: "harpreet.kaur@yahoo.com",
-            location: "12 Urban Estate, Patiala",
-            amount: "98000",
-            status: "Active",
-        },
-        {
-            userName: "Karan Malhotra",
-            email: "karan.malhotra@gmail.com",
-            location: "9 Civil Lines, Amritsar",
-            amount: "156000",
-            status: "Completed",
-        },
-        {
-            userName: "Simran Gill",
-            email: "simran.gill@icloud.com",
-            location: "33 Green Avenue, Mohali",
-            amount: "67000",
-            status: "Unseen",
-        },
-        {
-            userName: "Rohit Verma",
-            email: "rohit.verma@gmail.com",
-            location: "101 GT Road, Phagwara",
-            amount: "73000",
-            status: "Active",
-        },
-        {
-            userName: "Neha Bansal",
-            email: "neha.bansal@protonmail.com",
-            location: "5 Rose Garden, Chandigarh",
-            amount: "111000",
-            status: "Completed",
-        },
-        {
-            userName: "Manav Arora",
-            email: "manav.arora@gmail.com",
-            location: "17 Defence Colony, Bathinda",
-            amount: "54000",
-            status: "Unseen",
-        },
-        {
-            userName: "Pooja Mehta",
-            email: "pooja.mehta@gmail.com",
-            location: "88 Shastri Nagar, Hoshiarpur",
-            amount: "89000",
-            status: "Active",
-        },
-    ]
+type BackendRequirement = {
+    id: string
+    preferredLocation: string
+    subLocation: string | null
+    propertyType: string | null
+    budgetMin: number | null
+    budgetMax: number | null
+    currency: string
+    status: string
+    userId: string
+    createdAt: string
+    user: {
+        id: string
+        email: string
+        firstName: string
+        lastName: string
+        phone: string | null
+    }
 }
-export default async function RequirementBoardPage() {
-    const data = await getRequirements();
+
+function mapStatus(status: string): string {
+    switch (status) {
+        case "ACTIVE":
+            return "Active"
+        case "FULFILLED":
+            return "Fulfilled"
+        case "CLOSED":
+            return "Closed"
+        default:
+            return status
+    }
+}
+
+function formatAmount(budgetMin: number | null, budgetMax: number | null, currency: string): string {
+    const sym = currency === "INR" ? "₹" : currency
+    if (budgetMin != null && budgetMax != null) {
+        return `${sym}${budgetMin.toLocaleString("en-IN")} - ${sym}${budgetMax.toLocaleString("en-IN")}`
+    }
+    if (budgetMin != null) return `${sym}${budgetMin.toLocaleString("en-IN")}`
+    if (budgetMax != null) return `${sym}${budgetMax.toLocaleString("en-IN")}`
+    return "-"
+}
+
+function formatDate(isoDate: string): string {
+    try {
+        const d = new Date(isoDate)
+        return d.toLocaleDateString("en-IN", {
+            day: "2-digit",
+            month: "short",
+            year: "numeric",
+        })
+    } catch {
+        return isoDate
+    }
+}
+
+async function getRequirements(
+    statusFilter?: RequirementStatusFilter
+): Promise<RequirementBoardTableInterface[]> {
+    const params =
+        statusFilter && statusFilter !== "ALL"
+            ? { status: statusFilter }
+            : {}
+    const response = await api.get("/staff/requirements", { params })
+    const items: BackendRequirement[] = response.data?.data ?? []
+
+    return items.map((r) => {
+        const userName = `${r.user.firstName} ${r.user.lastName}`.trim() || r.user.email
+        return {
+            id: r.id,
+            userId: r.userId,
+            userName,
+            email: r.user.email,
+            preferredLocation: r.preferredLocation,
+            amount: formatAmount(r.budgetMin, r.budgetMax, r.currency),
+            status: mapStatus(r.status),
+            propertyType: r.propertyType ?? undefined,
+            subLocation: r.subLocation ?? undefined,
+            budgetMin: r.budgetMin ?? undefined,
+            budgetMax: r.budgetMax ?? undefined,
+            currency: r.currency,
+            createdAt: formatDate(r.createdAt),
+        }
+    })
+}
+
+async function updateRequirementStatus(
+    id: string,
+    status: "FULFILLED" | "CLOSED"
+): Promise<void> {
+    await api.put(`/staff/requirements/${id}`, { status })
+}
+
+export default function RequirementBoardPage() {
+    const queryClient = useQueryClient()
+    const [selectedRequirement, setSelectedRequirement] =
+        useState<RequirementBoardTableInterface | null>(null)
+    const [dialogOpen, setDialogOpen] = useState(false)
+    const [targetFulfill, setTargetFulfill] =
+        useState<RequirementBoardTableInterface | null>(null)
+    const [targetClose, setTargetClose] =
+        useState<RequirementBoardTableInterface | null>(null)
+    const [statusFilter, setStatusFilter] = useState<RequirementStatusFilter>("ALL")
+
+    const { data = [], isLoading, isError, error } = useQuery({
+        queryKey: ["requirements", statusFilter],
+        queryFn: () => getRequirements(statusFilter),
+    })
+
+    const fulfillMutation = useMutation({
+        mutationFn: (req: RequirementBoardTableInterface) =>
+            updateRequirementStatus(req.id, "FULFILLED"),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["requirements"] })
+            setTargetFulfill(null)
+            setDialogOpen(false)
+            setSelectedRequirement(null)
+        },
+    })
+
+    const closeMutation = useMutation({
+        mutationFn: (req: RequirementBoardTableInterface) =>
+            updateRequirementStatus(req.id, "CLOSED"),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["requirements"] })
+            setTargetClose(null)
+            setDialogOpen(false)
+            setSelectedRequirement(null)
+        },
+    })
+
+    const columns = useMemo(
+        () =>
+            getRequirementColumns({
+                onView: (req) => {
+                    setSelectedRequirement(req)
+                    setDialogOpen(true)
+                },
+                onFulfill: (req) => setTargetFulfill(req),
+                onClose: (req) => setTargetClose(req),
+            }),
+        []
+    )
+
+    if (isLoading) {
+        return (
+            <div className="flex items-center justify-center min-h-[200px]">
+                <p className="text-muted-foreground">Loading requirements...</p>
+            </div>
+        )
+    }
+
+    if (isError) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-[200px] gap-2">
+                <p className="text-destructive font-medium">Failed to load requirements</p>
+                <p className="text-sm text-muted-foreground">
+                    {error instanceof Error ? error.message : "An error occurred"}
+                </p>
+            </div>
+        )
+    }
+
     return (
         <div className="mt-4">
-            <RequirementDataTable columns={requirementColumns} data={data} />
+            <RequirementDataTable
+                columns={columns}
+                data={data}
+                statusFilter={statusFilter}
+                onFilterChange={setStatusFilter}
+            />
+            <RequirementDetailsDialog
+                requirement={selectedRequirement}
+                open={dialogOpen}
+                onOpenChange={(open) => {
+                    setDialogOpen(open)
+                    if (!open) setSelectedRequirement(null)
+                }}
+                onFulfill={(req) => setTargetFulfill(req)}
+                onClose={(req) => setTargetClose(req)}
+            />
+
+            {/* Fulfill confirmation */}
+            <Dialog
+                open={!!targetFulfill}
+                onOpenChange={(open) => !open && setTargetFulfill(null)}
+            >
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Fulfill Requirement</DialogTitle>
+                        <DialogDescription>
+                            Mark this requirement from{" "}
+                            <span className="font-semibold">{targetFulfill?.userName}</span> as
+                            fulfilled?
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter>
+                        <DialogClose asChild>
+                            <Button variant="outline">Cancel</Button>
+                        </DialogClose>
+                        <Button
+                            className="bg-green-600 hover:bg-green-700 text-white"
+                            onClick={() =>
+                                targetFulfill && fulfillMutation.mutate(targetFulfill)
+                            }
+                            disabled={fulfillMutation.isPending}
+                        >
+                            {fulfillMutation.isPending ? "Fulfilling..." : "Yes, Fulfill"}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Close confirmation */}
+            <Dialog open={!!targetClose} onOpenChange={(open) => !open && setTargetClose(null)}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Close Requirement</DialogTitle>
+                        <DialogDescription>
+                            Close this requirement from{" "}
+                            <span className="font-semibold">{targetClose?.userName}</span>? It
+                            will be marked as closed.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter>
+                        <DialogClose asChild>
+                            <Button variant="outline">Cancel</Button>
+                        </DialogClose>
+                        <Button
+                            className="bg-red-500 hover:bg-red-600 text-white"
+                            onClick={() => targetClose && closeMutation.mutate(targetClose)}
+                            disabled={closeMutation.isPending}
+                        >
+                            {closeMutation.isPending ? "Closing..." : "Yes, Close"}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     )
 }

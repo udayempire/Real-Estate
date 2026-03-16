@@ -1,3 +1,5 @@
+"use client"
+
 import { Button } from "@/components/ui/button"
 import {
     DropdownMenu,
@@ -7,9 +9,16 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { ChevronDown, Settings2Icon } from "lucide-react"
+import { ChevronDown, Check, Settings2Icon } from "lucide-react"
 
-export function RequirementsFilters() {
+export type RequirementStatusFilter = "ALL" | "ACTIVE" | "FULFILLED" | "CLOSED"
+
+type RequirementsFiltersProps = {
+    filter: RequirementStatusFilter
+    onFilterChange: (filter: RequirementStatusFilter) => void
+}
+
+export function RequirementsFilters({ filter, onFilterChange }: RequirementsFiltersProps) {
     return (
         <div>
             <DropdownMenu>
@@ -22,11 +31,37 @@ export function RequirementsFilters() {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-44">
                     <DropdownMenuGroup>
-                        <DropdownMenuItem className="font-medium">Completed</DropdownMenuItem>
+                        <DropdownMenuItem
+                            className="font-medium"
+                            onClick={() => onFilterChange("ALL")}
+                        >
+                            {filter === "ALL" && <Check className="mr-2 size-4" />}
+                            All
+                        </DropdownMenuItem>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem className="font-medium">Rejected</DropdownMenuItem>
+                        <DropdownMenuItem
+                            className="font-medium"
+                            onClick={() => onFilterChange("ACTIVE")}
+                        >
+                            {filter === "ACTIVE" && <Check className="mr-2 size-4" />}
+                            Active
+                        </DropdownMenuItem>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem className="font-medium">Pending</DropdownMenuItem>
+                        <DropdownMenuItem
+                            className="font-medium"
+                            onClick={() => onFilterChange("FULFILLED")}
+                        >
+                            {filter === "FULFILLED" && <Check className="mr-2 size-4" />}
+                            Fulfilled
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                            className="font-medium"
+                            onClick={() => onFilterChange("CLOSED")}
+                        >
+                            {filter === "CLOSED" && <Check className="mr-2 size-4" />}
+                            Closed
+                        </DropdownMenuItem>
                     </DropdownMenuGroup>
                 </DropdownMenuContent>
             </DropdownMenu>

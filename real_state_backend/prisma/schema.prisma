@@ -762,7 +762,6 @@ model GemTransaction {
 }
 
 enum PropertyRequirementStatus {
-  NEW
   ACTIVE
   FULFILLED
   CLOSED
@@ -776,7 +775,7 @@ model PropertyRequirement {
   budgetMin         Float?
   budgetMax         Float?
   currency          String                    @default("INR")
-  status            PropertyRequirementStatus @default(NEW)
+  status            PropertyRequirementStatus @default(ACTIVE)
   userId            String
   user              User                      @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt         DateTime                  @default(now())
