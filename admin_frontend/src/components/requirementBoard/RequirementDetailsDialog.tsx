@@ -11,27 +11,6 @@ import { type RequirementBoardTableInterface } from "./requirementColumns"
 import { Button } from "../ui/button"
 import { Search } from "lucide-react"
 
-const PROPERTY_TYPE_MAP: Record<string, string> = {
-    flat: "FLAT",
-    apartment: "FLAT",
-    villa: "DUPLEX",
-    house: "DUPLEX",
-    duplex: "DUPLEX",
-    plot: "PLOT",
-    land: "PLOT",
-    farm: "FARMLAND",
-    farmhouse: "FARMLAND",
-}
-
-function mapRequirementPropertyType(value: string | undefined): string | null {
-    if (!value?.trim()) return null
-    const lower = value.trim().toLowerCase()
-    if (["FLAT", "DUPLEX", "PLOT", "FARMLAND"].includes(value.trim().toUpperCase())) {
-        return value.trim().toUpperCase()
-    }
-    return PROPERTY_TYPE_MAP[lower] ?? null
-}
-
 function requirementToSuggestParams(requirement: RequirementBoardTableInterface): URLSearchParams {
     const params = new URLSearchParams()
     if (requirement.preferredLocation?.trim()) {
@@ -43,8 +22,9 @@ function requirementToSuggestParams(requirement: RequirementBoardTableInterface)
     if (requirement.budgetMax != null && requirement.budgetMax > 0) {
         params.set("priceMax", String(requirement.budgetMax))
     }
-    const propType = mapRequirementPropertyType(requirement.propertyType)
-    if (propType) params.set("propertyType", propType)
+    if (requirement.propertyType?.trim()) {
+        params.set("propertyType", requirement.propertyType.trim())
+    }
     return params
 }
 
