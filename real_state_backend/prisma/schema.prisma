@@ -212,7 +212,7 @@ enum Category {
 }
 
 enum FurnishingStatus {
-  FullyFurnished
+  Furnished
   SemiFurnished
   Unfurnished
   FencedWired
