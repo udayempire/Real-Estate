@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import Image from "next/image";
 import { api } from "@/lib/api";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -9,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { FieldLabel } from "@/components/ui/field";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { CheckCircle, Loader2, X } from "lucide-react";
 
 type ExclusiveStatus = "ACTIVE" | "SOLD_OUT" | "UNLISTED";
@@ -32,7 +34,17 @@ type ExistingProperty = {
     city?: string | null;
     locality?: string | null;
     subLocality?: string | null;
+    flatNo?: string | null;
+    area?: string | null;
     address?: string | null;
+    latitude?: number | null;
+    longitude?: number | null;
+    carpetArea?: number | null;
+    carpetAreaUnit?: string | null;
+    plotLandArea?: number | null;
+    plotLandAreaUnit?: string | null;
+    propertyFloor?: string | null;
+    media?: Array<{ url: string; key: string; mediaType: "IMAGE" | "VIDEO"; order?: number | null }>;
     category?: string | null;
     propertyType?: string | null;
     furnishingStatus?: string | null;
@@ -65,7 +77,15 @@ type FormState = {
     city: string;
     locality: string;
     subLocality: string;
+    flatNo: string;
+    area: string;
     address: string;
+    latitude: string;
+    longitude: string;
+    carpetArea: string;
+    carpetAreaUnit: "" | "NONE" | "SQFT" | "SQM" | "ACRES";
+    plotLandArea: string;
+    plotLandAreaUnit: "" | "NONE" | "SQFT" | "SQM" | "ACRES";
     category: CategoryValue;
     propertyType: string;
     furnishingStatus: "" | "FullyFurnished" | "SemiFurnished" | "Unfurnished" | "FencedWired" | "FertileLand" | "OpenLand" | "Cultivated";
@@ -76,6 +96,7 @@ type FormState = {
     numberOfBathrooms: string;
     numberOfBalcony: string;
     numberOfFloors: string;
+    propertyFloor: string;
     coveredParking: string;
     uncoveredParking: string;
     amenities: string;
@@ -98,7 +119,15 @@ const initialState: FormState = {
     city: "",
     locality: "",
     subLocality: "",
+    flatNo: "",
+    area: "",
     address: "",
+    latitude: "",
+    longitude: "",
+    carpetArea: "",
+    carpetAreaUnit: "",
+    plotLandArea: "",
+    plotLandAreaUnit: "",
     category: "",
     propertyType: "",
     furnishingStatus: "",
@@ -109,6 +138,7 @@ const initialState: FormState = {
     numberOfBathrooms: "",
     numberOfBalcony: "",
     numberOfFloors: "",
+    propertyFloor: "",
     coveredParking: "",
     uncoveredParking: "",
     amenities: "",
@@ -137,6 +167,19 @@ const toOptionalArray = (value: string) => {
     return list.length ? list : undefined;
 };
 
+type MediaEntry = {
+    url: string;
+    key: string;
+    mediaType: "IMAGE" | "VIDEO";
+    order: number;
+};
+
+// You can change upload limits here.
+const MAX_IMAGE_COUNT = 6;
+const MAX_VIDEO_COUNT = 1;
+const MAX_IMAGE_SIZE_MB = 2;
+const MAX_VIDEO_SIZE_MB = 4;
+
 export function MakeExclusiveForm() {
     const router = useRouter();
     const params = useParams<{ id: string }>();
@@ -158,6 +201,9 @@ export function MakeExclusiveForm() {
         AGRICULTURAL: [],
     });
     const [isLoadingPropertyTypes, setIsLoadingPropertyTypes] = useState(false);
+    const [mediaItems, setMediaItems] = useState<MediaEntry[]>([]);
+    const [isUploadingMedia, setIsUploadingMedia] = useState(false);
+    const [previewMedia, setPreviewMedia] = useState<MediaEntry | null>(null);
 
     const setField = <K extends keyof FormState>(key: K, value: FormState[K]) => {
         setForm((prev) => ({ ...prev, [key]: value }));
@@ -180,7 +226,15 @@ export function MakeExclusiveForm() {
             city: existing.city ?? "",
             locality: existing.locality ?? "",
             subLocality: existing.subLocality ?? "",
+            flatNo: existing.flatNo ?? "",
+            area: existing.area ?? "",
             address: existing.address ?? "",
+            latitude: existing.latitude != null ? String(existing.latitude) : "",
+            longitude: existing.longitude != null ? String(existing.longitude) : "",
+            carpetArea: String(existing.carpetArea ?? 0),
+            carpetAreaUnit: (existing.carpetAreaUnit as FormState["carpetAreaUnit"]) ?? "",
+            plotLandArea: String(existing.plotLandArea ?? 0),
+            plotLandAreaUnit: (existing.plotLandAreaUnit as FormState["plotLandAreaUnit"]) ?? "",
             category: (existing.category as FormState["category"]) ?? "",
             propertyType: existing.propertyType ?? "",
             furnishingStatus: (existing.furnishingStatus as FormState["furnishingStatus"]) ?? "",
@@ -191,6 +245,7 @@ export function MakeExclusiveForm() {
             numberOfBathrooms: existing.numberOfBathrooms != null ? String(existing.numberOfBathrooms) : "",
             numberOfBalcony: existing.numberOfBalcony != null ? String(existing.numberOfBalcony) : "",
             numberOfFloors: existing.numberOfFloors != null ? String(existing.numberOfFloors) : "",
+            propertyFloor: existing.propertyFloor ?? "",
             coveredParking: existing.coveredParking != null ? String(existing.coveredParking) : "",
             uncoveredParking: existing.uncoveredParking != null ? String(existing.uncoveredParking) : "",
             amenities: existing.amenities?.length ? existing.amenities.join(", ") : "",
@@ -204,6 +259,14 @@ export function MakeExclusiveForm() {
             negotiablePrice: existing.negotiablePrice != null,
             govtChargesTaxIncluded: existing.govtChargesTaxIncluded != null,
         });
+        setMediaItems(
+            (existing.media ?? []).map((m, index) => ({
+                url: m.url,
+                key: m.key,
+                mediaType: m.mediaType,
+                order: m.order ?? index,
+            }))
+        );
     }, [existing]);
 
     useEffect(() => {
@@ -260,6 +323,83 @@ export function MakeExclusiveForm() {
     const propertyTypeOptions = form.category ? typesByCategory[form.category] ?? [] : [];
     const hasCustomPropertyType = Boolean(form.propertyType) && !propertyTypeOptions.includes(form.propertyType);
 
+    const uploadSingleMedia = async (file: File, mediaType: "IMAGE" | "VIDEO") => {
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("purpose", mediaType === "IMAGE" ? "PROPERTY_IMAGE" : "PROPERTY_VIDEO");
+        const uploadRes = await api.post<{ success: boolean; data: { fileUrl: string; key: string } }>("/upload", formData, {
+            headers: { "Content-Type": "multipart/form-data" },
+        });
+        return uploadRes.data.data;
+    };
+
+    const handleMediaFiles = async (files: FileList | null) => {
+        if (!files || files.length === 0) return;
+        const selected = Array.from(files);
+        const currentImageCount = mediaItems.filter((m) => m.mediaType === "IMAGE").length;
+        const currentVideoCount = mediaItems.filter((m) => m.mediaType === "VIDEO").length;
+
+        const nextImages = selected.filter((f) => f.type.startsWith("image/"));
+        const nextVideos = selected.filter((f) => f.type.startsWith("video/"));
+
+        if (currentImageCount + nextImages.length > MAX_IMAGE_COUNT) {
+            setError(`You can upload maximum ${MAX_IMAGE_COUNT} photos.`);
+            return;
+        }
+        if (currentVideoCount + nextVideos.length > MAX_VIDEO_COUNT) {
+            setError(`You can upload maximum ${MAX_VIDEO_COUNT} video.`);
+            return;
+        }
+        const imageLimitBytes = MAX_IMAGE_SIZE_MB * 1024 * 1024;
+        const videoLimitBytes = MAX_VIDEO_SIZE_MB * 1024 * 1024;
+        for (const file of nextImages) {
+            if (file.size > imageLimitBytes) {
+                setError(`Each photo must be <= ${MAX_IMAGE_SIZE_MB}MB.`);
+                return;
+            }
+        }
+        for (const file of nextVideos) {
+            if (file.size > videoLimitBytes) {
+                setError(`Video must be <= ${MAX_VIDEO_SIZE_MB}MB.`);
+                return;
+            }
+        }
+
+        try {
+            setError(null);
+            setIsUploadingMedia(true);
+            const uploaded: MediaEntry[] = [];
+            for (const file of selected) {
+                const mediaType: "IMAGE" | "VIDEO" | null = file.type.startsWith("image/")
+                    ? "IMAGE"
+                    : file.type.startsWith("video/")
+                        ? "VIDEO"
+                        : null;
+                if (!mediaType) continue;
+                const data = await uploadSingleMedia(file, mediaType);
+                uploaded.push({
+                    url: data.fileUrl,
+                    key: data.key,
+                    mediaType,
+                    order: 0,
+                });
+            }
+            setMediaItems((prev) => {
+                const merged = [...prev, ...uploaded];
+                return merged.map((m, index) => ({ ...m, order: index }));
+            });
+        } catch (err) {
+            console.error("Media upload failed:", err);
+            setError("Failed to upload media files");
+        } finally {
+            setIsUploadingMedia(false);
+        }
+    };
+
+    const handleDeleteMedia = (index: number) => {
+        setMediaItems((prev) => prev.filter((_, i) => i !== index).map((m, i) => ({ ...m, order: i })));
+    };
+
     const handleSubmit = async () => {
         setError(null);
         setSuccess(null);
@@ -287,7 +427,21 @@ export function MakeExclusiveForm() {
             city: toOptionalString(form.city),
             locality: toOptionalString(form.locality),
             subLocality: toOptionalString(form.subLocality),
+            flatNo: toOptionalString(form.flatNo),
+            area: toOptionalString(form.area),
             address: toOptionalString(form.address),
+            latitude: toOptionalNumber(form.latitude),
+            longitude: toOptionalNumber(form.longitude),
+            carpetArea: (() => {
+                const value = toOptionalNumber(form.carpetArea);
+                return value === 0 ? null : value;
+            })(),
+            carpetAreaUnit: form.carpetAreaUnit === "NONE" ? null : form.carpetAreaUnit || undefined,
+            plotLandArea: (() => {
+                const value = toOptionalNumber(form.plotLandArea);
+                return value === 0 ? null : value;
+            })(),
+            plotLandAreaUnit: form.plotLandAreaUnit === "NONE" ? null : form.plotLandAreaUnit || undefined,
             category: form.category || undefined,
             propertyType: form.propertyType || undefined,
             furnishingStatus: form.furnishingStatus || undefined,
@@ -298,6 +452,7 @@ export function MakeExclusiveForm() {
             numberOfBathrooms: toOptionalNumber(form.numberOfBathrooms),
             numberOfBalcony: toOptionalNumber(form.numberOfBalcony),
             numberOfFloors: toOptionalNumber(form.numberOfFloors),
+            propertyFloor: toOptionalString(form.propertyFloor),
             coveredParking: toOptionalNumber(form.coveredParking),
             uncoveredParking: toOptionalNumber(form.uncoveredParking),
             amenities: toOptionalArray(form.amenities),
@@ -305,6 +460,12 @@ export function MakeExclusiveForm() {
             allInclusivePrice: switchTouched.allInclusivePrice ? form.allInclusivePrice : undefined,
             negotiablePrice: switchTouched.negotiablePrice ? form.negotiablePrice : undefined,
             govtChargesTaxIncluded: switchTouched.govtChargesTaxIncluded ? form.govtChargesTaxIncluded : undefined,
+            media: mediaItems.map((m, index) => ({
+                url: m.url,
+                key: m.key,
+                mediaType: m.mediaType,
+                order: index,
+            })),
         };
 
         try {
@@ -336,9 +497,70 @@ export function MakeExclusiveForm() {
                     </CardDescription>
                     {isLoadingExisting && <p className="text-xs text-gray-500">Loading current property values...</p>}
                     {!propertyId && <p className="text-xs text-red-500">Invalid property id in route.</p>}
+                    <p className="text-xs text-gray-500">
+                        Media limits: max {MAX_IMAGE_COUNT} photos ({MAX_IMAGE_SIZE_MB}MB each) and {MAX_VIDEO_COUNT} video ({MAX_VIDEO_SIZE_MB}MB). You can change these limits in this file constants.
+                    </p>
                 </CardHeader>
 
                 <CardContent className="space-y-6">
+                    <div className="space-y-3 border rounded-md p-4">
+                        <FieldLabel>Property Media</FieldLabel>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                            {mediaItems.map((item, index) => (
+                                <div key={`${item.key}-${index}`} className="relative border rounded-md p-2">
+                                    <button type="button" className="w-full" onClick={() => setPreviewMedia(item)}>
+                                        {item.mediaType === "VIDEO" ? (
+                                            <video src={item.url} className="h-28 w-full object-cover rounded" />
+                                        ) : (
+                                            <Image src={item.url} alt={`media-${index}`} width={320} height={112} className="h-28 w-full object-cover rounded" unoptimized />
+                                        )}
+                                    </button>
+                                    <Button
+                                        type="button"
+                                        size="sm"
+                                        variant="destructive"
+                                        className="mt-2 w-full"
+                                        onClick={() => handleDeleteMedia(index)}
+                                    >
+                                        Delete
+                                    </Button>
+                                </div>
+                            ))}
+                        </div>
+                        <Input
+                            type="file"
+                            multiple
+                            accept="image/*,video/*"
+                            onChange={(e) => {
+                                void handleMediaFiles(e.target.files);
+                                e.currentTarget.value = "";
+                            }}
+                            className="h-10 border-2 bg-white"
+                            disabled={isUploadingMedia}
+                        />
+                        {isUploadingMedia && <p className="text-xs text-gray-500">Uploading media...</p>}
+                    </div>
+
+                    <Dialog open={Boolean(previewMedia)} onOpenChange={(open) => !open && setPreviewMedia(null)}>
+                        <DialogContent className="max-w-4xl">
+                            <DialogHeader>
+                                <DialogTitle>Media Preview</DialogTitle>
+                            </DialogHeader>
+                            {previewMedia?.mediaType === "VIDEO" ? (
+                                <video src={previewMedia.url} controls autoPlay className="w-full max-h-[75vh] rounded object-contain" />
+                            ) : previewMedia ? (
+                                <Image
+                                    src={previewMedia.url}
+                                    alt="Selected property media"
+                                    width={1440}
+                                    height={900}
+                                    className="w-full max-h-[75vh] rounded object-contain"
+                                    unoptimized
+                                />
+                            ) : null}
+                        </DialogContent>
+                    </Dialog>
+
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div className="space-y-1.5">
                             <FieldLabel>Fixed Reward Gems *</FieldLabel>
@@ -476,6 +698,97 @@ export function MakeExclusiveForm() {
                             <FieldLabel>Sub Locality</FieldLabel>
                             <Input value={form.subLocality} onChange={(e) => setField("subLocality", e.target.value)} className="h-10 border-2 bg-white" placeholder="Sub locality" />
                         </div>
+                        <div className="space-y-1.5">
+                            <FieldLabel>Flat No</FieldLabel>
+                            <Input value={form.flatNo} onChange={(e) => setField("flatNo", e.target.value)} className="h-10 border-2 bg-white" placeholder="Flat / House no" />
+                        </div>
+                        <div className="space-y-1.5">
+                            <FieldLabel>Area (text)</FieldLabel>
+                            <Input value={form.area} onChange={(e) => setField("area", e.target.value)} className="h-10 border-2 bg-white" placeholder="Area" />
+                        </div>
+                        <div className="space-y-1.5">
+                            <FieldLabel>Address</FieldLabel>
+                            <Input value={form.address} onChange={(e) => setField("address", e.target.value)} className="h-10 border-2 bg-white" placeholder="Address" />
+                        </div>
+                        <div className="space-y-1.5">
+                            <FieldLabel>Latitude</FieldLabel>
+                            <Input type="number" step="any" value={form.latitude} onChange={(e) => setField("latitude", e.target.value)} className="h-10 border-2 bg-white" placeholder="0.0" />
+                        </div>
+                        <div className="space-y-1.5">
+                            <FieldLabel>Longitude</FieldLabel>
+                            <Input type="number" step="any" value={form.longitude} onChange={(e) => setField("longitude", e.target.value)} className="h-10 border-2 bg-white" placeholder="0.0" />
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div className="space-y-1.5">
+                            <FieldLabel>Carpet Area</FieldLabel>
+                            <Input type="number" step="any" value={form.carpetArea} onChange={(e) => setField("carpetArea", e.target.value)} className="h-10 border-2 bg-white" placeholder="0" />
+                        </div>
+                        <div className="space-y-1.5">
+                            <FieldLabel>Carpet Area Unit</FieldLabel>
+                            <Select value={form.carpetAreaUnit} onValueChange={(v) => setField("carpetAreaUnit", v as FormState["carpetAreaUnit"])}>
+                                <SelectTrigger className="h-10 border-2 bg-white w-full"><SelectValue placeholder="Select unit" /></SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="NONE">None</SelectItem>
+                                    <SelectItem value="SQFT">SQFT</SelectItem>
+                                    <SelectItem value="SQM">SQM</SelectItem>
+                                    <SelectItem value="ACRES">ACRES</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div className="space-y-1.5">
+                            <FieldLabel>Plot Land Area</FieldLabel>
+                            <Input type="number" step="any" value={form.plotLandArea} onChange={(e) => setField("plotLandArea", e.target.value)} className="h-10 border-2 bg-white" placeholder="0" />
+                        </div>
+                        <div className="space-y-1.5">
+                            <FieldLabel>Plot Land Area Unit</FieldLabel>
+                            <Select value={form.plotLandAreaUnit} onValueChange={(v) => setField("plotLandAreaUnit", v as FormState["plotLandAreaUnit"])}>
+                                <SelectTrigger className="h-10 border-2 bg-white w-full"><SelectValue placeholder="Select unit" /></SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="NONE">None</SelectItem>
+                                    <SelectItem value="SQFT">SQFT</SelectItem>
+                                    <SelectItem value="SQM">SQM</SelectItem>
+                                    <SelectItem value="ACRES">ACRES</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="space-y-1.5">
+                            <FieldLabel>Age Of Property</FieldLabel>
+                            <Select value={form.ageOfProperty} onValueChange={(v) => setField("ageOfProperty", v as FormState["ageOfProperty"])}>
+                                <SelectTrigger className="h-10 border-2 bg-white w-full"><SelectValue placeholder="Select age" /></SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="ZeroToOne">Zero To One</SelectItem>
+                                    <SelectItem value="OneToThree">One To Three</SelectItem>
+                                    <SelectItem value="ThreeToSix">Three To Six</SelectItem>
+                                    <SelectItem value="SixToTen">Six To Ten</SelectItem>
+                                    <SelectItem value="TenPlus">Ten Plus</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div className="space-y-1.5">
+                            <FieldLabel>Property Facing</FieldLabel>
+                            <Select value={form.propertyFacing} onValueChange={(v) => setField("propertyFacing", v as FormState["propertyFacing"])}>
+                                <SelectTrigger className="h-10 border-2 bg-white w-full"><SelectValue placeholder="Select facing" /></SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="East">East</SelectItem>
+                                    <SelectItem value="West">West</SelectItem>
+                                    <SelectItem value="North">North</SelectItem>
+                                    <SelectItem value="South">South</SelectItem>
+                                    <SelectItem value="NorthEast">North East</SelectItem>
+                                    <SelectItem value="NorthWest">North West</SelectItem>
+                                    <SelectItem value="SouthEast">South East</SelectItem>
+                                    <SelectItem value="SouthWest">South West</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div className="space-y-1.5">
+                            <FieldLabel>Property Floor</FieldLabel>
+                            <Input value={form.propertyFloor} onChange={(e) => setField("propertyFloor", e.target.value)} className="h-10 border-2 bg-white" placeholder="e.g. 3" />
+                        </div>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -494,6 +807,14 @@ export function MakeExclusiveForm() {
                         <div className="space-y-1.5">
                             <FieldLabel>Floors</FieldLabel>
                             <Input type="number" min={0} value={form.numberOfFloors} onChange={(e) => setField("numberOfFloors", e.target.value)} className="h-10 border-2 bg-white" placeholder="0" />
+                        </div>
+                        <div className="space-y-1.5">
+                            <FieldLabel>Covered Parking</FieldLabel>
+                            <Input type="number" min={0} value={form.coveredParking} onChange={(e) => setField("coveredParking", e.target.value)} className="h-10 border-2 bg-white" placeholder="0" />
+                        </div>
+                        <div className="space-y-1.5">
+                            <FieldLabel>Uncovered Parking</FieldLabel>
+                            <Input type="number" min={0} value={form.uncoveredParking} onChange={(e) => setField("uncoveredParking", e.target.value)} className="h-10 border-2 bg-white" placeholder="0" />
                         </div>
                     </div>
 
