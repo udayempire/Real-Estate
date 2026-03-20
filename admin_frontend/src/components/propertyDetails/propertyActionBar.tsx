@@ -83,12 +83,27 @@ export function PropertyActionBar({
     const listUnlistLabel = isListed ? "Unlist Property" : "List Property"
 
     const [soldConfirmOpen, setSoldConfirmOpen] = useState(false)
+    const [listConfirmOpen, setListConfirmOpen] = useState(false)
+    const [isSubmittingListUnlist, setIsSubmittingListUnlist] = useState(false)
     const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
     const [isDeleting, setIsDeleting] = useState(false)
     const [buyDialogOpen, setBuyDialogOpen] = useState(false)
     const [isSubmittingBuy, setIsSubmittingBuy] = useState(false)
 
     const isMarkingSold = soldToggleLabel === "Mark as Sold"
+    const isUnlisting = isListed
+
+    const handleListUnlistConfirm = async () => {
+        if (!onListUnlist) return
+        try {
+            setIsSubmittingListUnlist(true)
+            await onListUnlist()
+            setListConfirmOpen(false)
+        } finally {
+            setIsSubmittingListUnlist(false)
+        }
+    }
+
     const handleSoldConfirm = async () => {  
         await onMarkSold?.()
         setSoldConfirmOpen(false)
@@ -132,12 +147,40 @@ export function PropertyActionBar({
                     variant="outline"
                     size="sm"
                     className={`border-2 shadow-none gap-1.5 text-xs ${!listUnlistEnabled ? disabledBtnClass : ""}`}
-                    onClick={listUnlistEnabled ? onListUnlist : undefined}
+                    onClick={() => listUnlistEnabled && setListConfirmOpen(true)}
                     disabled={!listUnlistEnabled}
                 >
                     {isListed ? <EyeOff className="size-3.5" /> : <Eye className="size-3.5" />}
                     {listUnlistLabel}
                 </Button>
+
+                <Dialog open={listConfirmOpen} onOpenChange={setListConfirmOpen}>
+                    <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle>Confirm Action</DialogTitle>
+                            <DialogDescription>
+                                {isUnlisting
+                                    ? "Are you sure you want to unlist this property?"
+                                    : "Are you sure you want to list this property?"}
+                            </DialogDescription>
+                        </DialogHeader>
+                        <DialogFooter>
+                            <Button
+                                variant="outline"
+                                onClick={() => setListConfirmOpen(false)}
+                                disabled={isSubmittingListUnlist}
+                            >
+                                Cancel
+                            </Button>
+                            <Button
+                                onClick={handleListUnlistConfirm}
+                                disabled={isSubmittingListUnlist || !onListUnlist}
+                            >
+                                {isSubmittingListUnlist ? "Processing..." : "Confirm"}
+                            </Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
 
                 <Button
                     variant="outline"
