@@ -8,6 +8,10 @@ import { createOtp, generateOtpCode, sendOtpEmail, verifyOtp } from "../../servi
 
 const SIGNUP_OTP_EXPIRY_MINUTES = 5;
 
+function normalizeEmail(email: string): string {
+    return email.trim().toLowerCase();
+}
+
 function capitalizeFirstLetter(str: string): string {
     if (!str) return '';
     return str.charAt(0).toUpperCase() + str.slice(1);
@@ -77,6 +81,8 @@ export async function signup(req: Request, res: Response) {
             aadharNo, kycAadharImageUrl, kycAadharImageKey,
             panNo, kycPanImageUrl, kycPanImageKey
         } = req.body;
+
+        const normalizedEmail = normalizeEmail(email);
         if (!req.body) {
             return res.status(404).json("Please fill all the details")
         }
@@ -88,7 +94,7 @@ export async function signup(req: Request, res: Response) {
             });
         }
 
-        const existingEmailUser = await prisma.user.findUnique({ where: { email } });
+        const existingEmailUser = await prisma.user.findUnique({ where: { email: normalizedEmail } });
         if (existingEmailUser) {
             return res.status(400).json({
                 error: "Email already registered",
@@ -115,7 +121,7 @@ export async function signup(req: Request, res: Response) {
         }
 
         const pendingSignup = await (prisma as any).pendingSignup.findUnique({
-            where: { email }
+            where: { email: normalizedEmail }
         });
 
         // Step 1: send OTP and persist signup details only in pending storage.
@@ -124,11 +130,11 @@ export async function signup(req: Request, res: Response) {
             const otpExpiresAt = new Date(Date.now() + SIGNUP_OTP_EXPIRY_MINUTES * 60 * 1000);
 
             await (prisma as any).pendingSignup.upsert({
-                where: { email },
+                where: { email: normalizedEmail },
                 create: {
                     firstName: capitalizeFirstLetter(firstName),
                     lastName: capitalizeFirstLetter(lastName),
-                    email,
+                    email: normalizedEmail,
                     phone,
                     passwordHash: await hashPassword(password),
                     age,
@@ -166,7 +172,7 @@ export async function signup(req: Request, res: Response) {
                 }
             });
 
-            await sendOtpEmail(email, signupOtp);
+            await sendOtpEmail(normalizedEmail, signupOtp);
             return res.status(200).json({
                 message: "OTP sent to email. Submit signup again with otpCode to complete registration.",
                 requiresOtp: true,
@@ -181,7 +187,7 @@ export async function signup(req: Request, res: Response) {
         }
 
         if (pendingSignup.otpExpiresAt < new Date()) {
-            await (prisma as any).pendingSignup.delete({ where: { email } });
+            await (prisma as any).pendingSignup.delete({ where: { id: pendingSignup.id } });
             return res.status(400).json({
                 error: "OTP expired. Please signup again to receive a new OTP.",
             });
@@ -243,8 +249,9 @@ export async function signin(req: Request, res: Response) {
         }
         // Check if identifier is email or phone
         const isEmail = identifier.includes('@');
+        const normalizedIdentifier = isEmail ? normalizeEmail(identifier) : identifier;
         const user = await prisma.user.findUnique({
-            where: isEmail ? { email: identifier } : { phone: identifier }
+            where: isEmail ? { email: normalizedIdentifier } : { phone: normalizedIdentifier }
         })
         if (!user) {
             return res.status(401).json({ message: "Invalid credentials" })
@@ -369,8 +376,15 @@ export async function sendOtp(req: Request, res: Response) {
             return res.status(400).json({ message: "Please enter a valid email" });
         }
 
-        const pendingSignup = await (prisma as any).pendingSignup.findUnique({
-            where: { email },
+        const normalizedEmail = normalizeEmail(email);
+
+        const pendingSignup = await (prisma as any).pendingSignup.findFirst({
+            where: {
+                email: {
+                    equals: normalizedEmail,
+                    mode: "insensitive",
+                },
+            },
         });
 
         if (!pendingSignup) {
@@ -383,14 +397,14 @@ export async function sendOtp(req: Request, res: Response) {
         const otpExpiresAt = new Date(Date.now() + SIGNUP_OTP_EXPIRY_MINUTES * 60 * 1000);
 
         await (prisma as any).pendingSignup.update({
-            where: { email },
+            where: { id: pendingSignup.id },
             data: {
                 otpCode: code,
                 otpExpiresAt,
             },
         });
 
-        await sendOtpEmail(email, code);
+        await sendOtpEmail(normalizedEmail, code);
         return res.status(200).json({ message: "OTP sent successfully" });
     } catch (error) {
         console.error(error);
@@ -402,6 +416,7 @@ export async function verifyOtpEmail(req: Request, res: Response) {
     try {
         const { email, code, otp, otpCode } = req.body;
         const normalizedCode = code || otp || otpCode;
+        const normalizedEmail = normalizeEmail(email);
         if (!email) {
             return res.status(400).json({ message: "Please enter a valid email" });
         }
@@ -409,13 +424,18 @@ export async function verifyOtpEmail(req: Request, res: Response) {
             return res.status(400).json({ message: "Please enter otp" });
         }
 
-        const pendingSignup = await (prisma as any).pendingSignup.findUnique({
-            where: { email },
+        const pendingSignup = await (prisma as any).pendingSignup.findFirst({
+            where: {
+                email: {
+                    equals: normalizedEmail,
+                    mode: "insensitive",
+                },
+            },
         });
 
         if (!pendingSignup) {
             const existingUser = await prisma.user.findUnique({
-                where: { email },
+                where: { email: normalizedEmail },
                 select: {
                     id: true,
                     firstName: true,
@@ -454,7 +474,7 @@ export async function verifyOtpEmail(req: Request, res: Response) {
         }
 
         if (pendingSignup.otpExpiresAt < new Date()) {
-            await (prisma as any).pendingSignup.delete({ where: { email } });
+            await (prisma as any).pendingSignup.delete({ where: { id: pendingSignup.id } });
             return res.status(400).json({
                 error: "OTP expired. Please start signup again.",
             });
@@ -484,15 +504,17 @@ export async function forgotPassword(req: Request, res: Response) {
             return res.status(400).json({ error: "Please enter a valid email" });
         }
 
+        const normalizedEmail = normalizeEmail(email);
+
         const user = await prisma.user.findUnique({
-            where: { email }
+            where: { email: normalizedEmail }
         });
 
         if (!user) {
             return res.status(200).json({ message: "User doesn't exist with this email" })
         }
         const otpResult = await createOtp(user.id, "RESET_PASSWORD");
-        await sendOtpEmail(email, otpResult.code);
+        await sendOtpEmail(normalizedEmail, otpResult.code);
 
         return res.status(200).json({ message: "OTP sent successfully" });
     } catch (error) {
@@ -507,12 +529,14 @@ export async function resetPassword(req: Request, res: Response) {
         if (!email || !code || !newPassword) {
             return res.status(400).json({ error: "Email, OTP code, and new password are required" });
         }
+
+        const normalizedEmail = normalizeEmail(email);
         // Validate password length
         if (newPassword.length < 8) {
             return res.status(400).json({ error: "Password must be at least 8 characters" });
         }
         const user = await prisma.user.findUnique({
-            where: { email }
+            where: { email: normalizedEmail }
         });
         if (!user) {
             return res.status(400).json({ error: "User not found" });
