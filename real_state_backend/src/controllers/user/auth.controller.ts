@@ -129,6 +129,31 @@ export async function signup(req: Request, res: Response) {
             const signupOtp = generateOtpCode();
             const otpExpiresAt = new Date(Date.now() + SIGNUP_OTP_EXPIRY_MINUTES * 60 * 1000);
 
+            // If changing phone, validate it's not already in use
+            if (pendingSignup && pendingSignup.phone !== phone) {
+                // Check if new phone exists in User table
+                const existingPhoneInUser = await prisma.user.findUnique({ where: { phone } });
+                if (existingPhoneInUser) {
+                    return res.status(400).json({
+                        message: "Phone number already registered with another account",
+                        error: "Phone number already registered with another account",
+                        field: "phone"
+                    });
+                }
+
+                // Check if new phone exists in another PendingSignup record
+                const phoneInAnotherPending = await (prisma as any).pendingSignup.findUnique({
+                    where: { phone }
+                });
+                if (phoneInAnotherPending) {
+                    return res.status(400).json({
+                        message: "Phone number already registered with another account, Please use a different phone number.",
+                        error: "Phone number already in use by another pending signup. Please use a different phone number.",
+                        field: "phone"
+                    });
+                }
+            }
+
             await (prisma as any).pendingSignup.upsert({
                 where: { email: normalizedEmail },
                 create: {
