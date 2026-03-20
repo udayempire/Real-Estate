@@ -61,7 +61,7 @@ type FormState = {
     subLocality: string;
     address: string;
     category: "" | "RESIDENTIAL" | "COMMERCIAL" | "AGRICULTURAL";
-    propertyType: "" | "FARMLAND" | "DUPLEX" | "FLAT" | "PLOT";
+    propertyType: string;
     furnishingStatus: "" | "FullyFurnished" | "SemiFurnished" | "Unfurnished" | "FencedWired" | "FertileLand" | "OpenLand" | "Cultivated";
     availabilityStatus: "" | "ReadyToMove" | "UnderConstruction";
     ageOfProperty: "" | "ZeroToOne" | "OneToThree" | "ThreeToSix" | "SixToTen" | "TenPlus";
@@ -170,7 +170,7 @@ export function MakeExclusiveForm() {
             subLocality: existing.subLocality ?? "",
             address: existing.address ?? "",
             category: (existing.category as FormState["category"]) ?? "",
-            propertyType: (existing.propertyType as FormState["propertyType"]) ?? "",
+            propertyType: existing.propertyType ?? "",
             furnishingStatus: (existing.furnishingStatus as FormState["furnishingStatus"]) ?? "",
             availabilityStatus: (existing.availabilityStatus as FormState["availabilityStatus"]) ?? "",
             ageOfProperty: (existing.ageOfProperty as FormState["ageOfProperty"]) ?? "",
@@ -369,15 +369,12 @@ export function MakeExclusiveForm() {
                         </div>
                         <div className="space-y-1.5">
                             <FieldLabel>Property Type</FieldLabel>
-                            <Select value={form.propertyType} onValueChange={(v) => setField("propertyType", v as FormState["propertyType"])}>
-                                <SelectTrigger className="h-10 border-2 bg-white w-full"><SelectValue placeholder={existing?.propertyType ?? "Select property type"} /></SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="FARMLAND">FARMLAND</SelectItem>
-                                    <SelectItem value="DUPLEX">DUPLEX</SelectItem>
-                                    <SelectItem value="FLAT">FLAT</SelectItem>
-                                    <SelectItem value="PLOT">PLOT</SelectItem>
-                                </SelectContent>
-                            </Select>
+                            <Input
+                                value={form.propertyType}
+                                onChange={(e) => setField("propertyType", e.target.value)}
+                                className="h-10 border-2 bg-white"
+                                placeholder={existing?.propertyType ?? "Any property type"}
+                            />
                         </div>
                     </div>
 

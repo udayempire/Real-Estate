@@ -4,7 +4,7 @@ export default async function EditStaffPage({ params }: { params: Promise<{ id: 
     const { id } = await params;
     return (
         <div>
-            <EditStaff staffId={id} />
+            <EditStaff staffId={id}/>
         </div>
     )
-}
+};

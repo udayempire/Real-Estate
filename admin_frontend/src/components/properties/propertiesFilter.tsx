@@ -15,8 +15,8 @@ import { cn } from "@/lib/utils"
 /** Schema: RESIDENTIAL, COMMERCIAL, AGRICULTURAL */
 export type CategoryFilter = "" | "RESIDENTIAL" | "COMMERCIAL" | "AGRICULTURAL"
 
-/** Schema: FLAT, DUPLEX, PLOT, FARMLAND */
-export type PropertyTypeFilter = "" | "FLAT" | "DUPLEX" | "PLOT" | "FARMLAND"
+/** Free-form property type */
+export type PropertyTypeFilter = string
 
 /** Schema: FullyFurnished, SemiFurnished, Unfurnished, FencedWired, FertileLand, OpenLand, Cultivated */
 export type FurnishingFilter =
@@ -54,14 +54,6 @@ const CATEGORY_OPTIONS: { value: CategoryFilter; label: string }[] = [
     { value: "RESIDENTIAL", label: "Residential" },
     { value: "COMMERCIAL", label: "Commercial" },
     { value: "AGRICULTURAL", label: "Agriculture" },
-]
-
-const PROPERTY_TYPE_OPTIONS: { value: PropertyTypeFilter; label: string }[] = [
-    { value: "", label: "All" },
-    { value: "FLAT", label: "Apartment/Flat" },
-    { value: "DUPLEX", label: "Independent House/Villa" },
-    { value: "PLOT", label: "Plot/Land" },
-    { value: "FARMLAND", label: "Farmhouse" },
 ]
 
 const FURNISHING_OPTIONS: { value: FurnishingFilter; label: string }[] = [
@@ -151,19 +143,14 @@ export function PropertiesFilter({
 
                     <div>
                         <Label className="text-sm font-medium">Property type</Label>
-                        <select
+                        <Input
+                            placeholder="Any property type"
                             value={draft.propertyType}
                             onChange={(e) =>
-                                setDraft((p) => ({ ...p, propertyType: e.target.value as PropertyTypeFilter }))
+                                setDraft((p) => ({ ...p, propertyType: e.target.value }))
                             }
-                            className="mt-1.5 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                        >
-                            {PROPERTY_TYPE_OPTIONS.map(({ value, label }) => (
-                                <option key={value || "all"} value={value}>
-                                    {label}
-                                </option>
-                            ))}
-                        </select>
+                            className="mt-1.5 h-9"
+                        />
                     </div>
 
                     <div>
@@ -276,9 +263,7 @@ export function paramsToPropertiesFilterState(
     if (category && ["RESIDENTIAL", "COMMERCIAL", "AGRICULTURAL"].includes(category)) {
         state.category = category as CategoryFilter
     }
-    if (propertyType && ["FLAT", "DUPLEX", "PLOT", "FARMLAND"].includes(propertyType)) {
-        state.propertyType = propertyType as PropertyTypeFilter
-    }
+    if (propertyType) state.propertyType = propertyType
     if (
         furnishingStatus &&
         ["FullyFurnished", "SemiFurnished", "Unfurnished", "FencedWired", "FertileLand", "OpenLand", "Cultivated"].includes(furnishingStatus)
