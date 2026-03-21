@@ -3,6 +3,11 @@ import { Request, Response } from "express";
 import { prisma } from "../../config/prisma";
 import { verifyOtp } from "../../services/otp.service";
 import { debitAndCreateTransaction } from "../../services/gems.service";
+import { createAndSendUserNotification } from "../../services/notification.service";
+import {
+    gemRedeemApprovalNotification,
+    gemRedeemRequestNotification,
+} from "../../services/Notifications/gems.notification";
 
 export async function resolveStaffActorId(staffId: string, role: string): Promise<string> {
     if (role !== "SUPER_ADMIN") return staffId;
@@ -89,6 +94,21 @@ export async function createRedeemRequest(req: Request, res: Response) {
                 otpVerifiedAt: new Date(),
                 otpVerifiedByStaffId: actorStaffId,
             },
+        });
+
+        const requestPayload = gemRedeemRequestNotification({
+            userId: user.id,
+            redeemedGems: noOfGems,
+        });
+
+        createAndSendUserNotification({
+            userId: user.id,
+            type: requestPayload.type,
+            title: requestPayload.title,
+            description: requestPayload.description,
+            data: requestPayload.data,
+        }).catch((notificationError) => {
+            console.error("Redeem request notification error:", notificationError);
         });
 
         return res.status(201).json({
@@ -178,6 +198,21 @@ export async function approveRedeemRequest(req: Request, res: Response) {
                 requestedByStaffId: actorStaffId,
                 reason: GemTxnReason.GEM_REDEEM,
             });
+        });
+
+        const approvalPayload = gemRedeemApprovalNotification({
+            userId: gemRequest.userId,
+            redeemedGems: gemRequest.baseGems,
+        });
+
+        createAndSendUserNotification({
+            userId: gemRequest.userId,
+            type: approvalPayload.type,
+            title: approvalPayload.title,
+            description: approvalPayload.description,
+            data: approvalPayload.data,
+        }).catch((notificationError) => {
+            console.error("Redeem approval notification error:", notificationError);
         });
 
         return res.status(200).json({
@@ -292,7 +327,23 @@ export async function directRedeemGems(req: Request, res: Response) {
                 where: { id: user.id },
                 select: { points: true },
             });
+
+                    const approvalPayload = gemRedeemApprovalNotification({
+            userId: gemRequest.userId,
+            redeemedGems: gemRequest.baseGems,
+        });
+
+        createAndSendUserNotification({
+            userId: gemRequest.userId,
+            type: approvalPayload.type,
+            title: approvalPayload.title,
+            description: approvalPayload.description,
+            data: approvalPayload.data,
+        }).catch((notificationError) => {
+            console.error("Redeem approval notification error:", notificationError);
+        });
             return { balanceAfter: updatedUser?.points ?? 0 };
+
         });
 
         return res.status(200).json({
