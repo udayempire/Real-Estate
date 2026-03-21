@@ -7,90 +7,9 @@ import { createAndSendUserNotification } from "../../services/notification.servi
 import {
     gemRequestApprovalNotification,
     gemRequestNotification,
+    gemRequestRejectionNotification,
 } from "../../services/Notifications/gems.notification";
 import { resolveStaffActorId } from "./redeem.staff";
-
-
-
-// export async function giveAcquisitionRewardToUser(req: Request, res: Response) {
-//     try{
-//         const staffId = req.user?.id;
-//         const role = req.user?.role;
-//         if (!staffId || !role) {
-//             return res.status(401).json({ message: "Unauthorized" });
-//         }
-//         if (!["ADMIN", "SUPER_ADMIN"].includes(role)) {
-//             return res.status(403).json({ message: "Forbidden" });
-//         }
-//         const { userId, baseGems, propertyId, otpCode, type, comment } = req.body as {
-//             userId?: string;
-//             baseGems?: number;
-//             propertyId?: string;
-//             otpCode?: string;
-//             type?: GemRequestType;
-//             comment?: string;
-//         };
-
-//         if (!userId || !baseGems || baseGems <= 0 || !otpCode) {
-//             return res.status(400).json({ message: "userId, positive baseGems and otpCode are required" });
-//         }
-
-//         const requestType = type ?? "EXCLUSIVE_ACQUISITION_REWARD";
-//         if (!Object.values(GemRequestType).includes(requestType)) {
-//             return res.status(400).json({ message: "Invalid request type" });
-//         }
-//         if (requestType === "REDEMPTION") {
-//             return res.status(400).json({ message: "Use redemption API for redemption requests" });
-//         }
-//         const referralPercent = 5;
-//         const referralGems = referralUser ? Math.floor(baseGems * 0.05) : 0;
-//         const totalGems = baseGems + referralGems;
-//         const user = await prisma.user.findUnique({
-//             where: { id: userId },
-//         });
-//         if (!user){
-//             return res.status(404).json({ message: "User not found" });
-//         };
-        
-//         const property = await prisma.property.findUnique({
-//             where: { id: propertyId },
-//         });
-//         if (!property){
-//             return res.status(404).json({ message: "Property not found" });
-//         };
-//         const propertyAcquisitionRequest = await prisma.propertyAcquisitionRequest.findUnique({
-//             where: { propertyId: propertyId },
-//         });
-//         if (!propertyAcquisitionRequest){
-//             return res.status(404).json({ message: "Property acquisition request not found" });
-//         };
-//         if (propertyAcquisitionRequest.status !== "APPROVED"){
-//             return res.status(400).json({ message: "Property acquisition request is not approved" });
-//         };
-//         const gemRequest = await prisma.gemRequest.create({
-//             data:{
-//                 type: requestType,
-//                 status: "APPROVED",
-//                 requestedByStaffId: staffId,
-//                 reviewedByStaffId: staffId,
-//                 userId,
-//                 referralUserId,
-//                 propertyId: propertyId ?? null,
-//                 baseGems,
-//                 referralPercent,
-//                 referralGems,
-//                 totalGems,
-//                 comment: comment ?? null,
-//                 otpVerifiedAt: new Date(),
-//                 otpVerifiedByStaffId: staffId,
-
-//             }
-//         })
-//     }catch(error){
-//         console.error("Give acquisition reward to user error:", error);
-//         return res.status(500).json({ message: "Internal server error" });
-//     }
-// }
 
 export async function previewGemAllocation(req: Request, res: Response) {
     try {
@@ -412,8 +331,9 @@ export async function giveAcquisitionRewardToUser(req: Request, res: Response) {
             if (request) {
                 const payload = gemRequestApprovalNotification({
                     userId: targetUserId,
-                    approvedGems: totalGems,
+                    approvedGems: baseGems,
                     propertyName: request.property?.title ?? null,
+                    reason: requestType,
                 });
 
                 createAndSendUserNotification({
@@ -481,7 +401,7 @@ export async function giveAcquisitionRewardToUser(req: Request, res: Response) {
 
         const requestReceivedPayload = gemRequestNotification({
             userId: targetUserId,
-            requestedGems: totalGems,
+            requestedGems: baseGems,
             propertyName: request.property?.title ?? null,
         });
 
@@ -668,11 +588,12 @@ export async function approveGemRequest(req: Request, res: Response) {
                 });
             });
 
-            const approvedGems = request.baseGems + request.referralGems;
+            const approvedGems = request.baseGems;
             const payload = gemRequestApprovalNotification({
                 userId: request.userId,
                 approvedGems,
                 propertyName: request.property?.title ?? null,
+                reason: request.type,
             });
 
             createAndSendUserNotification({
@@ -693,6 +614,23 @@ export async function approveGemRequest(req: Request, res: Response) {
             await prisma.gemRequest.update({
                 where: { id: requestId },
                 data: { status: "REJECTED" },
+            });
+
+            const payload = gemRequestRejectionNotification({
+                userId: request.userId,
+                requestedGems: request.baseGems,
+                propertyName: request.property?.title ?? null,
+                reason: request.type,
+            });
+
+            createAndSendUserNotification({
+                userId: request.userId,
+                type: payload.type,
+                title: payload.title,
+                description: payload.description,
+                data: payload.data,
+            }).catch((notificationError) => {
+                console.error("Gem request rejection notification error:", notificationError);
             });
 
             return res.status(200).json({
@@ -723,6 +661,13 @@ export async function rejectGemRequest(req: Request, res: Response) {
                 id: true,
                 status: true,
                 type: true,
+                userId: true,
+                baseGems: true,
+                property: {
+                    select: {
+                        title: true,
+                    },
+                },
             },
         });
         if (!request) {
@@ -736,6 +681,25 @@ export async function rejectGemRequest(req: Request, res: Response) {
             where: { id: requestId },
             data: { status: "REJECTED" },
         });
+
+        if (request.type !== "REDEMPTION") {
+            const payload = gemRequestRejectionNotification({
+                userId: request.userId,
+                requestedGems: request.baseGems,
+                propertyName: request.property?.title ?? null,
+                reason: request.type,
+            });
+
+            createAndSendUserNotification({
+                userId: request.userId,
+                type: payload.type,
+                title: payload.title,
+                description: payload.description,
+                data: payload.data,
+            }).catch((notificationError) => {
+                console.error("Gem request rejection notification error:", notificationError);
+            });
+        }
 
         return res.status(200).json({
             success: true,

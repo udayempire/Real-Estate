@@ -6,6 +6,7 @@ import { debitAndCreateTransaction } from "../../services/gems.service";
 import { createAndSendUserNotification } from "../../services/notification.service";
 import {
     gemRedeemApprovalNotification,
+    gemRedeemRejectionNotification,
     gemRedeemRequestNotification,
 } from "../../services/Notifications/gems.notification";
 
@@ -241,7 +242,7 @@ export async function rejectRedeemRequest(req: Request, res: Response) {
 
         const gemRequest = await prisma.gemRequest.findUnique({
             where: { id: requestId },
-            select: { id: true, type: true, status: true },
+            select: { id: true, type: true, status: true, userId: true, baseGems: true },
         });
         if (!gemRequest) return res.status(404).json({ message: "Request not found" });
         if (gemRequest.type !== "REDEMPTION") return res.status(400).json({ message: "Not a redemption request" });
@@ -252,6 +253,22 @@ export async function rejectRedeemRequest(req: Request, res: Response) {
         await prisma.gemRequest.update({
             where: { id: requestId },
             data: { status: "REJECTED", reviewedByStaffId: actorStaffId },
+        });
+
+        const rejectionPayload = gemRedeemRejectionNotification({
+            userId: gemRequest.userId,
+            redeemedGems: gemRequest.baseGems,
+            reason: "REDEEM_POLICY_VIOLATION",
+        });
+
+        createAndSendUserNotification({
+            userId: gemRequest.userId,
+            type: rejectionPayload.type,
+            title: rejectionPayload.title,
+            description: rejectionPayload.description,
+            data: rejectionPayload.data,
+        }).catch((notificationError) => {
+            console.error("Redeem rejection notification error:", notificationError);
         });
 
         return res.status(200).json({

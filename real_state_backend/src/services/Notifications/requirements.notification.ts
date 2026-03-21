@@ -3,27 +3,6 @@ import { NotificationType, Prisma } from "@prisma/client";
 const SUPPORT_EMAIL = "contact@realbro.io";
 const SUPPORT_PHONE = "+91-80856-71414";
 
-export function requriementsMatchedNotification(input: {
-    userId: string;
-    propertyTitle: string;
-}): {
-    type: NotificationType;
-    title: string;
-    description: string;
-    data: Prisma.InputJsonValue;
-} {
-    return {
-        type: NotificationType.GENERIC,
-        title: "New Property Matches Your Preferences! 🏡",
-        description: `A new property '${input.propertyTitle}' matches your saved preferences. Check it out and start selling!`,  
-        data: {
-            action: "requirements_matched",
-            userId: input.userId,
-            propertyTitle: input.propertyTitle,
-        },
-    };
-}
-
 export function requirementFulfilledNotification(input: {
     userId: string;
     requirementId: string;

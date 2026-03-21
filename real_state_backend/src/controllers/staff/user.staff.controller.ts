@@ -5,6 +5,7 @@ import { createAndSendUserNotification } from "../../services/notification.servi
 import {
     BlueTickNotification,
     verificationNotification,
+    updateUserProfiledNotification,
     accountBlockedNotification,
     adharVerificationRejectedNotification,
     panVerificationRejectedNotification,
@@ -431,6 +432,10 @@ export async function updateUserByStaff(req: Request, res: Response) {
             return res.status(400).json({ message: "No fields provided to update" });
         }
 
+        const hasProfileFieldChanges = [firstName, lastName, age, gender, email, phone].some(
+            (value) => value !== undefined
+        );
+
         const updatedUser = await prisma.user.update({
             where: { id: id as string },
             data,
@@ -446,6 +451,19 @@ export async function updateUserByStaff(req: Request, res: Response) {
                 blueTick: true,
             },
         });
+
+        if (hasProfileFieldChanges) {
+            const payload = updateUserProfiledNotification({ userId: updatedUser.id });
+            createAndSendUserNotification({
+                userId: updatedUser.id,
+                type: payload.type,
+                title: payload.title,
+                description: payload.description,
+                data: payload.data,
+            }).catch((notificationError) => {
+                console.error("Profile update notification error:", notificationError);
+            });
+        }
 
         if (!existingUser.isVerifiedSeller && updatedUser.isVerifiedSeller) {
             const payload = verificationNotification({ userId: updatedUser.id });
