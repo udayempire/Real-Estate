@@ -473,8 +473,8 @@ export async function createExclusiveProperty(req: Request, res: Response) {
         // Send announcement in background so property conversion response stays fast.
         broadcastNotificationToAllUsers({
             type: NotificationType.EXCLUSIVE_PROPERTY_ADDED,
-            title: "New exclusive property added",
-            description: `${exclusiveProperty.title} is now live in ${locationLabel}.`,
+            title: "New Exclusive Property Added 🏡",
+            description: `${exclusiveProperty.title} is now live in ${locationLabel}. Help sell it and earn gems!`,
             data: {
                 exclusivePropertyId: exclusiveProperty.id,
                 sourcePropertyId: property.id,

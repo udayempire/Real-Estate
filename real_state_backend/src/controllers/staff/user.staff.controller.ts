@@ -1,6 +1,8 @@
 import { prisma } from "../../config/prisma";
 import { Request, Response } from "express";
 import { sendAccountBlockedEmail } from "../../services/otp.service";
+import { createAndSendUserNotification } from "../../services/notification.service";
+import { BlueTickNotification, verificationNotification } from "../../services/Notifications/user.notification";
 export async function getAllUsers(req: Request, res: Response) {
     try {
         const users = await prisma.user.findMany({
@@ -371,7 +373,7 @@ export async function updateUserByStaff(req: Request, res: Response) {
 
         const existingUser = await prisma.user.findUnique({
             where: { id: id as string },
-            select: { id: true },
+            select: { id: true, isVerifiedSeller: true, blueTick: true },
         });
         if (!existingUser) {
             return res.status(404).json({ message: "User not found" });
@@ -416,6 +418,32 @@ export async function updateUserByStaff(req: Request, res: Response) {
                 blueTick: true,
             },
         });
+
+        if (!existingUser.isVerifiedSeller && updatedUser.isVerifiedSeller) {
+            const payload = verificationNotification({ userId: updatedUser.id });
+            createAndSendUserNotification({
+                userId: updatedUser.id,
+                type: payload.type,
+                title: payload.title,
+                description: payload.description,
+                data: payload.data,
+            }).catch((notificationError) => {
+                console.error("Verified seller notification error:", notificationError);
+            });
+        }
+
+        if (!existingUser.blueTick && updatedUser.blueTick) {
+            const payload = BlueTickNotification({ userId: updatedUser.id });
+            createAndSendUserNotification({
+                userId: updatedUser.id,
+                type: payload.type,
+                title: payload.title,
+                description: payload.description,
+                data: payload.data,
+            }).catch((notificationError) => {
+                console.error("Blue tick notification error:", notificationError);
+            });
+        }
 
         return res.status(200).json({ message: "User updated successfully", user: updatedUser });
     } catch (error) {
