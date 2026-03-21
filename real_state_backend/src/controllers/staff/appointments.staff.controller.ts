@@ -147,20 +147,23 @@ export async function acceptAppointment(req: Request, res: Response) {
                 .filter(Boolean)
                 .join(" ") || "our support team";
             const contactValue = updated.staffHandler?.phone || updated.staffHandler?.email;
-            const contactText = contactValue ? `${handlerName} (${contactValue})` : handlerName;
+            const contactPhone = "+91-80856-71414 ";
+            const contactEmail = "contact@realbro.com";
+
 
             await createAndSendUserNotification({
                 userId: appointment.userId,
                 type: NotificationType.APPOINTMENT_UPDATED,
                 title: "Appointment accepted",
-                description: `Your appointment for "${appointment.property.title}" has been scheduled for ${scheduledAt}. Contact: ${contactText}.`,
+                description: `Your appointment for "${appointment.property.title}" has been scheduled for ${scheduledAt}. Call us at: ${contactPhone} or email us at: ${contactEmail}.`,
                 data: {
                     appointmentId,
                     propertyId: appointment.propertyId,
                     appointmentDate: appointment.appointmentDate.toISOString(),
                     appointmentTime: appointment.appointmentTime,
                     contactName: handlerName,
-                    contact: contactValue,
+                    contactPhone,
+                    contactEmail
                 }
             });
         } catch (e) {
@@ -281,15 +284,37 @@ export async function rejectAppointment(req: Request, res: Response) {
         });
 
         try {
+            const scheduledDate = new Date(appointment.appointmentDate).toLocaleDateString("en-GB", {
+                day: "2-digit",
+                month: "short",
+                year: "numeric",
+            });
+            const scheduledAt = `${scheduledDate} at ${appointment.appointmentTime}`;
+            const handlerName = [updated.staffHandler?.firstName, updated.staffHandler?.lastName]
+                .filter(Boolean)
+                .join(" ") || "our support team";
+            const contactValue = updated.staffHandler?.phone || updated.staffHandler?.email;
+            const contactPhone = "+91-80856-71414 ";
+            const contactEmail = "contact@realbro.com";
+
+
             await createAndSendUserNotification({
                 userId: appointment.userId,
-                type: NotificationType.APPOINTMENT_CANCELLED,
-                title: "Appointment rejected",
-                description: `Your appointment for ${appointment.property.title} has been cancelled by staff.`,
-                data: { appointmentId, propertyId: appointment.propertyId }
+                type: NotificationType.APPOINTMENT_UPDATED,
+                title: "Appointment accepted",
+                description: `Your appointment for "${appointment.property.title}" has been scheduled for ${scheduledAt}. Call us at: ${contactPhone} or email us at: ${contactEmail}.`,
+                data: {
+                    appointmentId,
+                    propertyId: appointment.propertyId,
+                    appointmentDate: appointment.appointmentDate.toISOString(),
+                    appointmentTime: appointment.appointmentTime,
+                    contactName: handlerName,
+                    contactPhone,
+                    contactEmail
+                }
             });
         } catch (e) {
-            console.error("Appointment reject notification error:", e);
+            console.error("Appointment accept notification error:", e);
         }
 
         return res.status(200).json({ success: true, message: "Appointment rejected", data: updated });
