@@ -132,17 +132,36 @@ export async function acceptAppointment(req: Request, res: Response) {
             include: {
                 property: { select: { id: true, title: true } },
                 user: { select: { id: true, firstName: true, lastName: true, email: true, phone: true } },
-                staffHandler: { select: { id: true, firstName: true, lastName: true, role: true } }
+                staffHandler: { select: { id: true, firstName: true, lastName: true, role: true, email: true, phone: true } }
             }
         });
 
         try {
+            const scheduledDate = new Date(appointment.appointmentDate).toLocaleDateString("en-GB", {
+                day: "2-digit",
+                month: "short",
+                year: "numeric",
+            });
+            const scheduledAt = `${scheduledDate} at ${appointment.appointmentTime}`;
+            const handlerName = [updated.staffHandler?.firstName, updated.staffHandler?.lastName]
+                .filter(Boolean)
+                .join(" ") || "our support team";
+            const contactValue = updated.staffHandler?.phone || updated.staffHandler?.email;
+            const contactText = contactValue ? `${handlerName} (${contactValue})` : handlerName;
+
             await createAndSendUserNotification({
                 userId: appointment.userId,
                 type: NotificationType.APPOINTMENT_UPDATED,
                 title: "Appointment accepted",
-                description: `Your appointment for ${appointment.property.title} is now waiting for completion.`,
-                data: { appointmentId, propertyId: appointment.propertyId }
+                description: `Your appointment for "${appointment.property.title}" has been scheduled for ${scheduledAt}. Contact: ${contactText}.`,
+                data: {
+                    appointmentId,
+                    propertyId: appointment.propertyId,
+                    appointmentDate: appointment.appointmentDate.toISOString(),
+                    appointmentTime: appointment.appointmentTime,
+                    contactName: handlerName,
+                    contact: contactValue,
+                }
             });
         } catch (e) {
             console.error("Appointment accept notification error:", e);

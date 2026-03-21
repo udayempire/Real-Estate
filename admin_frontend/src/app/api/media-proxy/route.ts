@@ -8,10 +8,8 @@ export async function GET(request: NextRequest) {
             status: 400,
             headers: { "Content-Type": "application/json" },
         })
-    }
+    };
 
-    // Handle Next.js Image Optimization URLs (_next/image?url=...)
-    // Extract the real URL from the url parameter if it's a _next/image endpoint
     if (target.includes("/_next/image")) {
         try {
             const nextImageUrl = new URL(target)
@@ -20,9 +18,12 @@ export async function GET(request: NextRequest) {
                 target = realUrl
             }
         } catch {
-            // If extraction fails, continue with original target
+            return new Response(JSON.stringify({ message: "Invalid media url" }), {
+                status: 400,
+                headers: { "Content-Type": "application/json" },
+            })
         }
-    }
+    };
 
     let parsedUrl: URL
     try {

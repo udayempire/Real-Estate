@@ -183,7 +183,7 @@ export function PropertyActionBar({
                 media.map(async (item, index) => {
                     const absoluteUrl = toAbsoluteMediaUrl(item.url)
                     if (!absoluteUrl) {
-                        throw new Error(`Failed to download media ${index + 1}`)
+                        throw new Error(`Failed to ${index + 1}`)
                     }
 
                     const response = await axios.get("/api/media-proxy", {
@@ -292,8 +292,7 @@ export function PropertyActionBar({
                     Buy Property
                 </Button>
                 <Button
-                    size="sm"
-                    className={`border-2 shadow-none gap-1.5 text-xs ${!media.length || isDownloadingMedia ? disabledBtnClass : ""}`}
+                    className={`border-2 shadow-none gap-1.5 text-xs bg-blue-600 ${!media.length || isDownloadingMedia ? disabledBtnClass : ""}`}
                     onClick={handleDownloadMedia}
                     disabled={!media.length || isDownloadingMedia}
                 >
