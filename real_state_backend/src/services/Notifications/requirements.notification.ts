@@ -33,7 +33,7 @@ export function requirementFulfilledNotification(input: {
     return {
         type: NotificationType.GENERIC,
         title: "Requirement Fulfilled",
-        description: "Good news! Your property requirement has been fulfilled by our team.",
+        description: "Good news! Your property requirement has been fulfilled by our team. Reach us at Mail: <span style='color:#2563eb'>contact@realbro.io</span> | <span style='color:#2563eb'>+91-80856-71414</span> for more details.",
         data: {
             action: "requirement_fulfilled",
             userId: input.userId,
@@ -55,7 +55,7 @@ export function requirementClosedNotification(input: {
     return {
         type: NotificationType.GENERIC,
         title: "Requirement Closed",
-        description: "Your property requirement has been closed by our team.",
+        description: "Your property requirement has been closed by our team. Reach us at Mail: <span style='color:#2563eb'>contact@realbro.io</span>| <span style='color:#2563eb'>+91-80856-71414</span> for more details.",
         data: {
             action: "requirement_closed",
             userId: input.userId,
