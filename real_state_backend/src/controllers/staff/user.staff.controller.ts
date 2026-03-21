@@ -2,7 +2,14 @@ import { prisma } from "../../config/prisma";
 import { Request, Response } from "express";
 import { sendAccountBlockedEmail } from "../../services/otp.service";
 import { createAndSendUserNotification } from "../../services/notification.service";
-import { BlueTickNotification, verificationNotification } from "../../services/Notifications/user.notification";
+import {
+    BlueTickNotification,
+    verificationNotification,
+    updateUserProfiledNotification,
+    accountBlockedNotification,
+    adharVerificationRejectedNotification,
+    panVerificationRejectedNotification,
+} from "../../services/Notifications/user.notification";
 export async function getAllUsers(req: Request, res: Response) {
     try {
         const users = await prisma.user.findMany({
@@ -203,6 +210,17 @@ export async function blockUser(req: Request, res: Response) {
                 console.error("Block user email error:", emailError);
             }
 
+            const payload = accountBlockedNotification({ userId: existingUser.id });
+            createAndSendUserNotification({
+                userId: existingUser.id,
+                type: payload.type,
+                title: payload.title,
+                description: payload.description,
+                data: payload.data,
+            }).catch((notificationError) => {
+                console.error("Block user notification error:", notificationError);
+            });
+
             return res.status(200).json({ message: "User blocked successfully" });
         } else if (role === "ADMIN") {
             await prisma.banRequest.create({
@@ -307,6 +325,17 @@ export async function reviewBanRequest(req: Request, res: Response) {
                 console.error("Ban approval email error:", emailError);
             }
 
+            const payload = accountBlockedNotification({ userId: request.userId });
+            createAndSendUserNotification({
+                userId: request.userId,
+                type: payload.type,
+                title: payload.title,
+                description: payload.description,
+                data: payload.data,
+            }).catch((notificationError) => {
+                console.error("Ban approval block notification error:", notificationError);
+            });
+
             return res.status(200).json({ message: "Ban request approved and user blocked successfully" });
         } else if (decision === "REJECTED") {
             await prisma.banRequest.update({
@@ -403,6 +432,10 @@ export async function updateUserByStaff(req: Request, res: Response) {
             return res.status(400).json({ message: "No fields provided to update" });
         }
 
+        const hasProfileFieldChanges = [firstName, lastName, age, gender, email, phone].some(
+            (value) => value !== undefined
+        );
+
         const updatedUser = await prisma.user.update({
             where: { id: id as string },
             data,
@@ -418,6 +451,19 @@ export async function updateUserByStaff(req: Request, res: Response) {
                 blueTick: true,
             },
         });
+
+        if (hasProfileFieldChanges) {
+            const payload = updateUserProfiledNotification({ userId: updatedUser.id });
+            createAndSendUserNotification({
+                userId: updatedUser.id,
+                type: payload.type,
+                title: payload.title,
+                description: payload.description,
+                data: payload.data,
+            }).catch((notificationError) => {
+                console.error("Profile update notification error:", notificationError);
+            });
+        }
 
         if (!existingUser.isVerifiedSeller && updatedUser.isVerifiedSeller) {
             const payload = verificationNotification({ userId: updatedUser.id });
@@ -489,6 +535,34 @@ export async function updateKycStatus(req: Request, res: Response) {
                 imageUrl: true,
             },
         });
+
+        if (status === "REJECTED") {
+            if (updated.type === "AADHARCARD") {
+                const payload = adharVerificationRejectedNotification({ userId: id as string });
+                createAndSendUserNotification({
+                    userId: id as string,
+                    type: payload.type,
+                    title: payload.title,
+                    description: payload.description,
+                    data: payload.data,
+                }).catch((notificationError) => {
+                    console.error("Aadhaar rejection notification error:", notificationError);
+                });
+            }
+
+            if (updated.type === "PANCARD") {
+                const payload = panVerificationRejectedNotification({ userId: id as string });
+                createAndSendUserNotification({
+                    userId: id as string,
+                    type: payload.type,
+                    title: payload.title,
+                    description: payload.description,
+                    data: payload.data,
+                }).catch((notificationError) => {
+                    console.error("PAN rejection notification error:", notificationError);
+                });
+            }
+        }
 
         return res.status(200).json({ message: "KYC status updated", kyc: updated });
     } catch (error) {
