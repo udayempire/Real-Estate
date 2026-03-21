@@ -5,7 +5,7 @@ import { NotificationType } from "@prisma/client";
 import { createExclusivePropertySchema, updateExclusivePropertySchema } from "../../validators/property.validators";
 import { broadcastNotificationToAllUsers, createAndSendUserNotification } from "../../services/notification.service";
 import { normalizeCategory } from "../../utils/propertyTaxonomy";
-import { buildAcquisitionApprovalNotification } from "../../services/Notifications/properties.notification";
+import { buildAcquisitionApprovalNotification, unlistPropertyNotification } from "../../services/Notifications/properties.notification";
 
 async function resolveStaffActorId(staffId: string, role: string): Promise<string | null> {
     if (role !== "SUPER_ADMIN") {
@@ -950,7 +950,15 @@ export async function updatePropertyStatus(req: Request, res: Response) {
         const validPropertyStatuses = ["ACTIVE", "UNLISTED", "SOLDOFFLINE", "SOLDTOREALBRO", "SOLDFROMLISTINGS", "DRAFT", "SOLDEXCLUSIVEPROPERTY"];
         const validExclusiveStatuses = ["ACTIVE", "SOLD_OUT", "UNLISTED"];
 
-        const property = await prisma.property.findUnique({ where: { id: propertyId }, select: { id: true, exclusiveProperty: { select: { id: true } } } });
+        const property = await prisma.property.findUnique({
+            where: { id: propertyId },
+            select: {
+                id: true,
+                title: true,
+                userId: true,
+                exclusiveProperty: { select: { id: true } },
+            },
+        });
         if (!property) return res.status(404).json({ message: "Property not found" });
 
         if (target === "exclusive" && validExclusiveStatuses.includes(status) && property.exclusiveProperty) {
@@ -962,6 +970,24 @@ export async function updatePropertyStatus(req: Request, res: Response) {
         }
         if (validPropertyStatuses.includes(status)) {
             await prisma.property.update({ where: { id: propertyId }, data: { status: status as "ACTIVE" | "UNLISTED" | "SOLDOFFLINE" | "SOLDTOREALBRO" | "SOLDFROMLISTINGS" | "DRAFT" | "SOLDEXCLUSIVEPROPERTY" } });
+
+            if (status === "UNLISTED") {
+                const payload = unlistPropertyNotification({
+                    propertyId: property.id,
+                    propertyTitle: property.title,
+                });
+
+                createAndSendUserNotification({
+                    userId: property.userId,
+                    type: payload.type,
+                    title: payload.title,
+                    description: payload.description,
+                    data: payload.data,
+                }).catch((notificationError) => {
+                    console.error("Unlist property notification error:", notificationError);
+                });
+            }
+
             return res.status(200).json({ success: true, message: "Property status updated" });
         }
         return res.status(400).json({ message: "Invalid status" });
