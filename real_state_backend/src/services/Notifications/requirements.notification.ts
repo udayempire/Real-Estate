@@ -1,5 +1,8 @@
 import { NotificationType, Prisma } from "@prisma/client";
 
+const SUPPORT_EMAIL = "contact@realbro.io";
+const SUPPORT_PHONE = "+91-80856-71414";
+
 export function requriementsMatchedNotification(input: {
     userId: string;
     propertyTitle: string;
@@ -33,14 +36,14 @@ export function requirementFulfilledNotification(input: {
     return {
         type: NotificationType.GENERIC,
         title: "Requirement Fulfilled",
-        description: `Good news! Your property requirement has been fulfilled by our team. Reach us at Mail: '${contactEmail}' | '${contactPhone}' `,
+        description: `Good news! Your property requirement has been fulfilled by our team. Reach us at Mail: '${SUPPORT_EMAIL}' | '${SUPPORT_PHONE}'.`,
         data: {
             action: "requirement_fulfilled",
             userId: input.userId,
             requirementId: input.requirementId,
             status: "FULFILLED",
-            contactEmail: "contact@realbro.io",
-            contactPhone: "+91-80856-71414",
+            contactEmail: SUPPORT_EMAIL,
+            contactPhone: SUPPORT_PHONE,
         },
     };
 }
@@ -57,14 +60,14 @@ export function requirementClosedNotification(input: {
     return {
         type: NotificationType.GENERIC,
         title: "Requirement Closed",
-        description: `Your property requirement has been closed by our team. Reach us at Mail: '${contactEmail}' | '${contactPhone}'.`,
+        description: `Your property requirement has been closed by our team. Reach us at Mail: '${SUPPORT_EMAIL}' | '${SUPPORT_PHONE}'.`,
         data: {
             action: "requirement_closed",
             userId: input.userId,
             requirementId: input.requirementId,
             status: "CLOSED",
-            contactEmail: "contact@realbro.io",
-            contactPhone: "+91-80856-71414",
+            contactEmail: SUPPORT_EMAIL,
+            contactPhone: SUPPORT_PHONE,
         },
     };
 }

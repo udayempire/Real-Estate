@@ -2,7 +2,10 @@ import { PropertyRequirementStatus } from "@prisma/client";
 import { Request, Response } from "express";
 import { prisma } from "../../config/prisma";
 import { createAndSendUserNotification } from "../../services/notification.service";
-import { requirementFulfilledNotification } from "../../services/Notifications/requirements.notification";
+import {
+    requirementClosedNotification,
+    requirementFulfilledNotification,
+} from "../../services/Notifications/requirements.notification";
 
 export async function getPropertyRequirements(req: Request, res: Response) {
     try {
@@ -77,12 +80,17 @@ export async function updateRequirementStatus(req: Request, res: Response) {
             data: { status: status as PropertyRequirementStatus },
         });
 
-        if (updated.status === "FULFILLED") {
+        if (updated.status === "FULFILLED" || updated.status === "CLOSED") {
             try {
-                const payload = requirementFulfilledNotification({
-                    userId: requirement.userId,
-                    requirementId: updated.id,
-                });
+                const payload = updated.status === "FULFILLED"
+                    ? requirementFulfilledNotification({
+                        userId: requirement.userId,
+                        requirementId: updated.id,
+                    })
+                    : requirementClosedNotification({
+                        userId: requirement.userId,
+                        requirementId: updated.id,
+                    });
 
                 await createAndSendUserNotification({
                     userId: requirement.userId,
