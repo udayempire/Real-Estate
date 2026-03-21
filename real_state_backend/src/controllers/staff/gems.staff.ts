@@ -403,6 +403,7 @@ export async function giveAcquisitionRewardToUser(req: Request, res: Response) {
             userId: targetUserId,
             requestedGems: baseGems,
             propertyName: request.property?.title ?? null,
+            reason: requestType,
         });
 
         createAndSendUserNotification({

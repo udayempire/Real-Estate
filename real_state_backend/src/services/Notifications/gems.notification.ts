@@ -4,6 +4,7 @@ export function gemRequestNotification(input: {
     userId: string;
     requestedGems: number;
     propertyName?: string | null;
+    reason?: string | null;
 }): {
     type: NotificationType;
     title: string;
@@ -11,16 +12,23 @@ export function gemRequestNotification(input: {
     data: Prisma.InputJsonValue;
 } {
     const propertyName = input.propertyName ?? "N/A";
+    const reasonLabel =
+        input.reason === "EXCLUSIVE_SALE_REWARD"
+            ? "exclusive property sale"
+            : input.reason === "EXCLUSIVE_ACQUISITION_REWARD"
+                ? "property acquisition"
+                : "reward request";
 
     return {
         type: NotificationType.GENERIC,
         title: "Gem Reward Update 💎",
-        description: `Your reward request for ${input.requestedGems} gems under Property '${propertyName}' has been received by Realbro and will be processed in 1-3 working days.`,
+        description: `Your ${reasonLabel} request for ${input.requestedGems} gems under property '${propertyName}' has been received by Realbro and will be processed in 1-3 working days.`,
         data: {
             action: "gem_request_received",
             userId: input.userId,
             requestedGems: input.requestedGems,
             propertyName,
+            reason: input.reason ?? null,
         },
     };
 };
