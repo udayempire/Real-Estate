@@ -62,7 +62,7 @@ export function PropertyDetailsPanel({ data }: PropertyDetailsPanelProps) {
                     {data.status}
                 </span>
                 {data.statusLabel && (
-                    <span className="bg-blue-500 text-white text-[11px] font-semibold px-3 py-1 rounded-full">
+                    <span className="bg-blue-500 text-white text-[11px] font-semibold px-3 py-1 rounded-full">  
                         {data.statusLabel}
                     </span>
                 )}
