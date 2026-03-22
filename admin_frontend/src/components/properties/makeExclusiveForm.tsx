@@ -62,6 +62,7 @@ type ExistingProperty = {
     allInclusivePrice?: boolean;
     negotiablePrice?: boolean;
     govtChargesTaxIncluded?: boolean;
+    isExtraRewardOn?: boolean;
 };
 
 type FormState = {
@@ -104,6 +105,7 @@ type FormState = {
     allInclusivePrice: boolean;
     negotiablePrice: boolean;
     govtChargesTaxIncluded: boolean;
+    isExtraRewardOn: boolean;
 };
 
 const initialState: FormState = {
@@ -146,6 +148,7 @@ const initialState: FormState = {
     allInclusivePrice: false,
     negotiablePrice: false,
     govtChargesTaxIncluded: false,
+    isExtraRewardOn: false,
 };
 
 const toOptionalNumber = (value: string) => {
@@ -194,6 +197,7 @@ export function MakeExclusiveForm() {
         allInclusivePrice: false,
         negotiablePrice: false,
         govtChargesTaxIncluded: false,
+        isExtraRewardOn: false,
     });
     const [typesByCategory, setTypesByCategory] = useState<Record<Exclude<CategoryValue, "">, string[]>>({
         RESIDENTIAL: [],
@@ -255,11 +259,13 @@ export function MakeExclusiveForm() {
             allInclusivePrice: existing.allInclusivePrice ?? false,
             negotiablePrice: existing.negotiablePrice ?? false,
             govtChargesTaxIncluded: existing.govtChargesTaxIncluded ?? false,
+            isExtraRewardOn: existing.isExtraRewardOn ?? false,
         }));
         setSwitchTouched({
             allInclusivePrice: existing.allInclusivePrice != null,
             negotiablePrice: existing.negotiablePrice != null,
             govtChargesTaxIncluded: existing.govtChargesTaxIncluded != null,
+            isExtraRewardOn: existing.isExtraRewardOn != null,
         });
         setMediaItems(
             (existing.media ?? []).map((m, index) => ({
@@ -468,6 +474,7 @@ export function MakeExclusiveForm() {
             allInclusivePrice: switchTouched.allInclusivePrice ? form.allInclusivePrice : undefined,
             negotiablePrice: switchTouched.negotiablePrice ? form.negotiablePrice : undefined,
             govtChargesTaxIncluded: switchTouched.govtChargesTaxIncluded ? form.govtChargesTaxIncluded : undefined,
+            isExtraRewardOn: switchTouched.isExtraRewardOn ? form.isExtraRewardOn : undefined,
             media: mediaItems.map((m, index) => ({
                 url: m.url,
                 key: m.key,
@@ -834,7 +841,7 @@ export function MakeExclusiveForm() {
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                         <div className="flex items-center justify-between rounded-md border p-3">
                             <FieldLabel className="mb-0">All Inclusive Price</FieldLabel>
                             <Switch
@@ -862,6 +869,16 @@ export function MakeExclusiveForm() {
                                 onCheckedChange={(v) => {
                                     setField("govtChargesTaxIncluded", v);
                                     setSwitchTouched((prev) => ({ ...prev, govtChargesTaxIncluded: true }));
+                                }}
+                            />
+                        </div>
+                        <div className="flex items-center justify-between rounded-md border p-3">
+                            <FieldLabel className="mb-0">Enable Extra Rewarded</FieldLabel>
+                            <Switch
+                                checked={form.isExtraRewardOn}
+                                onCheckedChange={(v) => {
+                                    setField("isExtraRewardOn", v);
+                                    setSwitchTouched((prev) => ({ ...prev, isExtraRewardOn: true }));
                                 }}
                             />
                         </div>
