@@ -338,6 +338,7 @@ export async function createExclusiveProperty(req: Request, res: Response) {
         const {
             media: bodyMedia,
             fixedRewardGems,
+            isExtraRewardOn,
             ...bodyOverrides
         } = body;
 
@@ -388,6 +389,7 @@ export async function createExclusiveProperty(req: Request, res: Response) {
             sourcePropertyId: propertyId,
             originalUserId: property.userId,
             fixedRewardGems,
+            isExtraRewardOn,
             status: (bodyOverrides.status ?? "ACTIVE") as "ACTIVE" | "SOLD_OUT" | "UNLISTED",
         };
 
@@ -1014,6 +1016,7 @@ export async function getExclusiveProperty(req: Request, res: Response) {
                 coveredParking: true,
                 uncoveredParking: true,
                 fixedRewardGems: true,
+                isExtraRewardOn: true,
                 soldOutAt: true,
                 notes: true,
                 createdAt: true,

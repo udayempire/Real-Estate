@@ -4,6 +4,7 @@ import {
     normalizeCategory,
     normalizeCategoryArray,
 } from "../utils/propertyTaxonomy";
+import { is } from "zod/locales";
 
 export const StatusEnum = [
     "ACTIVE",
@@ -310,6 +311,7 @@ export const exclusivePropertyStatusEnum = ["ACTIVE", "SOLD_OUT", "UNLISTED"] as
 export const createExclusivePropertySchema = z.object({
     fixedRewardGems: z.number().int().min(0, "fixedRewardGems is required and must be non-negative"),
     notes: z.string().optional(),
+    isExtraRewardOn: z.boolean().optional(),
     status: z.enum(exclusivePropertyStatusEnum).optional(),
     // All property fields optional - override copied values from source property
     title: z.string().min(1).optional(),
@@ -356,6 +358,7 @@ export const createExclusivePropertySchema = z.object({
 
 export const updateExclusivePropertySchema = z.object({
     fixedRewardGems: z.number().int().min(0).optional(),
+    isExtraRewardOn: z.boolean().optional(),
     notes: z.string().optional().nullable(),
     status: z.enum(exclusivePropertyStatusEnum).optional(),
     title: z.string().min(1).optional(),
