@@ -1,15 +1,10 @@
 "use client"
 
 import Image from "next/image"
-import { MapPin, Calendar, Scaling, MoreVertical, ImageOff } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+import { MapPin, Calendar, Scaling, ImageOff } from "lucide-react"
 import type { PropertyListing, PropertyStatus } from "./types"
+import Link from "next/link"
+import { useAuth } from "@/contexts/AuthContext"
 
 const statusLabel: Record<PropertyStatus, string> = {
     ACTIVE: "Active",
@@ -64,6 +59,34 @@ function formatDate(dateStr: string): string {
 }
 
 export function PropertyCard({ property }: { property: PropertyListing }) {
+    const { user } = useAuth()
+    const canOpenPropertyDetails = user?.role === "ADMIN" || user?.role === "SUPER_ADMIN"
+
+    const detailsContent = (
+        <>
+            <div className="flex items-start justify-between gap-2">
+                <div className="space-y-0.5">
+                    <h4 className="text-sm font-semibold leading-tight truncate">{property.title}</h4>
+                    <p className="flex items-center gap-1 text-xs text-muted-foreground">
+                        <MapPin className="size-3 shrink-0" />
+                        {formatLocation(property)}
+                    </p>
+                    <p className="flex items-center gap-1 text-xs text-muted-foreground">
+                        <Calendar className="size-3 shrink-0" />
+                        {formatDate(property.createdAt)}
+                    </p>
+                </div>
+            </div>
+            <div className="flex items-center gap-4 text-sm">
+                <span className="font-bold">{formatPrice(property.listingPrice)}</span>
+                <span className="flex items-center gap-1 text-muted-foreground">
+                    <Scaling className="size-3.5" />
+                    {formatArea(property)}
+                </span>
+            </div>
+        </>
+    )
+
     return (
         <div className="flex gap-3 rounded-xl border bg-white p-3">
             <div className="relative shrink-0 w-32 h-24 rounded-lg overflow-hidden bg-gray-100">
@@ -85,40 +108,15 @@ export function PropertyCard({ property }: { property: PropertyListing }) {
                 </span>
             </div>
 
-            <div className="flex flex-1 flex-col justify-between min-w-0">
-                <div className="flex items-start justify-between gap-2">
-                    <div className="space-y-0.5">
-                        <h4 className="text-sm font-semibold leading-tight truncate">{property.title}</h4>
-                        <p className="flex items-center gap-1 text-xs text-muted-foreground">
-                            <MapPin className="size-3 shrink-0" />
-                            {formatLocation(property)}
-                        </p>
-                        <p className="flex items-center gap-1 text-xs text-muted-foreground">
-                            <Calendar className="size-3 shrink-0" />
-                            {formatDate(property.createdAt)}
-                        </p>
-                    </div>
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="size-7 shrink-0">
-                                <MoreVertical className="size-4" />
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-32">
-                            <DropdownMenuItem>View</DropdownMenuItem>
-                            <DropdownMenuItem>Edit</DropdownMenuItem>
-                            <DropdownMenuItem className="text-red-600 focus:text-red-600">Delete</DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
+            {canOpenPropertyDetails ? (
+                <Link href={`/property/${property.id}`} className="flex flex-1 flex-col justify-between min-w-0 cursor-pointer">
+                    {detailsContent}
+                </Link>
+            ) : (
+                <div className="flex flex-1 flex-col justify-between min-w-0 cursor-default" aria-disabled="true">
+                    {detailsContent}
                 </div>
-                <div className="flex items-center gap-4 text-sm">
-                    <span className="font-bold">{formatPrice(property.listingPrice)}</span>
-                    <span className="flex items-center gap-1 text-muted-foreground">
-                        <Scaling className="size-3.5" />
-                        {formatArea(property)}
-                    </span>
-                </div>
-            </div>
+            )}
         </div>
     )
 }

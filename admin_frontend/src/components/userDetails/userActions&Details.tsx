@@ -20,6 +20,7 @@ import type { FullUserData } from "./types";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 import { AxiosError } from "axios";
+import { useAuth } from "@/contexts/AuthContext";
 
 function formatPrice(value: number): string {
     if (value >= 10000000) return `₹ ${(value / 10000000).toFixed(1)} Cr`;
@@ -30,9 +31,11 @@ function formatPrice(value: number): string {
 
 export function UserActionsAndDetails({ user, onUserUpdated }: { user: FullUserData; onUserUpdated?: () => void }) {
     const router = useRouter();
+    const { user: authUser } = useAuth();
     const { userStats, properties_by_status } = user;
     const name = `${user.firstName} ${user.lastName}`;
     const initials = `${user.firstName[0] ?? ""}${user.lastName[0] ?? ""}`.toUpperCase();
+    const canViewAdminActions = authUser?.role === "ADMIN" || authUser?.role === "SUPER_ADMIN";
 
     const [blockOpen, setBlockOpen] = useState(false);
     const [unblockOpen, setUnblockOpen] = useState(false);
@@ -107,49 +110,50 @@ export function UserActionsAndDetails({ user, onUserUpdated }: { user: FullUserD
                     {user.isVerifiedSeller && <VerifiedSeller />}
                 </div>
             </div>
-            <div className="grid grid-cols-4 gap-2 items-center flex-wrap ">
-                {user.isBlocked ? (
-                    <Button
-                        variant="outline"
-                        className="gap-2 h-12 w-32 border-green-200 hover:bg-green-50 shadow-none"
-                        onClick={() => setUnblockOpen(true)}
-                    >
-                        <Unlock className="size-5 text-green-600" />
-                        Unblock User
-                    </Button>
-                ) : (
-                    <Button
-                        variant="outline"
-                        className="gap-2 h-12 w-32 border-red-200 hover:bg-zinc-100 shadow-none"
-                        onClick={() => setBlockOpen(true)}
-                    >
-                        <OctagonMinus className="size-5 text-orange-500" />
-                        Block User
-                    </Button>
-                )}
-                <SendGemsDialog
-                    prefillEmail={user.email}
-                    trigger={
-                        <Button variant="outline" className="gap-2 h-12 w-32 border-red-200 hover:bg-zinc-100 shadow-none">
-                            <Gem className="size-5 text-green-500" />
-                            <p>Send Gems</p>
+            {canViewAdminActions && (
+                <div className="grid grid-cols-4 gap-2 items-center flex-wrap ">
+                    {user.isBlocked ? (
+                        <Button
+                            variant="outline"
+                            className="gap-2 h-12 w-32 border-green-200 hover:bg-green-50 shadow-none"
+                            onClick={() => setUnblockOpen(true)}
+                        >
+                            <Unlock className="size-5 text-green-600" />
+                            Unblock User
                         </Button>
-                    }
-                />
-                <Button variant="outline" className="gap-2 h-12 w-32 border-red-200 hover:bg-zinc-100   shadow-none"
-                    onClick={() => router.push(`/user/edit/${user.id}`)}
-                >
-                    <PenLine className="size-5 text-blue-500" />
-                    <p>Edit User</p>
-                </Button>
-                <Button variant="outline" className="gap-2 h-12 w-32 border-red-200 hover:bg-zinc-100   shadow-none"
-                    onClick={() => router.push(`/user/${user.id}/txn-history`)}
-                >
-                    <PenLine className="size-5 text-blue-500" />
-                    <p>Txn History</p>
-                </Button>
-
-            </div>
+                    ) : (
+                        <Button
+                            variant="outline"
+                            className="gap-2 h-12 w-32 border-red-200 hover:bg-zinc-100 shadow-none"
+                            onClick={() => setBlockOpen(true)}
+                        >
+                            <OctagonMinus className="size-5 text-orange-500" />
+                            Block User
+                        </Button>
+                    )}
+                    <SendGemsDialog
+                        prefillEmail={user.email}
+                        trigger={
+                            <Button variant="outline" className="gap-2 h-12 w-32 border-red-200 hover:bg-zinc-100 shadow-none">
+                                <Gem className="size-5 text-green-500" />
+                                <p>Send Gems</p>
+                            </Button>
+                        }
+                    />
+                    <Button variant="outline" className="gap-2 h-12 w-32 border-red-200 hover:bg-zinc-100   shadow-none"
+                        onClick={() => router.push(`/user/edit/${user.id}`)}
+                    >
+                        <PenLine className="size-5 text-blue-500" />
+                        <p>Edit User</p>
+                    </Button>
+                    <Button variant="outline" className="gap-2 h-12 w-32 border-red-200 hover:bg-zinc-100   shadow-none"
+                        onClick={() => router.push(`/user/${user.id}/txn-history`)}
+                    >
+                        <PenLine className="size-5 text-blue-500" />
+                        <p>Txn History</p>
+                    </Button>
+                </div>
+            )}
             {/* Contact Info */}
             <div className="space-y-1.5">
                 <h2 className="font-medium text-sm px-0.5">Contact Info</h2>

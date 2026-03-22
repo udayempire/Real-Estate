@@ -177,7 +177,7 @@ export default function PendingApprovalsPage() {
                 </div>
             </div>
 
-            <div className="flex items-center gap-2 py-2  justify-center mt-2 border-b bg-zinc-200 rounded-xl w-[352px]">
+            <div className="flex items-center gap-2 py-2  justify-center mt-2 border-b bg-zinc-200 rounded-xl w-88">
                 <Button
                     variant={activeTab === "pending-approvals" ? "default" : "ghost"}
                     size="sm"

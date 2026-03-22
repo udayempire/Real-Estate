@@ -14,6 +14,7 @@ import {
     DialogFooter,
     DialogHeader,
     DialogTitle,
+    DialogTrigger
 } from "@/components/ui/dialog"
 import {
     CalendarDays,
@@ -110,6 +111,8 @@ export function PropertyCard({
     const { user } = useAuth()
     const [buyDialogOpen, setBuyDialogOpen] = useState(false)
     const [isSubmittingBuy, setIsSubmittingBuy] = useState(false)
+    const [approveDialogOpen, setApproveDialogOpen] = useState(false)
+    const [isSubmittingApprove, setIsSubmittingApprove] = useState(false)
     const [soldConfirmOpen, setSoldConfirmOpen] = useState(false)
     const [isSubmittingSold, setIsSubmittingSold] = useState(false)
 
@@ -140,6 +143,17 @@ export function PropertyCard({
         }
     }
 
+    const handleConfirmApprove = async () => {
+        if (!onApprove) return
+        try {
+            setIsSubmittingApprove(true)
+            await onApprove(property.id)
+            setApproveDialogOpen(false)
+        } finally {
+            setIsSubmittingApprove(false)
+        }
+    }
+
     const propertyDetailsHref = `/property/${property.detailId ?? property.id}`
     const handleEditClick = () => {
         if (onEdit) {
@@ -155,13 +169,13 @@ export function PropertyCard({
         <Card className="border py-0 gap-0 overflow-hidden">
             <div className="relative">
                 <Link href={propertyDetailsHref}>
-                <Image
-                    src={property.imageUrl}
-                    alt={property.title}
-                    width={400}
-                    height={200}
-                    className="w-full h-44 object-cover"
-                />
+                    <Image
+                        src={property.imageUrl}
+                        alt={property.title}
+                        width={400}
+                        height={200}
+                        className="w-full h-44 object-cover"
+                    />
                 </Link>
                 <div className="absolute top-3 left-3 flex items-center gap-1.5">
                     <span className={`${statusColors[property.status] ?? defaultStatusColor} text-white text-[10px] font-semibold px-2 py-0.5 rounded-full flex items-center gap-1`}>
@@ -270,15 +284,41 @@ export function PropertyCard({
                     {!onMakeExclusive && (onApprove || onReject) ? (
                         <>
                             {onApprove && (
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="flex-1 h-8 text-[11px] text-green-700 border-green-300 hover:bg-green-50"
-                                    onClick={() => void onApprove(property.id)}
-                                >
-                                    <CheckCircle className="size-3 mr-1" />
-                                    Approve
-                                </Button>
+                                <Dialog open={approveDialogOpen} onOpenChange={setApproveDialogOpen}>
+                                    <DialogTrigger asChild>
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            className="flex-1 h-8 text-[11px] text-green-700 border-green-300 hover:bg-green-50"
+                                        >
+                                            <CheckCircle className="size-3 mr-1" />
+                                            Approve
+                                        </Button>
+                                    </DialogTrigger>
+                                    <DialogContent>
+                                        <DialogHeader>
+                                            <DialogTitle>Confirm Approval</DialogTitle>
+                                            <DialogDescription>
+                                                Are you sure you want to approve this property?
+                                            </DialogDescription>
+                                        </DialogHeader>
+                                        <DialogFooter>
+                                            <Button
+                                                variant="outline"
+                                                onClick={() => setApproveDialogOpen(false)}
+                                                disabled={isSubmittingApprove}
+                                            >
+                                                Cancel
+                                            </Button>
+                                            <Button
+                                                onClick={handleConfirmApprove}
+                                                disabled={isSubmittingApprove || !onApprove}
+                                            >
+                                                {isSubmittingApprove ? "Processing..." : "Approve"}
+                                            </Button>
+                                        </DialogFooter>
+                                    </DialogContent>
+                                </Dialog>
                             )}
                             {onReject && (
                                 <Button
