@@ -34,12 +34,6 @@ function formatDateDdMmYy(dateStr: string): string {
     return `${day}/${month}/${year}`
 }
 
-function formatDateIso(dateStr: string): string {
-    const d = new Date(dateStr)
-    if (isNaN(d.getTime())) return ""
-    return d.toISOString().slice(0, 10)
-}
-
 const statusDisplayMap: Record<string, string> = {
     SCHEDULED: "Scheduled",
     COMPLETED: "Completed",
@@ -125,9 +119,28 @@ export default function AppointmentsPage() {
         [data, dateFilter]
     )
 
+    const analytics = useMemo(() => {
+        const todayIso = new Date().toISOString().slice(0, 10)
+        const isToday = (row: AppointmentTableInterface) => row.dateIso === todayIso
+
+        return {
+            totalScheduled: data.length,
+            totalPendingApprovals: data.filter((row) => row.status === "Scheduled").length,
+            scheduledToday: data.filter((row) => row.status === "Scheduled" && isToday(row)).length,
+            completedToday: data.filter((row) => row.status === "Completed" && isToday(row)).length,
+            waitingToday: data.filter((row) => row.status === "Waiting" && isToday(row)).length,
+        }
+    }, [data])
+
     return (
         <div className="mt-4">
-            <AppointmentsTopBar />
+            <AppointmentsTopBar
+                totalScheduled={analytics.totalScheduled}
+                totalPendingApprovals={analytics.totalPendingApprovals}
+                scheduledToday={analytics.scheduledToday}
+                completedToday={analytics.completedToday}
+                waitingToday={analytics.waitingToday}
+            />
             {isLoading && (
                 <div className="flex items-center gap-2 px-4 py-4 text-muted-foreground">
                     <Loader2 className="size-5 animate-spin" />
