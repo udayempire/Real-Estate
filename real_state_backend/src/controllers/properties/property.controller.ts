@@ -7,15 +7,55 @@ type Params = {
     id: string;
 };
 
+const STATUS_LIMIT = 10;
+const TOTAL_PROPERTIES_LIMIT = 20;
+const LIMITED_STATUSES = ["ACTIVE", "UNLISTED"] as const;
+type LimitedStatus = (typeof LIMITED_STATUSES)[number];
+
+function isLimitedStatus(status: string | undefined): status is LimitedStatus {
+    return status === "ACTIVE" || status === "UNLISTED";
+}
+
+async function hasReachedStatusLimit(userId: string, status: LimitedStatus) {
+    const count = await prisma.property.count({
+        where: {
+            userId,
+            status,
+        },
+    });
+    return count >= STATUS_LIMIT;
+}
+
+async function hasReachedTotalPropertyLimit(userId: string) {
+    const totalCount = await prisma.property.count({
+        where: { userId },
+    });
+    return totalCount >= TOTAL_PROPERTIES_LIMIT;
+}
+
 export async function addProperty(req: Request, res: Response) {
     try {
         const userId = req.user?.id;
         if (!userId) {
             return res.status(201).json("UnAuthorized User");
         }
+
+        if (await hasReachedTotalPropertyLimit(userId)) {
+            return res.status(400).json({
+                message: `Cannot create more than ${TOTAL_PROPERTIES_LIMIT} properties per user.`,
+            });
+        }
+
         type AddPropertyInput = z.infer<typeof addPropertySchema>;
         const body = req.body as AddPropertyInput;
         const { media, ...propertyData } = body;
+
+        if (isLimitedStatus(propertyData.status) && await hasReachedStatusLimit(userId, propertyData.status)) {
+            return res.status(400).json({
+                message: `Cannot create more than ${STATUS_LIMIT} ${propertyData.status} properties.`,
+            });
+        }
+
         const property = await prisma.property.create({
             data: {
                 ...propertyData,
@@ -48,6 +88,12 @@ export async function addDraftProperty(req: Request, res: Response) {
         const userId = req.user?.id;
         if (!userId) {
             return res.status(401).json({ message: "Unauthorized User" });
+        }
+
+        if (await hasReachedTotalPropertyLimit(userId)) {
+            return res.status(400).json({
+                message: `Cannot create more than ${TOTAL_PROPERTIES_LIMIT} properties per user.`,
+            });
         }
         
         type AddDraftPropertyInput = z.infer<typeof addDraftPropertySchema>;
@@ -118,11 +164,21 @@ export async function updateDraftProperty(req: Request<Params>, res: Response) {
         
         const nextStatus = status ?? "DRAFT";
 
+        if (
+            isLimitedStatus(nextStatus) &&
+            existingProperty.status !== nextStatus &&
+            await hasReachedStatusLimit(userId, nextStatus)
+        ) {
+            return res.status(400).json({
+                message: `Cannot set more than ${STATUS_LIMIT} properties as ${nextStatus}.`,
+            });
+        }
+
         // If publishing draft, validate it against full add-property requirements.
         if (nextStatus === "ACTIVE") {
             const mediaForValidation = media && media.length > 0
                 ? media
-                : existingProperty.media.map((m) => ({
+                : existingProperty.media.map((m: { url: string; key: string; mediaType: "IMAGE" | "VIDEO"; order: number }) => ({
                     url: m.url,
                     key: m.key,
                     mediaType: m.mediaType,
@@ -356,7 +412,7 @@ export async function updateProperty(req: Request<Params>, res: Response) {
         if (!nextStatus && existingProperty.status === "DRAFT") {
             const mediaForValidation = media !== undefined
                 ? media
-                : existingProperty.media.map((m) => ({
+                : existingProperty.media.map((m: { url: string; key: string; mediaType: "IMAGE" | "VIDEO"; order: number }) => ({
                     url: m.url,
                     key: m.key,
                     mediaType: m.mediaType,
@@ -373,6 +429,16 @@ export async function updateProperty(req: Request<Params>, res: Response) {
             if (publishValidation.success) {
                 nextStatus = "ACTIVE";
             }
+        }
+
+        if (
+            isLimitedStatus(nextStatus) &&
+            existingProperty.status !== nextStatus &&
+            await hasReachedStatusLimit(userId, nextStatus)
+        ) {
+            return res.status(400).json({
+                message: `Cannot set more than ${STATUS_LIMIT} properties as ${nextStatus}.`,
+            });
         }
 
         const property = await prisma.property.update({
@@ -556,6 +622,16 @@ export async function changeStatus(req:Request<Params>,res:Response){
 
         if(!property){
             return res.status(404).json({message:"Property not found or not owned by this user"})
+        }
+
+        if (
+            isLimitedStatus(status) &&
+            property.status !== status &&
+            await hasReachedStatusLimit(userId, status)
+        ) {
+            return res.status(400).json({
+                message: `Cannot set more than ${STATUS_LIMIT} properties as ${status}`,
+            });
         }
 
         // Update property status
