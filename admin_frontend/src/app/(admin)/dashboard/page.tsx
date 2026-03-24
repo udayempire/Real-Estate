@@ -1,5 +1,6 @@
 import { AnalyticsCards } from "@/components/dashboard/analyticsCards";
 import { MyChart } from "@/components/dashboard/userAnalytics";
+import { InventoryVelocityChart } from "@/components/dashboard/inventoryVelocity";
 
 export default function Dashboard() {
     return (
@@ -9,6 +10,9 @@ export default function Dashboard() {
             </div>
             <div>
                 <MyChart />
+            </div>
+            <div>
+                <InventoryVelocityChart />
             </div>
         </div>
     );

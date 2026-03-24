@@ -23,15 +23,12 @@ import {
 } from "@/components/ui/chart"
 import { Calendar } from "lucide-react"
 
-type UserAnalyticsCompact = {
-  customActiveUsers: number | null
-  activeUsersToday: number
-  activeUsers7d: number
-  activeUsers30d: number
-  activeUsers90d: number
-  activeUsers180d: number
-  activeUsers365d: number
+type PropertiesAnalyticsCompact = {
+  propertiesAddedTotal: number
+  propertiesSoldTotal: number
 }
+
+type PresetKey = "today" | "7d" | "1m" | "6m" | "1y"
 
 type DateBucket = {
   start: Date
@@ -39,12 +36,14 @@ type DateBucket = {
   label: string
 }
 
-type PresetKey = "today" | "7d" | "1m" | "6m" | "1y"
-
 const chartConfig = {
-  activeUsers: {
-    label: "Active Users",
+  added: {
+    label: "Properties Added",
     color: "#3b82f6",
+  },
+  sold: {
+    label: "Properties Sold",
+    color: "#94a3b8",
   },
 } satisfies ChartConfig
 
@@ -124,15 +123,15 @@ function getCustomStepDays(start: Date, end: Date): number {
   return 15
 }
 
-export function MyChart() {
+export function InventoryVelocityChart() {
   const [preset, setPreset] = useState<PresetKey>("7d")
   const [showCustomPanel, setShowCustomPanel] = useState(false)
   const [customFrom, setCustomFrom] = useState("")
   const [customTo, setCustomTo] = useState("")
   const [customApplied, setCustomApplied] = useState<{ from: string; to: string } | null>(null)
 
-  const { data: chartData, isLoading, isError } = useQuery({
-    queryKey: ["dashboard", "user-analytics", "timeseries", preset, customApplied?.from, customApplied?.to],
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ["dashboard", "inventory-velocity", preset, customApplied?.from, customApplied?.to],
     queryFn: async () => {
       let start: Date
       let end: Date
@@ -156,13 +155,14 @@ export function MyChart() {
           const from = formatAsYmd(bucket.start)
           const to = formatAsYmd(bucket.end)
 
-          const response = await api.get<{ success: boolean; data: UserAnalyticsCompact }>(
-            `/analytics/user?view=compact&from=${from}&to=${to}`
+          const response = await api.get<{ success: boolean; data: PropertiesAnalyticsCompact }>(
+            `/analytics/properties?view=compact&from=${from}&to=${to}`
           )
 
           return {
-            window: bucket.label,
-            activeUsers: response.data.data.customActiveUsers ?? 0,
+            bucket: bucket.label,
+            propertiesAdded: response.data.data.propertiesAddedTotal,
+            propertiesSold: response.data.data.propertiesSoldTotal,
           }
         })
       )
@@ -172,11 +172,17 @@ export function MyChart() {
     staleTime: 60 * 1000,
   })
 
-  const safeChartData = useMemo(() => chartData ?? [], [chartData])
+  const chartData = useMemo(() => data ?? [], [data])
 
   const rangeLabel = customApplied
     ? `${customApplied.from} to ${customApplied.to}`
-    : ({ today: "Today", "7d": "Last 7 Days", "1m": "Last 1 Month", "6m": "Last 6 Months", "1y": "Last 1 Year" } as const)[preset]
+    : ({
+      today: "Today",
+      "7d": "Last 7 Days",
+      "1m": "Last 1 Month",
+      "6m": "Last 6 Months",
+      "1y": "Last 1 Year",
+    } as const)[preset]
 
   const applyCustomRange = () => {
     if (!customFrom || !customTo) return
@@ -189,14 +195,14 @@ export function MyChart() {
   }
 
   if (isError) {
-    return <div className="rounded-lg border p-4 text-sm text-red-500">Failed to load active users analytics.</div>
+    return <div className="rounded-lg border p-4 text-sm text-red-500">Failed to load inventory velocity.</div>
   }
 
   return (
     <div className="rounded-lg border p-4 bg-white">
       <div className="mb-3 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div>
-          <h3 className="text-sm font-semibold">Active Users Trend</h3>
+          <h3 className="text-sm font-semibold">Inventory Velocity</h3>
           <p className="text-xs text-muted-foreground">{rangeLabel}</p>
         </div>
 
@@ -207,7 +213,7 @@ export function MyChart() {
             onClick={() => setShowCustomPanel((prev) => !prev)}
           >
             Select Date Range
-          <Calendar className="text-zinc-100 size-4 ml-1" />
+            <Calendar className="text-zinc-100 size-4 ml-1" />
           </Button>
 
           <Select
@@ -217,8 +223,8 @@ export function MyChart() {
               setCustomApplied(null)
             }}
           >
-            <SelectTrigger className="w-42.5 border-2 font-medium ">
-              <SelectValue placeholder="Select type" />
+            <SelectTrigger className="w-42.5  font-medium text-black">
+              <SelectValue placeholder="Select range" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="today">Today</SelectItem>
@@ -236,7 +242,7 @@ export function MyChart() {
           <Input
             type="date"
             className="border-zinc-300 font-medium  border-2 text-black"
-            value={customFrom}
+                value={customFrom}
             onChange={(e) => setCustomFrom(e.target.value)}
           />
           <Input
@@ -265,10 +271,10 @@ export function MyChart() {
 
       <div className="relative">
         <ChartContainer config={chartConfig} className="h-65 w-full">
-          <BarChart data={safeChartData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+          <BarChart data={chartData} barCategoryGap={18} margin={{ top: 8, right: 6, left: 0, bottom: 0 }}>
             <CartesianGrid vertical={false} />
             <XAxis
-              dataKey="window"
+              dataKey="bucket"
               tickLine={false}
               axisLine={false}
               interval="preserveStartEnd"
@@ -276,28 +282,36 @@ export function MyChart() {
             />
             <YAxis allowDecimals={false} tickLine={false} axisLine={false} />
             <ChartTooltip content={<ChartTooltipContent />} />
-            <Bar
-              dataKey="activeUsers"
-              name="activeUsers"
-              fill="var(--color-activeUsers)"
-              radius={[6, 6, 0, 0]}
-              isAnimationActive={!isLoading}
-            />
+            <Bar dataKey="propertiesAdded" name="added" fill="var(--color-added)" radius={[4, 4, 0, 0]} />
+            <Bar dataKey="propertiesSold" name="sold" fill="var(--color-sold)" radius={[4, 4, 0, 0]} />
           </BarChart>
         </ChartContainer>
 
         {isLoading && (
           <div className="absolute inset-0 flex items-center justify-center rounded-md bg-background/70 backdrop-blur-[1px]">
             <div className="flex h-52 w-full max-w-2xl items-end justify-center gap-3 px-6">
-              <Skeleton className="w-8 h-16 rounded-t-md bg-blue-200/70" />
-              <Skeleton className="w-8 h-28 rounded-t-md bg-blue-200/70" />
-              <Skeleton className="w-8 h-20 rounded-t-md bg-blue-200/70" />
-              <Skeleton className="w-8 h-36 rounded-t-md bg-blue-200/70" />
-              <Skeleton className="w-8 h-24 rounded-t-md bg-blue-200/70" />
-              <Skeleton className="w-8 h-40 rounded-t-md bg-blue-200/70" />
+              <Skeleton className="h-22 w-4 rounded-t-md bg-blue-200/70" />
+              <Skeleton className="h-14 w-4 rounded-t-md bg-slate-300/80" />
+              <Skeleton className="h-18 w-4 rounded-t-md bg-blue-200/70" />
+              <Skeleton className="h-20 w-4 rounded-t-md bg-slate-300/80" />
+              <Skeleton className="h-28 w-4 rounded-t-md bg-blue-200/70" />
+              <Skeleton className="h-16 w-4 rounded-t-md bg-slate-300/80" />
+              <Skeleton className="h-34 w-4 rounded-t-md bg-blue-200/70" />
+              <Skeleton className="h-24 w-4 rounded-t-md bg-slate-300/80" />
             </div>
           </div>
         )}
+      </div>
+
+      <div className="mt-3 flex items-center gap-5 text-xs text-muted-foreground">
+        <div className="flex items-center gap-1.5">
+          <span className="size-2.5 rounded bg-blue-500" />
+          Properties Added
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span className="size-2.5 rounded bg-slate-400" />
+          Properties Sold
+        </div>
       </div>
     </div>
   )
