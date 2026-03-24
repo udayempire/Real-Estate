@@ -15,6 +15,7 @@ import savedExclusivePropertyRoutes from "./routes/savedExclusiveProperty/savedE
 import metadataRoutes from "./routes/metadata/metadata.route"
 import appointmentRoutes from "./routes/appointment/appointment.route"
 import staffRoutes from "./routes/staff/staff.routes"
+import analyticsRoutes from "./routes/analytics/analytics.route"
 import cors from "cors";
 import cookieParser from "cookie-parser";
 
@@ -55,6 +56,7 @@ app.use(`${process.env.API_VERSION}/saved-exclusive-properties`,savedExclusivePr
 app.use(`${process.env.API_VERSION}/metadata`,metadataRoutes);
 app.use(`${process.env.API_VERSION}/appointments`,appointmentRoutes);
 app.use(`${process.env.API_VERSION}/staff`,staffRoutes);
+app.use(`${process.env.API_VERSION}`,analyticsRoutes);
 
 app.get("/health",(req,res)=>{
     res.status(200).json({
