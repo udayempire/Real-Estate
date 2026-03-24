@@ -9,6 +9,23 @@ type UserIdRow = {
   userId: string | null;
 };
 
+type UserAnalyticsResponse = {
+  totalUsers: number;
+  newUsersToday: number;
+  activeUsersToday: number;
+  activeUsers7d: number;
+  activeUsers30d: number;
+  activeUsers90d: number;
+  activeUsers180d: number;
+  activeUsers365d: number;
+  range: {
+    from: string;
+    to: string;
+    newUsers: number | null;
+    activeUsers: number | null;
+  } | null;
+};
+
 function startOfDayUTC(date: Date): Date {
   return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate(), 0, 0, 0, 0));
 }
@@ -96,7 +113,7 @@ async function getActiveUserCountBetween(start: Date, end: Date): Promise<number
   return set.size;
 }
 
-export async function getUserAnalyticsSummary(input: DateRangeInput) {
+export async function getUserAnalyticsSummary(input: DateRangeInput): Promise<UserAnalyticsResponse> {
   const now = new Date();
 
   const todayStart = startOfDayUTC(now);
@@ -155,5 +172,22 @@ export async function getUserAnalyticsSummary(input: DateRangeInput) {
           activeUsers: activeUsersInRange,
         }
       : null,
+  };
+}
+
+export function toCompactUserAnalytics(data: UserAnalyticsResponse) {
+  return {
+    totalUsers: data.totalUsers,
+    newUsersToday: data.newUsersToday,
+    activeUsersToday: data.activeUsersToday,
+    activeUsers7d: data.activeUsers7d,
+    activeUsers30d: data.activeUsers30d,
+    activeUsers90d: data.activeUsers90d,
+    activeUsers180d: data.activeUsers180d,
+    activeUsers365d: data.activeUsers365d,
+    customFrom: data.range?.from ?? null,
+    customTo: data.range?.to ?? null,
+    customNewUsers: data.range?.newUsers ?? null,
+    customActiveUsers: data.range?.activeUsers ?? null,
   };
 }
