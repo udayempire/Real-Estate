@@ -1,9 +1,19 @@
 import 'dotenv/config';
-import { PrismaClient } from '@prisma/client';
+import { PrismaPg } from '@prisma/adapter-pg';
+import { createRequire } from 'module';
 import { hashPassword } from '../src/utils/password.js';
 import { generateReferralCode } from '../src/utils/generateReferralCode.js';
 
-const prisma = new PrismaClient();
+const require = createRequire(import.meta.url);
+const { PrismaClient } = require('@prisma/client') as typeof import('@prisma/client');
+
+const connectionString = process.env.DATABASE_URL;
+if (!connectionString) {
+  throw new Error('DATABASE_URL environment variable is not set');
+}
+
+const adapter = new PrismaPg({ connectionString });
+const prisma = new PrismaClient({ adapter });
 
 async function main() {
   console.log('🌱 Seeding database...');
