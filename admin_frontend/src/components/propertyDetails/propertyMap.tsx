@@ -90,7 +90,7 @@ export function PropertyMap({ latitude, longitude, title }: PropertyMapProps) {
                     <MapPin className="size-4 text-gray-600" />
                     Map
                 </h3>
-                <div className="h-[280px] rounded-lg bg-gray-200 animate-pulse flex items-center justify-center">
+                <div className="h-70 rounded-lg bg-gray-200 animate-pulse flex items-center justify-center">
                     <span className="text-sm text-gray-500">Loading map...</span>
                 </div>
             </div>

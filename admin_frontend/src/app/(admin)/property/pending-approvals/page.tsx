@@ -143,7 +143,7 @@ export default function PendingApprovalsPage() {
         if (!isSuperAdmin) return
         try {
             setActionMessage(null)
-            await api.post("/staff/properties/-approval", { propertyId, decision })
+            await api.post("/staff/properties/acquisition-request-approval", { propertyId, decision })
             setActionMessage(`Request ${decision === "APPROVED" ? "approved" : "rejected"} successfully`)
             await fetchProperties()
         } catch (err) {

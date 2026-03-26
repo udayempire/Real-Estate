@@ -4,6 +4,7 @@ import { InventoryVelocityChart } from "@/components/dashboard/inventoryVelocity
 import { PropertyCategoryChart } from "@/components/dashboard/propertyCategory";
 import { InventoryDistributionChart } from "@/components/dashboard/inventoryDistribution";
 import { FinancialGraph } from "@/components/dashboard/financialGraph";
+import { UserListingsMaps } from "@/components/dashboard/userListingsMaps";
 
 export default function Dashboard() {
     return (
@@ -17,6 +18,7 @@ export default function Dashboard() {
                 <InventoryVelocityChart />
                 <PropertyCategoryChart/>
                 <InventoryDistributionChart />
+                <UserListingsMaps />
             </div>
         </div>
     );
