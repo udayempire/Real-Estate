@@ -133,6 +133,7 @@ export async function signin(req: Request, res: Response) {
             }
         });
     } catch (error) {
+        console.error("signin error:", error);
         return res.status(500).json({ error: "Internal server error" });
     }
 }
