@@ -13,6 +13,7 @@ type StaffProperty = {
 	title: string
 	latitude: number | null
 	longitude: number | null
+	status?: string
 }
 
 type StaffPropertyListResponse = {
@@ -42,12 +43,9 @@ export function UserListingsMaps() {
 	const { data, isLoading, isError } = useQuery({
 		queryKey: ["dashboard", "properties-map-all"],
 		queryFn: async () => {
-			const [userListingsResponse, exclusiveListingsResponse] = await Promise.all([
-				api.get<StaffPropertyListResponse>("/staff/properties?limit=300&page=1"),
-				api.get<StaffPropertyListResponse>("/staff/properties/exclusive?limit=300&page=1"),
-			])
-
-			return [...userListingsResponse.data.data, ...exclusiveListingsResponse.data.data]
+			const response = await api.get<StaffPropertyListResponse>("/staff/properties?limit=300&page=1")
+			// Filter to only show active user listings
+			return response.data.data.filter((property) => property.status?.toUpperCase() === "ACTIVE")
 		},
 		staleTime: 2 * 60 * 1000,
 	})
@@ -93,7 +91,7 @@ export function UserListingsMaps() {
 			<div className="mb-3 flex items-center justify-between">
 				<h3 className="flex items-center gap-2 text-sm font-semibold">
 					<Building2 className="size-4 text-blue-600" />
-					All Properties Across India
+					Active User Listings
 				</h3>
 				<p className="text-xs text-muted-foreground">{points.length} mapped properties</p>
 			</div>
@@ -102,7 +100,7 @@ export function UserListingsMaps() {
 				<div className="h-115 animate-pulse rounded-xl bg-slate-100" />
 			) : points.length === 0 ? (
 				<div className="flex h-115 items-center justify-center rounded-xl border border-dashed text-sm text-muted-foreground">
-					No properties with valid latitude/longitude found.
+					No active user listings with valid latitude/longitude found.
 				</div>
 			) : (
 				<div className="overflow-hidden rounded-xl border">
