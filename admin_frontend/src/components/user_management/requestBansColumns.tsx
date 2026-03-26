@@ -256,6 +256,7 @@ function BanRequestActionsCell({
                     className="h-8 w-8 rounded-full bg-green-600 hover:bg-green-700 p-0"
                     onClick={() => setApproveOpen(true)}
                     disabled={loading != null}
+                    title="Approve"
                 >
                     {loading === "approve" ? "..." : <Check className="size-4" />}
                 </Button>
@@ -265,6 +266,7 @@ function BanRequestActionsCell({
                     className="h-8 w-8 rounded-full p-0"
                     onClick={() => setRejectOpen(true)}
                     disabled={loading != null}
+                    title="Reject"
                 >
                     {loading === "reject" ? "..." : <X className="size-4" />}
                 </Button>

@@ -245,12 +245,14 @@ function ActionsCell({
                 <Link
                     href={`/user/${user.id}`}
                     className="inline-flex items-center justify-center h-8 w-8 rounded-md text-blue-600 hover:bg-blue-100"
+                    title="View"
                 >
                     <Eye className="size-4" />
                 </Link>
                 <Link
                     href={`/user/edit/${user.id}`}
                     className="inline-flex items-center justify-center h-8 w-8 rounded-md text-blue-600 hover:bg-blue-100"
+                    title="Edit"
                 >
                     <Pencil className="size-4" />
                 </Link>
@@ -260,6 +262,7 @@ function ActionsCell({
                         size="icon"
                         className="h-8 w-8 text-orange-600 hover:bg-orange-100"
                         onClick={() => setBlockOpen(true)}
+                        title="Block"
                     >
                         <OctagonMinus className="size-4" />
                     </Button>
@@ -269,6 +272,7 @@ function ActionsCell({
                     size="icon"
                     className="h-8 w-8 text-red-600 hover:bg-red-100"
                     onClick={() => setDeleteOpen(true)}
+                    title="Delete"
                 >
                     <Trash2 className="size-4" />
                 </Button>

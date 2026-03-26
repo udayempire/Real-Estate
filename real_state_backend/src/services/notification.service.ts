@@ -52,6 +52,10 @@ export async function createAndSendUserNotification(input: {
   });
 
   if (!activeTokens.length) {
+    console.warn("Push skipped: no active device tokens", {
+      userId: input.userId,
+      type: input.type,
+    });
     return {
       notification,
       push: {
@@ -71,6 +75,17 @@ export async function createAndSendUserNotification(input: {
       ...(input.data && typeof input.data === "object" && !Array.isArray(input.data) ? input.data : {}),
     },
   });
+
+  if (!pushResult.pushed || pushResult.failureCount > 0) {
+    console.warn("Push delivery issue", {
+      userId: input.userId,
+      type: input.type,
+      reason: pushResult.reason,
+      successCount: pushResult.successCount,
+      failureCount: pushResult.failureCount,
+      invalidTokens: pushResult.invalidTokens.length,
+    });
+  }
 
   if (pushResult.invalidTokens.length) {
     await prisma.userDeviceToken.updateMany({

@@ -8,6 +8,7 @@ import {
     gemRequestApprovalNotification,
     gemRequestNotification,
     gemRequestRejectionNotification,
+    referralRewardCreditNotification,
 } from "../../services/Notifications/gems.notification";
 import { resolveStaffActorId } from "./redeem.staff";
 
@@ -345,6 +346,25 @@ export async function giveAcquisitionRewardToUser(req: Request, res: Response) {
                 }).catch((notificationError) => {
                     console.error("Gem approval notification error:", notificationError);
                 });
+
+                if (request.referralUser?.id && request.referralGems > 0) {
+                    const referralPayload = referralRewardCreditNotification({
+                        userId: request.referralUser.id,
+                        referralGems: request.referralGems,
+                        propertyName: request.property?.title ?? null,
+                        reason: requestType,
+                    });
+
+                    createAndSendUserNotification({
+                        userId: request.referralUser.id,
+                        type: referralPayload.type,
+                        title: referralPayload.title,
+                        description: referralPayload.description,
+                        data: referralPayload.data,
+                    }).catch((notificationError) => {
+                        console.error("Referral reward notification error:", notificationError);
+                    });
+                }
             }
 
             return res.status(201).json({
@@ -606,6 +626,25 @@ export async function approveGemRequest(req: Request, res: Response) {
             }).catch((notificationError) => {
                 console.error("Gem request approval notification error:", notificationError);
             });
+
+            if (request.referralUserId && request.referralGems > 0) {
+                const referralPayload = referralRewardCreditNotification({
+                    userId: request.referralUserId,
+                    referralGems: request.referralGems,
+                    propertyName: request.property?.title ?? null,
+                    reason: request.type,
+                });
+
+                createAndSendUserNotification({
+                    userId: request.referralUserId,
+                    type: referralPayload.type,
+                    title: referralPayload.title,
+                    description: referralPayload.description,
+                    data: referralPayload.data,
+                }).catch((notificationError) => {
+                    console.error("Referral reward notification error:", notificationError);
+                });
+            }
 
             return res.status(200).json({
                 success: true,

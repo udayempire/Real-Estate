@@ -66,6 +66,39 @@ export function gemRequestApprovalNotification(input: {
     };
 };
 
+export function referralRewardCreditNotification(input: {
+    userId: string;
+    referralGems: number;
+    propertyName?: string | null;
+    reason?: string | null;
+}): {
+    type: NotificationType;
+    title: string;
+    description: string;
+    data: Prisma.InputJsonValue;
+} {
+    const propertyName = input.propertyName ?? "your referred property";
+    const reasonLabel =
+        input.reason === "EXCLUSIVE_SALE_REWARD"
+            ? "exclusive property sale"
+            : input.reason === "EXCLUSIVE_ACQUISITION_REWARD"
+                ? "property acquisition"
+                : "reward credit";
+
+    return {
+        type: NotificationType.GENERIC,
+        title: `${input.referralGems} Referral Gems Credited! ✨`,
+        description: `You received ${input.referralGems} referral gems from ${reasonLabel} for '${propertyName}'.`,
+        data: {
+            action: "referral_reward_credited",
+            userId: input.userId,
+            referralGems: input.referralGems,
+            propertyName,
+            reason: input.reason ?? null,
+        },
+    };
+};
+
 export function gemRequestRejectionNotification(input: {
     userId: string;
     requestedGems: number;

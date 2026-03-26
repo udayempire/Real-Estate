@@ -47,6 +47,17 @@ interface CreateStaffInput {
     role: "SUPER_ADMIN" | "ADMIN" | "VIEWER" | "CUSTOMER_SUPPORT";
 }
 
+type ApiErrorResponse = {
+    message?: string;
+    error?: string;
+};
+
+const getBackendErrorMessage = (error: unknown): string => {
+    if (!(error instanceof AxiosError)) return "Failed to create staff";
+    const data = error.response?.data as ApiErrorResponse | undefined;
+    return data?.message || data?.error || error.message || "Failed to create staff";
+};
+
 const formatPhoneWithCountryCode = (phone: string): string | undefined => {
     const trimmed = phone.trim();
     if (!trimmed) return undefined;
@@ -69,7 +80,7 @@ const createStaff = async (input: CreateStaffInput) => {
         return response.data;
     }catch(error) {
         console.error("Create staff error:", error);
-        toast.error(error instanceof AxiosError ? (error.response?.data as { error?: string })?.error || "Failed to create staff" : "Failed to create staff", { position: "bottom-center" });
+        toast.error(getBackendErrorMessage(error), { position: "bottom-center" });
         throw error;
     }
 };
@@ -112,9 +123,7 @@ export function AddNewStaff() {
                 router.replace("/signin");
                 return;
             }
-            const msg = error instanceof AxiosError
-                ? (error.response?.data as { error?: string })?.error || error.message
-                : "Failed to create staff";
+            const msg = getBackendErrorMessage(error);
             setApiError(msg);
         },
     });

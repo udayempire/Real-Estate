@@ -86,6 +86,7 @@ export const getColumns = ({ onBlock, onDelete }: ColumnActions): ColumnDef<Role
                     <Link
                         href={`/role-management/edit-staff/${user.id}`}
                         className="inline-flex items-center justify-center h-8 w-8 rounded-md text-amber-600 hover:text-amber-800 hover:bg-amber-100"
+                        title="Edit"
                     >
                         <Pencil className="size-4" />
                     </Link>
@@ -97,6 +98,7 @@ export const getColumns = ({ onBlock, onDelete }: ColumnActions): ColumnDef<Role
                             : "text-green-600 hover:text-green-800 hover:bg-green-100"
                             }`}
                         onClick={() => onBlock(user)}
+                        title={user.isActive ? "Block" : "Unblock"}
                     >
                         {user.isActive ? (
                             <OctagonMinus className="size-4" />
@@ -109,6 +111,7 @@ export const getColumns = ({ onBlock, onDelete }: ColumnActions): ColumnDef<Role
                         size="icon"
                         className="h-8 w-8 text-red-600 hover:text-red-800 hover:bg-red-100"
                         onClick={() => onDelete(user)}
+                        title="Delete"
                     >
                         <Trash2 className="size-4" />
                     </Button>

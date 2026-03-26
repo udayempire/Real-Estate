@@ -192,6 +192,7 @@ function ViewPropertyButton({ propertyId, hasProperty }: { propertyId: string | 
                 }
                 onClick={() => hasProperty && propertyId && router.push(`/property/${propertyId}`)}
                 disabled={!hasProperty}
+                title={hasProperty ? "View property" : "No property linked"}
             >
                 <Eye className="size-4" />
             </Button>
@@ -259,6 +260,7 @@ function ActionsCell({ row, onSuccess }: { row: GemApprovalRow; onSuccess: () =>
                     className="h-6 w-6 bg-green-600 rounded-full hover:bg-green-700"
                     onClick={() => setApproveOpen(true)}
                     disabled={loading != null}
+                    title="Approve"
                 >
                     {loading === "approve" ? "..." : <Check className="size-4" />}
                 </Button>
@@ -268,6 +270,7 @@ function ActionsCell({ row, onSuccess }: { row: GemApprovalRow; onSuccess: () =>
                     className="h-6 w-6 bg-red-600 rounded-full hover:bg-red-700"
                     onClick={() => setRejectOpen(true)}
                     disabled={loading != null}
+                    title="Reject"
                 >
                     {loading === "reject" ? "..." : <X className="size-4" />}
                 </Button>
