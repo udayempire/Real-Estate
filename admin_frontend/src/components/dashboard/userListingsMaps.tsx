@@ -2,7 +2,7 @@
 
 import { useMemo } from "react"
 import { useQuery } from "@tanstack/react-query"
-import { GoogleMap, MarkerF, useJsApiLoader } from "@react-google-maps/api"
+import { GoogleMap, OverlayView, OverlayViewF, useJsApiLoader } from "@react-google-maps/api"
 import { useRouter } from "next/navigation"
 import { Building2 } from "lucide-react"
 
@@ -29,7 +29,6 @@ type MarkerPoint = {
 
 const mapContainerStyle = { width: "100%", height: "460px", borderRadius: "0.75rem" }
 const indiaCenter = { lat: 22.9734, lng: 78.6569 }
-const buildingMarkerIcon = "https://maps.google.com/mapfiles/kml/shapes/homegardenbusiness.png"
 
 export function UserListingsMaps() {
 	const router = useRouter()
@@ -119,13 +118,20 @@ export function UserListingsMaps() {
 						}}
 					>
 						{points.map((point) => (
-							<MarkerF
+							<OverlayViewF
 								key={point.id}
 								position={{ lat: point.lat, lng: point.lng }}
-								title={point.title}
-								icon={buildingMarkerIcon}
-								onClick={() => router.push(`/property/${point.id}`)}
-							/>
+								mapPaneName={OverlayView.OVERLAY_MOUSE_TARGET}
+							>
+								<button
+									type="button"
+									title={point.title}
+									onClick={() => router.push(`/property/${point.id}`)}
+									className="-translate-x-1/2 -translate-y-full rounded-full bg-white/95 p-1.5 shadow-md ring-1 ring-blue-200 transition hover:scale-105"
+								>
+									<Building2 className="size-4 text-blue-600" />
+								</button>
+							</OverlayViewF>
 						))}
 					</GoogleMap>
 				</div>
