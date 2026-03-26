@@ -49,4 +49,4 @@ export function requirementClosedNotification(input: {
             contactPhone: SUPPORT_PHONE,
         },
     };
-}
+};

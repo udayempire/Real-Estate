@@ -758,6 +758,8 @@ export async function getAllProperties(req: Request, res: Response) {
                 select: {
                     id: true,
                     title: true,
+                    latitude: true,
+                    longitude: true,
                     listingPrice: true,
                     area: true,
                     carpetArea: true,
@@ -786,6 +788,8 @@ export async function getAllProperties(req: Request, res: Response) {
         const data = properties.map((property) => ({
             id: property.id,
             title: property.title,
+            latitude: property.latitude,
+            longitude: property.longitude,
             location: formatLocation(property.subLocality, property.locality, property.city),
             price: property.listingPrice != null ? String(property.listingPrice) : "N/A",
             area: formatArea(property.area, property.carpetArea, property.carpetAreaUnit),
@@ -828,6 +832,8 @@ export async function getAllExclusiveProperties(req: Request, res: Response) {
                 select: {
                     id: true,
                     title: true,
+                    latitude: true,
+                    longitude: true,
                     status: true,
                     listingPrice: true,
                     city: true,
