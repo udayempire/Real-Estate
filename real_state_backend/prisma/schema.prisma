@@ -436,8 +436,9 @@ model ExclusiveProperty {
   originalUser   User   @relation("ExclusiveOriginalUser", fields: [originalUserId], references: [id], onDelete: Restrict)
 
   // Relations
-  media   ExclusivePropertyMedia[]
-  savedBy SavedExclusiveProperty[]
+  media        ExclusivePropertyMedia[]
+  savedBy      SavedExclusiveProperty[]
+  appointments Appointment[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
