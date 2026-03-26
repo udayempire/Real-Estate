@@ -674,6 +674,7 @@ model Appointment {
   id              String            @id @default(cuid())
   userId          String
   propertyId      String
+  exclusivePropertyId String?
   appointmentDate DateTime
   appointmentTime String // Stored as string (e.g., "10:00 AM", "14:30")
   status          AppointmentStatus @default(SCHEDULED)
@@ -682,14 +683,16 @@ model Appointment {
   staffHandlerId  String?
   staffHandler    Staff?            @relation(fields: [staffHandlerId], references: [id], onDelete: SetNull)
 
-  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  user              User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  property          Property          @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  exclusiveProperty ExclusiveProperty? @relation(fields: [exclusivePropertyId], references: [id], onDelete: SetNull)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([userId])
   @@index([propertyId])
+  @@index([exclusivePropertyId])
   @@index([appointmentDate])
   @@index([status])
   @@map("appointments")

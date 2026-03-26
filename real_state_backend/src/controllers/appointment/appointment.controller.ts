@@ -12,7 +12,13 @@ type Params = {
     appointmentId: string;
 };
 
-async function resolvePropertyId(propertyId: string) {
+type ResolvedProperty = {
+    resolvedPropertyId: string;
+    propertyTitle: string;
+    exclusivePropertyId?: string | null;
+};
+
+async function resolvePropertyId(propertyId: string): Promise<ResolvedProperty | null> {
     const property = await prisma.property.findUnique({
         where: { id: propertyId },
         select: { id: true, title: true },
@@ -22,6 +28,7 @@ async function resolvePropertyId(propertyId: string) {
         return {
             resolvedPropertyId: property.id,
             propertyTitle: property.title,
+            exclusivePropertyId: null,
         };
     }
 
@@ -38,6 +45,7 @@ async function resolvePropertyId(propertyId: string) {
             title: true,
             exclusiveProperty: {
                 select: {
+                    id: true,
                     title: true,
                 },
             },
@@ -51,6 +59,7 @@ async function resolvePropertyId(propertyId: string) {
     return {
         resolvedPropertyId: propertyFromExclusive.id,
         propertyTitle: propertyFromExclusive.exclusiveProperty?.title || propertyFromExclusive.title,
+        exclusivePropertyId: propertyFromExclusive.exclusiveProperty?.id ?? null,
     };
 }
 
@@ -74,6 +83,7 @@ export async function createAppointment(req: Request, res: Response) {
             data: {
                 userId,
                 propertyId: resolvedProperty.resolvedPropertyId,
+                exclusivePropertyId: resolvedProperty.exclusivePropertyId ?? null,
                 appointmentDate: new Date(appointmentDate),
                 appointmentTime,
                 notes,
@@ -110,6 +120,7 @@ export async function createAppointment(req: Request, res: Response) {
                 data: {
                     appointmentId: appointment.id,
                     propertyId: appointment.propertyId,
+                    exclusivePropertyId: appointment.exclusivePropertyId,
                 },
             });
         } catch (notificationError) {
