@@ -1,6 +1,8 @@
 import { prisma } from "../../config/prisma";
 import { Request, Response } from "express";
 import { GetTicketsQueryInput } from "../../validators/support.validators";
+import { NotificationType } from "@prisma/client";
+import { createAndSendUserNotification } from "../../services/notification.service";
 
 export async function getSupportTickets(req: Request, res: Response) {
     try {
@@ -68,14 +70,31 @@ export async function closeSupportTicket(req: Request, res: Response) {
         if (!ticket) {
             return res.status(404).json({ message: "Ticket not found" });
         }
-        await prisma.customerSupport.update({
+        const updatedTicket = await prisma.customerSupport.update({
             where: { id },
             data: { ticketStatus: "CLOSED" },
         });
+
+        try {
+            await createAndSendUserNotification({
+                userId: ticket.userId,
+                type: NotificationType.GENERIC,
+                title: "Support ticket closed",
+                description: "Your support ticket has been marked as closed. If you still need help, please raise a new ticket.",
+                data: {
+                    ticketId: ticket.id,
+                    ticketStatus: "CLOSED",
+                    action: "support_ticket_closed",
+                },
+            });
+        } catch (notificationError) {
+            console.error("Support ticket closed notification error:", notificationError);
+        }
+
         return res.status(200).json({
             success: true,
             message: "Ticket closed successfully",
-            data: ticket,
+            data: updatedTicket,
         });
     } catch (error) {
         console.error("Close support ticket error:", error);

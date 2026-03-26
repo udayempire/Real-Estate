@@ -214,3 +214,24 @@ export async function sendAccountBlockedEmail(email: string) {
         throw new Error(`Failed to send blocked email: ${error}`);
     }
 }
+
+export async function sendAccountUnblockedEmail(email: string) {
+    try {
+        return await sendEmailViaResend(
+            email,
+            "Your Realbro account has been unblocked",
+            `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+              <h2 style="color: #333;">Account Unblocked</h2>
+              <p>Your Realbro account has been unblocked by the admin team.</p>
+              <p>You can now sign in and continue using Realbro.</p>
+              <p>If you need any help, please contact us:</p>
+              <p style="margin: 0;">Email: <strong>contact@realbro.io</strong></p>
+              <p style="margin: 8px 0 0;">Phone: <strong>8085671414</strong></p>
+            </div>
+            `
+        );
+    } catch (error) {
+        throw new Error(`Failed to send unblocked email: ${error}`);
+    }
+}

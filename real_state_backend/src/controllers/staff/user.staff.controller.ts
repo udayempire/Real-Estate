@@ -1,6 +1,6 @@
 import { prisma } from "../../config/prisma";
 import { Request, Response } from "express";
-import { sendAccountBlockedEmail } from "../../services/otp.service";
+import { sendAccountBlockedEmail, sendAccountUnblockedEmail } from "../../services/otp.service";
 import { createAndSendUserNotification } from "../../services/notification.service";
 import {
     BlueTickNotification,
@@ -265,6 +265,18 @@ export async function unblockUser(req: Request, res: Response) {
                 blockedOn: null,
             },
         });
+
+        try {
+            const unblockedUser = await prisma.user.findUnique({
+                where: { id },
+                select: { email: true },
+            });
+            if (unblockedUser?.email) {
+                await sendAccountUnblockedEmail(unblockedUser.email);
+            }
+        } catch (emailError) {
+            console.error("Unblock user email error:", emailError);
+        }
 
         return res.status(200).json({ message: "User unblocked successfully" });
     } catch (error) {
