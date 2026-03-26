@@ -99,7 +99,7 @@ export function AppointmentsDataTable<TData, TValue>({
     return (
         <div>
             <div className="flex items-center py-4 gap-8 justify-between">
-                <h1 className="font-medium text-lg p-2 pl-4">Transaction History</h1>
+                <h1 className="font-medium text-lg p-2 pl-4">Appointment History</h1>
                 {/* Search Input Box  */}
                 <div className="flex items-center gap-4">
                     <div className="relative w-full max-w-md">

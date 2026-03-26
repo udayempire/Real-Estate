@@ -3,6 +3,7 @@ import localFont from "next/font/local";
 import { Geist_Mono } from "next/font/google";
 import "./globals.css";
 import ReactQueryProvider from "@/providers/ReactQueryProvider";
+import { Toaster } from "@/components/ui/sonner"
 
 const satoshi = localFont({
   src: [
@@ -82,6 +83,7 @@ export default function RootLayout({
       >
         <ReactQueryProvider>
           {children}
+          <Toaster />
         </ReactQueryProvider>
       </body>
     </html>

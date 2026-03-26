@@ -12,6 +12,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog"
+import { toast } from "sonner"
 import { Pencil, Bookmark, ShoppingCart, CheckCircle, EyeOff, Eye, XCircle, Copy, Trash2 } from "lucide-react"
 import { useRouter, useParams } from "next/navigation"
 import { useAuth } from "@/contexts/AuthContext"
@@ -224,6 +225,16 @@ export function PropertyActionBar({
         }
     }
 
+    const handleCopyPropertyId = async () => {
+        if (!propertyId) return
+        try {
+            await navigator.clipboard.writeText(propertyId)
+            toast.success("Property ID copied to clipboard",{ position: "bottom-center" })
+        } catch {
+            toast.error("Unable to copy property id",{ position: "bottom-center" } )
+        }
+    }
+
     return (
         <div className="space-y-4">
             <div className="flex flex-wrap items-center gap-2 mt-4">
@@ -399,7 +410,8 @@ export function PropertyActionBar({
                 <div className="my-2">
                     <div className="flex items-center gap-2">
                         <h1 ><span className="font-semibold">Property ID -</span> {propertyId} </h1>
-                        <Copy className="size-5 cursor-pointer" onClick={() => navigator.clipboard.writeText(propertyId)} />
+                        <Copy className="size-5 cursor-pointer" onClick={handleCopyPropertyId} />
+                            
                     </div>
                 </div>
             </div>
