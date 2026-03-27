@@ -16,6 +16,7 @@ import {
 import { Input } from "../ui/input";
 import { api } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 
 type RedeemGemsDialogProps = {
     trigger: React.ReactNode;
@@ -33,12 +34,10 @@ export function RedeemGemsDialog({ trigger, prefillEmail }: RedeemGemsDialogProp
     const [otp, setOtp] = useState("");
     const [isSendingOtp, setIsSendingOtp] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [message, setMessage] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [otpError, setOtpError] = useState<string | null>(null);
 
     const clearMessages = () => {
-        setMessage(null);
         setError(null);
         setOtpError(null);
     };
@@ -68,7 +67,7 @@ export function RedeemGemsDialog({ trigger, prefillEmail }: RedeemGemsDialogProp
         try {
             setIsSendingOtp(true);
             await api.post("/staff/gems/send-otp", { email: userEmail.trim() });
-            setMessage(`OTP sent to ${userEmail.trim()}`);
+            toast.success(`OTP sent to ${userEmail.trim()}`, { position: "bottom-center" });
         } catch (err) {
             setError(getErrorMessage(err));
         } finally {
@@ -103,10 +102,10 @@ export function RedeemGemsDialog({ trigger, prefillEmail }: RedeemGemsDialogProp
             };
             if (isSuperAdmin) {
                 await api.post("/staff/gems/direct-redeem-gems", payload);
-                setMessage("Gems redeemed successfully");
+                toast.success("Gems redeemed successfully", { position: "bottom-center" });
             } else {
                 await api.post("/staff/gems/redeem-user-gems", payload);
-                setMessage("Redemption request created and sent for super admin approval");
+                toast.success("Redemption request created and sent for super admin approval", { position: "bottom-center" });
             }
             setConfirmOpen(false);
         } catch (err) {
@@ -174,7 +173,6 @@ export function RedeemGemsDialog({ trigger, prefillEmail }: RedeemGemsDialogProp
                         </div>
                     </div>
 
-                    {message && <p className="text-sm text-green-600">{message}</p>}
                     {error && <p className="text-sm text-red-500">{error}</p>}
 
                     <DialogFooter>

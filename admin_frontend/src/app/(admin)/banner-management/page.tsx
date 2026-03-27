@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
 import Image from "next/image"
 import { AxiosError } from "axios"
+import { toast } from "sonner"
 import { api } from "@/lib/api"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -153,7 +154,6 @@ export default function BannerManagementPage() {
     const [activeBanners, setActiveBanners] = useState<BannerApiItem[]>([])
     const [inactiveBanners, setInactiveBanners] = useState<BannerApiItem[]>([])
     const [loading, setLoading] = useState(false)
-    const [message, setMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null)
 
     const [title, setTitle] = useState("")
     const [file, setFile] = useState<File | null>(null)
@@ -166,7 +166,6 @@ export default function BannerManagementPage() {
     const fetchBanners = useCallback(async () => {
         try {
             setLoading(true)
-            setMessage(null)
             const [activeRes, inactiveRes] = await Promise.all([
                 api.get<{ data: BannerApiItem[] }>("/staff/banners", { params: { status: "ACTIVE" } }),
                 api.get<{ data: BannerApiItem[] }>("/staff/banners", { params: { status: "INACTIVE" } }),
@@ -175,7 +174,7 @@ export default function BannerManagementPage() {
             setInactiveBanners(inactiveRes.data.data ?? [])
         } catch (err) {
             console.error("Fetch banners error:", err)
-            setMessage({ text: "Failed to load banners", type: 'error' })
+            toast.error("Failed to load banners", { position: "bottom-center" })
         } finally {
             setLoading(false)
         }
@@ -198,7 +197,6 @@ export default function BannerManagementPage() {
         if (!file || !title.trim()) return
         try {
             setIsSubmitting(true)
-            setMessage(null)
 
             const formData = new FormData()
             formData.append("file", file)
@@ -220,7 +218,7 @@ export default function BannerManagementPage() {
             setTitle("")
             setFile(null)
             setAddDialogOpen(false)
-            setMessage({ text: "Banner created successfully", type: 'success' })
+            toast.success("Banner created successfully", { position: "bottom-center" })
             await fetchBanners()
         } catch (err) {
             console.error("Create banner error:", err)
@@ -228,7 +226,7 @@ export default function BannerManagementPage() {
                 err instanceof AxiosError && (err.response?.data as { message?: string })?.message
                     ? String((err.response?.data as { message?: string }).message)
                     : "Failed to create banner"
-            setMessage({ text: msg, type: 'error' })
+            toast.error(msg, { position: "bottom-center" })
         } finally {
             setIsSubmitting(false)
         }
@@ -236,9 +234,10 @@ export default function BannerManagementPage() {
 
     const handleToggleStatus = async (id: string, nextStatus: "ACTIVE" | "INACTIVE") => {
         try {
-            setMessage(null)
             const response = await api.put<{ message?: string }>(`/staff/banners/${id}/status`, { status: nextStatus })
-            setMessage({ text: response.data.message ?? `Banner marked as ${nextStatus.toLowerCase()}`, type: 'success' })
+            toast.success(response.data.message ?? `Banner marked as ${nextStatus.toLowerCase()}`, {
+                position: "bottom-center",
+            })
             await fetchBanners()
         } catch (err) {
             console.error("Update banner status error:", err)
@@ -246,15 +245,16 @@ export default function BannerManagementPage() {
                 err instanceof AxiosError && (err.response?.data as { message?: string })?.message
                     ? String((err.response?.data as { message?: string }).message)
                     : "Failed to update banner status"
-            setMessage({ text: msg, type: 'error' })
+            toast.error(msg, { position: "bottom-center" })
         }
     }
 
     const handleDeleteBanner = async (id: string) => {
         try {
-            setMessage(null)
             const response = await api.delete<{ message?: string }>(`/staff/banners/${id}`)
-            setMessage({ text: response.data.message ?? "Banner deleted successfully", type: 'success' })
+            toast.success(response.data.message ?? "Banner deleted successfully", {
+                position: "bottom-center",
+            })
             setDeleteBannerId(null)
             await fetchBanners()
         } catch (err) {
@@ -263,7 +263,7 @@ export default function BannerManagementPage() {
                 err instanceof AxiosError && (err.response?.data as { message?: string })?.message
                     ? String((err.response?.data as { message?: string }).message)
                     : "Failed to delete banner"
-            setMessage({ text: msg, type: 'error' })
+            toast.error(msg, { position: "bottom-center" })
         }
     }
 
@@ -287,13 +287,6 @@ export default function BannerManagementPage() {
             {maxActiveReached && (
                 <p className="text-sm text-black bg-amber-100 p-4 rounded-lg font-medium flex items-center gap-2"> <AlertCircleIcon className="size-4" /> 4/4 Active Banners Reached. Mark one as Inactive to add a new banner.
                 </p>
-            )}
-
-            {/* Alert Message */}
-            {message && (
-                <div className={`p-4 rounded-lg border text-sm font-medium ${message.type === 'success' ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20' : 'bg-destructive/10 text-destructive border-destructive/20'}`}>
-                    {message.text}
-                </div>
             )}
 
             {/* Main Content */}

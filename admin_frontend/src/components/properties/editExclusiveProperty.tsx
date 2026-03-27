@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { CheckCircle, Loader2, X } from "lucide-react";
+import { toast } from "sonner";
 
 type ExclusiveStatus = "ACTIVE" | "SOLD_OUT" | "UNLISTED";
 type CategoryValue = "" | "RESIDENTIAL" | "COMMERCIAL" | "AGRICULTURAL";
@@ -192,7 +193,6 @@ export function EditExclusiveProperty() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isLoadingExisting, setIsLoadingExisting] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [success, setSuccess] = useState<string | null>(null);
     const [editConfirmOpen, setEditConfirmOpen] = useState(false);
 
     const [switchTouched, setSwitchTouched] = useState({
@@ -417,7 +417,6 @@ export function EditExclusiveProperty() {
 
     const handleSubmit = async () => {
         setError(null);
-        setSuccess(null);
 
         if (!propertyId) {
             setError("Invalid property id");
@@ -487,7 +486,9 @@ export function EditExclusiveProperty() {
         try {
             setIsSubmitting(true);
             const response = await api.put<{ message?: string }>(`/staff/properties/exclusive/${propertyId}`, payload);
-            setSuccess(response.data.message ?? "Exclusive property updated successfully");
+            toast.success(response.data.message ?? "Exclusive property updated successfully", {
+                position: "bottom-center",
+            });
             router.push("/property/exclusive-listings");
         } catch (err: unknown) {
             const msg =
@@ -907,7 +908,6 @@ export function EditExclusiveProperty() {
                     </div>
 
                     {error && <p className="text-sm text-red-500">{error}</p>}
-                    {success && <p className="text-sm text-green-600">{success}</p>}
                 </CardContent>
 
                 <CardFooter className="justify-end gap-3">

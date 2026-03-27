@@ -100,12 +100,10 @@ export function AddNewStaff() {
     });
     const [showPassword, setShowPassword] = useState(false)
     const [confirmOpen, setConfirmOpen] = useState(false)
-    const [successMessage, setSuccessMessage] = useState<string | null>(null)
 
     const addNewStaffMutation = useMutation({
         mutationFn: createStaff,
         onSuccess: () => {
-            setSuccessMessage("Admin staff created successfully.");
             setApiError(null);
             setInput({
                 firstName: "",
@@ -153,11 +151,6 @@ export function AddNewStaff() {
 
                 <form onSubmit={handleSubmit}>
                     <CardContent className="p-6 pt-2">
-                        {successMessage && (
-                            <div className="mb-4 p-3 rounded-lg bg-green-50 text-green-700 text-sm font-medium">
-                                {successMessage}
-                            </div>
-                        )}
                         {apiError && (
                             <div className="mb-4 p-3 rounded-lg bg-red-50 text-red-600 text-sm">
                                 {apiError}

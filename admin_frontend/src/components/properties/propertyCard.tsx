@@ -113,6 +113,8 @@ export function PropertyCard({
     const [isSubmittingBuy, setIsSubmittingBuy] = useState(false)
     const [approveDialogOpen, setApproveDialogOpen] = useState(false)
     const [isSubmittingApprove, setIsSubmittingApprove] = useState(false)
+    const [rejectDialogOpen, setRejectDialogOpen] = useState(false)
+    const [isSubmittingReject, setIsSubmittingReject] = useState(false)
     const [soldConfirmOpen, setSoldConfirmOpen] = useState(false)
     const [isSubmittingSold, setIsSubmittingSold] = useState(false)
 
@@ -151,6 +153,17 @@ export function PropertyCard({
             setApproveDialogOpen(false)
         } finally {
             setIsSubmittingApprove(false)
+        }
+    }
+
+    const handleConfirmReject = async () => {
+        if (!onReject) return
+        try {
+            setIsSubmittingReject(true)
+            await onReject(property.id)
+            setRejectDialogOpen(false)
+        } finally {
+            setIsSubmittingReject(false)
         }
     }
 
@@ -321,15 +334,52 @@ export function PropertyCard({
                                 </Dialog>
                             )}
                             {onReject && (
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="flex-1 h-8 text-[11px] text-red-700 border-red-300 hover:bg-red-50"
-                                    onClick={() => void onReject(property.id)}
-                                >
-                                    <XCircle className="size-3 mr-1" />
-                                    Reject
-                                </Button>
+                                // <Button
+                                //     variant="outline"
+                                //     size="sm"
+                                //     className="flex-1 h-8 text-[11px] text-red-700 border-red-300 hover:bg-red-50"
+                                //     onClick={() => void onReject(property.id)}
+                                // >
+                                //     <XCircle className="size-3 mr-1" />
+                                //     Reject
+                                // </Button>
+                                <Dialog open={rejectDialogOpen} onOpenChange={setRejectDialogOpen}>
+                                    <DialogTrigger asChild>
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            className="flex-1 h-8 text-[11px] text-red-700 border-red-300 hover:bg-red-50"
+                                        >
+                                            <XCircle className="size-3 mr-1" />
+                                            Reject
+                                        </Button>
+                                    </DialogTrigger>
+                                    <DialogContent>
+                                        <DialogHeader>
+                                            <DialogTitle>Confirm Rejection</DialogTitle>
+                                            <DialogDescription>
+                                                Are you sure you want to reject this property?
+                                            </DialogDescription>
+                                        </DialogHeader>
+                                        <DialogFooter>
+                                            <Button
+                                                variant="outline"
+                                                onClick={() => setRejectDialogOpen(false)}
+                                                disabled={isSubmittingReject}
+                                            >
+                                                Cancel
+                                            </Button>
+                                            <Button
+                                                className="bg-red-600 hover:bg-red-700"
+                                                onClick={handleConfirmReject}
+                                                disabled={isSubmittingReject || !onReject}
+                                            >
+                                                <XCircle className="size-3 mr-1" />
+                                                {isSubmittingReject ? "Processing..." : "Reject"}
+                                            </Button>
+                                        </DialogFooter>
+                                    </DialogContent>
+                                </Dialog>
                             )}
                         </>
                     ) : !onMakeExclusive && isExclusive ? (

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
+import { toast } from "sonner"
 import { PropertyGrid } from "@/components/properties/propertyGrid"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -36,7 +37,6 @@ export default function PendingApprovalsPage() {
     const [properties, setProperties] = useState<PropertyCardData[]>([])
     const [isLoading, setIsLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
-    const [actionMessage, setActionMessage] = useState<string | null>(null)
 
     const isSuperAdmin = user?.role === "SUPER_ADMIN"
 
@@ -142,13 +142,16 @@ export default function PendingApprovalsPage() {
     const handleAcquisitionDecision = async (propertyId: string, decision: "APPROVED" | "REJECTED") => {
         if (!isSuperAdmin) return
         try {
-            setActionMessage(null)
             await api.post("/staff/properties/acquisition-request-approval", { propertyId, decision })
-            setActionMessage(`Request ${decision === "APPROVED" ? "approved" : "rejected"} successfully`)
+            toast.success(`Request ${decision === "APPROVED" ? "approved" : "rejected"} successfully`, {
+                position: "bottom-center",
+            })
             await fetchProperties()
         } catch (err) {
             console.error("Failed to process acquisition request:", err)
-            setActionMessage(`Failed to ${decision === "APPROVED" ? "approve" : "reject"} request`)
+            toast.error(`Failed to ${decision === "APPROVED" ? "approve" : "reject"} request`, {
+                position: "bottom-center",
+            })
         }
     }
 
@@ -199,7 +202,6 @@ export default function PendingApprovalsPage() {
             </div>
 
             <div className="flex gap-4 mt-4 px-2">
-                {actionMessage && <p className="text-sm px-4 text-blue-600">{actionMessage}</p>}
                 {isLoading && <p className="text-sm text-gray-500 px-4">Loading...</p>}
                 {error && <p className="text-sm text-red-500 px-4">{error}</p>}
                 {!isLoading && !error && (

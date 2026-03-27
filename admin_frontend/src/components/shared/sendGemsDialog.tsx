@@ -16,6 +16,7 @@ import {
 import { Input } from "../ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import { api } from "@/lib/api";
+import { toast } from "sonner";
 
 type GemRequestType = "EXCLUSIVE_ACQUISITION_REWARD" | "EXCLUSIVE_SALE_REWARD";
 
@@ -48,13 +49,11 @@ export function SendGemsDialog({ trigger, prefillEmail }: SendGemsDialogProps) {
     const [isSendingOtp, setIsSendingOtp] = useState(false);
     const [isPreviewing, setIsPreviewing] = useState(false);
     const [isSendingGems, setIsSendingGems] = useState(false);
-    const [message, setMessage] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [otpError, setOtpError] = useState<string | null>(null);
     const [previewData, setPreviewData] = useState<PreviewResponse["data"] | null>(null);
 
     const clearMessages = () => {
-        setMessage(null);
         setError(null);
         setOtpError(null);
     };
@@ -88,7 +87,7 @@ export function SendGemsDialog({ trigger, prefillEmail }: SendGemsDialogProps) {
         try {
             setIsSendingOtp(true);
             await api.post("/staff/gems/send-otp", { email: email.trim() });
-            setMessage(`OTP sent to ${email.trim()}`);
+            toast.success(`OTP sent to ${email.trim()}`, { position: "bottom-center" });
         } catch (err) {
             setError(getErrorMessage(err));
         } finally {
@@ -138,7 +137,7 @@ export function SendGemsDialog({ trigger, prefillEmail }: SendGemsDialogProps) {
                 propertyId: propertyId.trim() || undefined,
             });
             setConfirmOpen(false);
-            setMessage("Gems sent successfully");
+            toast.success("Gems sent successfully", { position: "bottom-center" });
         } catch (err) {
             const msg = getErrorMessage(err);
             if (msg.toLowerCase().includes("otp")) {
@@ -222,18 +221,8 @@ export function SendGemsDialog({ trigger, prefillEmail }: SendGemsDialogProps) {
                                 placeholder="Enter property ID if payment is for a specific property"
                             />
                         </div>
-                        <div>
-                            <p className="text-xs mb-1 text-gray-600">Comment (optional)</p>
-                            <textarea
-                                value={comment}
-                                onChange={(e) => setComment(e.target.value)}
-                                placeholder="Write a short comment"
-                                className="w-full min-h-20 rounded-md border px-3 py-2 text-sm outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
-                            />
-                        </div>
                     </div>
 
-                    {message && <p className="text-sm text-green-600">{message}</p>}
                     {error && <p className="text-sm text-red-500">{error}</p>}
 
                     <DialogFooter>

@@ -25,6 +25,7 @@ import type { ExportColumn } from "@/components/role_management/exportButton"
 import { api } from "@/lib/api"
 import { fetchBookmarkedPropertyIds, toggleBookmark } from "@/lib/bookmarks"
 import { AxiosError } from "axios"
+import { toast } from "sonner"
 
 // const mockPendingApprovals: PendingApprovalData[] = [
 //     { id: "p1", title: "3BHK Villa in Arera Colony", location: "Arera Colony, Bhopal", imageUrl: "/smallBuilding.png" },
@@ -55,7 +56,6 @@ export default function AllPropertiesPage() {
     const [bookmarkedIds, setBookmarkedIds] = useState<Set<string>>(new Set())
     const [isLoading, setIsLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
-    const [actionMessage, setActionMessage] = useState<string | null>(null)
 
     useEffect(() => {
         let isMounted = true
@@ -158,19 +158,20 @@ export default function AllPropertiesPage() {
     }
 
     const handleBuyProperty = async (propertyId: string) => {
-        setActionMessage(null)
         try {
             const response = await api.post<{ message?: string }>("/staff/properties/acquisition-request", {
                 propertyId,
             })
-            setActionMessage(response.data.message ?? "Request submitted successfully")
+            toast.success(response.data.message ?? "Request submitted successfully", {
+                position: "bottom-center",
+            })
         } catch (err) {
             console.error("Failed to buy/request property:", err)
             const message =
                 err instanceof AxiosError && (err.response?.data as { message?: string })?.message
                     ? String((err.response?.data as { message?: string }).message)
                     : "Failed to process property acquisition"
-            setActionMessage(message)
+            toast.error(message, { position: "bottom-center" })
         }
     }
 
@@ -201,7 +202,6 @@ export default function AllPropertiesPage() {
 
             <div className="flex gap-4 mt-4 px-2">
                 <div className="w-full">
-                    {actionMessage && <p className="text-sm text-blue-600 mb-2">{actionMessage}</p>}
                     {isLoading && <p className="text-sm text-gray-500">Loading properties...</p>}
                     {error && <p className="text-sm text-red-500">{error}</p>}
                     {!isLoading && !error && filteredProperties.length === 0 && (

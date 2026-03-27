@@ -15,6 +15,7 @@ import { useMemo, useState } from "react"
 import { useMutation, useQuery } from "@tanstack/react-query"
 import { useRouter } from "next/navigation"
 import { Eye, EyeOff } from "lucide-react"
+import { toast } from "sonner"
 
 const roles = [
     {
@@ -105,7 +106,6 @@ const mapStaffToInput = (staff: StaffData): UpdateStaffInput => ({
 export function EditStaff({ staffId }: { staffId: string }) {
     const router = useRouter()
     const [apiError, setApiError] = useState<string | null>(null)
-    const [successMsg, setSuccessMsg] = useState<string | null>(null)
     const [confirmOpen, setConfirmOpen] = useState(false)
     const [overrides, setOverrides] = useState<Partial<UpdateStaffInput>>({})
     const [showPassword, setShowPassword] = useState(false)
@@ -125,8 +125,7 @@ export function EditStaff({ staffId }: { staffId: string }) {
         mutationFn: updateStaffApi,
         onSuccess: () => {
             setApiError(null)
-            setSuccessMsg("Staff updated successfully!")
-            setTimeout(() => setSuccessMsg(null), 3000)
+            toast.success("Staff updated successfully", { position: "bottom-center" })
         },
         onError: (error) => {
             if (error instanceof AxiosError && error.response?.status === 401) {
@@ -145,7 +144,7 @@ export function EditStaff({ staffId }: { staffId: string }) {
         mutationFn: blockStaffApi,
         onSuccess: () => {
             setApiError(null)
-            setSuccessMsg("Staff blocked successfully!")
+            toast.success("Staff blocked successfully", { position: "bottom-center" })
             setTimeout(() => router.push("/role-management"), 1500)
         },
         onError: (error) => {
@@ -165,7 +164,6 @@ export function EditStaff({ staffId }: { staffId: string }) {
     const handleConfirmUpdate = () => {
         setConfirmOpen(false)
         setApiError(null)
-        setSuccessMsg(null)
         const payload: UpdateStaffInput = { ...input }
         // Only send password if user typed a new one
         if (!payload.password) {
@@ -212,9 +210,6 @@ export function EditStaff({ staffId }: { staffId: string }) {
                     <CardContent className="p-6 pt-2">
                         {apiError && (
                             <div className="mb-4 p-3 rounded-lg bg-red-50 text-red-600 text-sm">{apiError}</div>
-                        )}
-                        {successMsg && (
-                            <div className="mb-4 p-3 rounded-lg bg-green-50 text-green-600 text-sm">{successMsg}</div>
                         )}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
                             {/* Left Column — Personal Information */}
